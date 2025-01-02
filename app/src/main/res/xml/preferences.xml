@@ -1,0 +1,60 @@
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:theme="@style/AppPreferenceTheme">
+
+    <PreferenceCategory
+        android:title="General"
+        android:layout="@layout/custom_preference_category">
+        <!--<ListPreference
+            android:key="language"
+            android:title="Language"
+            android:summary="Select your preferred language"
+            android:entries="@array/language_options"
+            android:entryValues="@array/language_values"
+            android:defaultValue="en" />-->
+
+        <Preference
+            android:key="font_selection"
+            android:title="Select Font"
+            android:summary="Choose your preferred font" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Legal"
+        android:layout="@layout/custom_preference_category">
+        <Preference
+            android:key="terms_of_use"
+            android:title="Terms of Use"
+            android:summary="Read our terms of use" />
+
+        <Preference
+            android:key="privacy_policy"
+            android:title="Privacy Policy"
+            android:summary="Read our privacy policy" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Support"
+        android:layout="@layout/custom_preference_category">
+        <Preference
+            android:key="contact_us"
+            android:title="Contact Us"
+            android:summary="Get in touch with us" />
+
+        <Preference
+            android:key="rate_us"
+            android:title="Rate Us"
+            android:summary="Rate our app on the Play Store" />
+    </PreferenceCategory>
+
+    <!--<PreferenceCategory
+        android:title="Others"
+        android:layout="@layout/custom_preference_category">
+        <Preference
+            android:key="history"
+            android:title="History"
+            android:summary="View conversation history"/>
+    </PreferenceCategory>-->
+
+</PreferenceScreen>

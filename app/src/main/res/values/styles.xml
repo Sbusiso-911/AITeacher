@@ -1,0 +1,132 @@
+<resources>
+    <!-- Base application theme. -->
+    <style name="Theme.AITeacher" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <!-- Primary branding color. -->
+        <item name="colorPrimary">@color/dark_grey</item>
+        <item name="colorPrimaryVariant">@color/custom1_blue</item>
+        <item name="colorOnPrimary">@color/black</item>
+        <item name="android:textSize">14sp</item> <!-- Adjust the size as needed -->
+        <!--<item name="android:textStyle">bold</item> <! Make text bold -->
+
+        <!-- Secondary branding color. -->
+        <item name="colorSecondary">@color/glow_start</item>
+        <item name="colorSecondaryVariant">@color/teal_700</item>
+        <item name="colorOnSecondary">@color/black</item>
+
+        <!-- Customize your theme here. -->
+        <item name="buttonStyle">@style/CustomButton</item>
+    </style>
+
+    <!-- Custom button style -->
+    <style name="CustomButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:background">@drawable/button_gradient_background</item>
+        <item name="android:textColor">@color/button_text_color</item>
+        <item name="android:textSize">14sp</item> <!-- Adjust the size as needed -->
+        <item name="android:textStyle">bold</item> <!-- Make text bold -->
+    </style>
+
+    <!-- Custom style for TTS button -->
+    <style name="TTSButtonStyle" parent="CustomButton">
+        <item name="android:background">@drawable/ic_tts_on</item>
+        <item name="backgroundTint">@null</item> <!-- Nullify background tint -->
+    </style>
+
+    <!-- Custom style for Email button -->
+    <style name="EmailButtonStyle" parent="CustomButton">
+        <item name="android:background">@drawable/email_button_background</item>
+        <item name="backgroundTint">@null</item> <!-- Nullify background tint -->
+    </style>
+
+    <!-- Suggested Question Button Style -->
+    <style name="SuggestedQuestionButtonStyle" parent="Widget.MaterialComponents.Button">
+        <item name="backgroundTint">@color/clear</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textSize">14sp</item> <!-- Adjust the size as needed -->
+        <item name="android:textStyle">bold</item> <!-- Make text bold -->
+    </style>
+
+    <!-- Splash Screen Theme -->
+    <style name="Theme.AITeacher.Splash" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">@color/white</item>
+    </style>
+
+    <!-- Preference Theme -->
+    <style name="AppPreferenceTheme" parent="Theme.MaterialComponents.DayNight">
+        <item name="android:colorBackground">@android:color/background_light</item>
+        <item name="android:textColorPrimary">@android:color/primary_text_light</item>
+    </style>
+
+    <!-- Define custom PreferenceCategory style with background color -->
+    <style name="CustomPreferenceCategory" parent="Preference.Material">
+        <item name="android:background">#FFDE03</item> <!-- Change to your desired color -->
+        <item name="android:padding">8dp</item>
+    </style>
+
+    <!-- Text Appearance Styles for Custom Fonts -->
+    <!-- Font 1 -->
+    <style name="Font1TextAppearance" parent="@android:style/TextAppearance">
+        <item name="android:fontFamily">@font/font3</item>
+    </style>
+
+    <!-- Font 2 -->
+    <style name="Font2TextAppearance" parent="@android:style/TextAppearance">
+        <item name="android:fontFamily">@font/font1</item>
+    </style>
+
+    <!-- Font 3 -->
+    <style name="Font3TextAppearance" parent="@android:style/TextAppearance">
+        <item name="android:fontFamily">@font/font2</item>
+    </style>
+
+    <!-- Font 4 -->
+    <style name="Font4TextAppearance" parent="@android:style/TextAppearance">
+        <item name="android:fontFamily">@font/font4</item>
+    </style>
+
+    <!-- Font 5 -->
+    <style name="Font5TextAppearance" parent="@android:style/TextAppearance">
+        <item name="android:fontFamily">@font/font5</item>
+    </style>
+
+    <!-- Custom style for Clear Recent Conversations and Remove Ads buttons -->
+    <style name="CustomWhiteButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:background">@color/white</item>
+        <item name="backgroundTint">@null</item> <!-- Remove any background tint -->
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textSize">16sp</item> <!-- Adjust the size as needed -->
+    <!--<item name="android:textStyle">bold</item>  Make text bold -->
+    </style>
+
+    <!-- Other styles -->
+
+    <style name="CustomEditTextStyle">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textColorHint">@android:color/black</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textAlignment">center</item>
+    </style>
+
+    <style name="CustomAlertDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:textColorPrimary">@android:color/black</item>
+        <item name="android:buttonBarButtonStyle">@style/CustomDialogButton</item>
+    </style>
+
+    <style name="CustomDialogButton" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+
+    <style name="CustomButtonStyle" parent="Widget.AppCompat.Button">
+        <item name="android:textColor">@android:color/white</item>
+
+       <!-- <item name="android:background">"@color/your_button_color"</item>-->
+    </style>
+
+
+    <style name="RoundedButton" parent="Widget.MaterialComponents.Button">
+        <item name="cornerRadius">16dp</item>
+        <item name="backgroundTint">@color/light_yellow</item>
+    </style>
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+</resources>

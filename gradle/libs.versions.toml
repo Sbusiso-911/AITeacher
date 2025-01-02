@@ -1,0 +1,235 @@
+[versions]
+agp = "8.5.0"
+androidxEspressoCore = "3.6.1"
+androidxJunit = "1.2.1"
+androidxJunitVersion = "1.2.1"
+annotation = "1.9.1"
+appcompatVersion = "1.7.0"
+bcprovJdk18on = "1.77"
+billing = "7.1.1"
+billingKtx = "7.1.1"
+commonsCompress = "1.26.2"
+constraintlayout = "2.2.0"
+coreKtxVersion = "1.15.0"
+credentialsPlayServicesAuth = "1.5.0-beta01"
+databindingKtx = "8.7.2"
+espressoCoreVersion = "3.6.1"
+foundation = "1.7.5"
+githubColorpicker = "0.0.13"
+glideVersion = "4.12.0"
+googleApiClient = "1.32.1"
+googleApiClientGson = "1.31.5"
+googleApiServicesDocs = "v1-rev20210329-1.32.1"
+googleApiServicesDocsVersion = "v1-rev20210707-1.32.1"
+googleApiServicesGmail = "v1-rev20211010-1.32.1"
+googleApiServicesGmailVersion = "v1-rev20221107-1.32.1"
+googleApiServicesSheets = "v4-rev614-1.32.1"
+googleApiServicesSheetsVersion = "v4-rev20210629-1.32.1"
+googleApiServicesSlides = "v1-rev20210820-1.32.1"
+googleGoogleApiServicesGmail = "v1-rev20230510-2.0.0"
+googleGoogleApiServicesGmailVersion = "v1-rev110-1.25.0"
+googleHttpClientJackson2 = "1.41.5"
+googlePlayServicesAds = "23.5.0"
+googleServicesVersion = "4.4.2"
+gson = "2.10.1"
+itext7Core = "7.2.6"
+kotlin = "1.9.0"
+gradle = "8.5.2"
+googleServices = "4.4.2"
+coreKtx = "1.15.0"
+junit = "4.13.2"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
+kotlinStdlib = "1.9.22"
+lifecycleRuntimeKtx = "2.8.7"
+activityCompose = "1.9.3"
+composeBom = "2024.11.00"
+material = "1.12.0"
+material3 = "1.3.1"
+multidex = "2.0.1"
+okhttp = "4.9.3"
+paypalAndroidSdk = "2.16.0"
+pdfboxAndroid = "2.0.27.0"
+pdfboxTools = "2.0.24"
+playServicesAds = "23.5.0"
+playServicesAdsVersion = "23.5.0"
+playServicesAuth = "21.2.0"
+playServicesMlkitTextRecognition = "19.0.1"
+poiOoxml = "5.3.0"
+recyclerview = "1.3.2"
+appcompat = "1.7.0"
+recyclerviewVersion = "1.3.2"
+squareupConverterGson = "2.9.0"
+stripeAndroid = "20.0.0"
+sunAndroidMail = "1.6.7"
+tessTwo = "9.1.0"
+tessTwoVersion = "9.1.0"
+textRecognition = "16.0.1"
+
+ui = "1.7.5"
+uiGraphicsAndroid = "1.7.5"
+foundationAndroid = "1.7.5"
+material3Android = "1.3.1"
+junitJunit = "4.13.2"
+monitor = "1.7.2"
+junitKtx = "1.2.1"
+preferenceKtx = "1.2.1"
+uiTooling = "1.7.5"
+uiToolingPreview = "1.7.5"
+supportAnnotations = "28.0.0"
+carUiLib = "2.6.0"
+generativeai = "0.9.0"
+firebaseCrashlyticsBuildtools = "3.0.2"
+databindingCommon = "8.7.2"
+kotlinReflect = "1.9.22"
+supportV4 = "28.0.0"
+legacySupportV4 = "1.0.0"
+supportV13 = "28.0.0"
+legacySupportV13 = "1.0.0"
+appcompatV7 = "28.0.0"
+supportVectorDrawable = "28.0.0"
+vectordrawable = "1.2.0"
+androidEspressoCore = "3.0.2"
+preference = "1.2.1"
+espressoContrib = "3.0.2"
+espressoContribVersion = "3.6.1"
+library = "8.7.2"
+databindingRuntime = "8.7.2"
+baselibrary = "8.7.2"
+compiler = "3.1.4"
+databindingCompiler = "8.7.2"
+adapters = "8.7.2"
+databindingAdapters = "8.7.2"
+recyclerviewV7 = "28.0.0"
+coreSplashscreen = "1.0.1"
+jackson = "2.13.2"
+navigationFragmentKtx = "2.8.4"
+navigationUiKtx = "2.8.4"
+paletteKtx = "1.0.0"
+
+[libraries]
+android-activation = { module = "com.sun.mail:android-activation", version.ref = "sunAndroidMail" }
+androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
+androidx-appcompat-v140 = { module = "androidx.appcompat:appcompat", version.ref = "appcompatVersion" }
+androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-core-ktx-v170 = { module = "androidx.core:core-ktx", version.ref = "coreKtxVersion" }
+androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentialsPlayServicesAuth" }
+androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentialsPlayServicesAuth" }
+androidx-databinding-ktx = { module = "androidx.databinding:databinding-ktx", version.ref = "databindingKtx" }
+androidx-espresso-core-v340 = { module = "androidx.test.espresso:espresso-core", version.ref = "espressoCoreVersion" }
+androidx-espresso-core-v361 = { module = "androidx.test.espresso:espresso-core", version.ref = "androidxEspressoCore" }
+androidx-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "foundation" }
+androidx-junit-v113 = { module = "androidx.test.ext:junit", version.ref = "androidxJunit" }
+androidx-junit-v121 = { module = "androidx.test.ext:junit", version.ref = "androidxJunitVersion" }
+androidx-multidex = { module = "androidx.multidex:multidex", version.ref = "multidex" }
+androidx-recyclerview-v121 = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerviewVersion" }
+bcprov-jdk18on = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bcprovJdk18on" }
+billing = { module = "com.android.billingclient:billing", version.ref = "billing" }
+billingclient-billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billingKtx" }
+commons-compress = { module = "org.apache.commons:commons-compress", version.ref = "commonsCompress" }
+github-colorpicker = { module = "com.github.QuadFlask:colorpicker", version.ref = "githubColorpicker" }
+github-glide = { module = "com.github.bumptech.glide:glide", version.ref = "glideVersion" }
+glide-compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "glideVersion" }
+google-api-client = { module = "com.google.api-client:google-api-client", version.ref = "googleApiClient" }
+google-api-client-android = { module = "com.google.api-client:google-api-client-android", version.ref = "googleApiClientGson" }
+google-api-client-gson = { module = "com.google.api-client:google-api-client-gson", version.ref = "googleApiClientGson" }
+google-api-services-docs = { module = "com.google.apis:google-api-services-docs", version.ref = "googleApiServicesDocs" }
+google-api-services-docs-vv1rev202107071321 = { module = "com.google.apis:google-api-services-docs", version.ref = "googleApiServicesDocsVersion" }
+google-api-services-gmail = { module = "com.google.apis:google-api-services-gmail", version.ref = "googleApiServicesGmail" }
+google-api-services-gmail-vv1rev1101250 = { module = "com.google.apis:google-api-services-gmail", version.ref = "googleGoogleApiServicesGmailVersion" }
+google-api-services-gmail-vv1rev202211071321 = { module = "com.google.apis:google-api-services-gmail", version.ref = "googleApiServicesGmailVersion" }
+google-api-services-gmail-vv1rev20230510200 = { module = "com.google.apis:google-api-services-gmail", version.ref = "googleGoogleApiServicesGmail" }
+google-api-services-sheets = { module = "com.google.apis:google-api-services-sheets", version.ref = "googleApiServicesSheets" }
+google-api-services-sheets-vv4rev202106291321 = { module = "com.google.apis:google-api-services-sheets", version.ref = "googleApiServicesSheetsVersion" }
+google-api-services-slides = { module = "com.google.apis:google-api-services-slides", version.ref = "googleApiServicesDocs" }
+google-api-services-slides-vv1rev202108201321 = { module = "com.google.apis:google-api-services-slides", version.ref = "googleApiServicesSlides" }
+google-http-client-jackson2 = { module = "com.google.http-client:google-http-client-jackson2", version.ref = "googleHttpClientJackson2" }
+google-services-v442 = { module = "com.google.gms:google-services", version.ref = "googleServicesVersion" }
+gson-v2101 = { module = "com.google.code.gson:gson", version.ref = "gson" }
+itext7-core = { module = "com.itextpdf:itext7-core", version.ref = "itext7Core" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version.ref = "uiGraphicsAndroid" }
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "uiTooling" }
+androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version.ref = "uiToolingPreview" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-ui-graphics-android = { group = "androidx.compose.ui", name = "ui-graphics-android", version.ref = "uiGraphicsAndroid" }
+androidx-foundation-android = { group = "androidx.compose.foundation", name = "foundation-android", version.ref = "foundationAndroid" }
+androidx-material3-android = { group = "androidx.compose.material3", name = "material3-android", version.ref = "material3Android" }
+junit-junit = { group = "junit", name = "junit", version.ref = "junitJunit" }
+androidx-monitor = { group = "androidx.test", name = "monitor", version.ref = "monitor" }
+androidx-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "junitKtx" }
+androidx-preference-ktx = { group = "androidx.preference", name = "preference-ktx", version.ref = "preferenceKtx" }
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlinStdlib" }
+material = { module = "com.google.android.material:material", version.ref = "material" }
+material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+paypal-android-sdk = { module = "com.paypal.sdk:paypal-android-sdk", version.ref = "paypalAndroidSdk" }
+pdfbox-android = { module = "com.tom-roush:pdfbox-android", version.ref = "pdfboxAndroid" }
+pdfbox-tools = { module = "org.apache.pdfbox:pdfbox-tools", version.ref = "pdfboxTools" }
+play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
+play-services-ads-v2320 = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAdsVersion" }
+play-services-ads-v2330 = { module = "com.google.android.gms:play-services-ads", version.ref = "googlePlayServicesAds" }
+play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
+play-services-mlkit-text-recognition = { module = "com.google.android.gms:play-services-mlkit-text-recognition", version.ref = "playServicesMlkitTextRecognition" }
+poi = { module = "org.apache.poi:poi", version.ref = "poiOoxml" }
+poi-ooxml = { module = "org.apache.poi:poi-ooxml", version.ref = "poiOoxml" }
+poi-scratchpad = { module = "org.apache.poi:poi-scratchpad", version.ref = "poiOoxml" }
+retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "squareupConverterGson" }
+rmtheis-tess-two = { module = "com.rmtheis:tess-two", version.ref = "tessTwoVersion" }
+squareup-converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "squareupConverterGson" }
+stripe-android = { module = "com.stripe:stripe-android", version.ref = "stripeAndroid" }
+sun-android-mail = { module = "com.sun.mail:android-mail", version.ref = "sunAndroidMail" }
+tess-two = { module = "com.googlecode.tesseract.android:tess-two", version.ref = "tessTwo" }
+text-recognition = { module = "com.google.mlkit:text-recognition", version.ref = "textRecognition" }
+ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
+ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "uiTooling" }
+ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "uiToolingPreview" }
+support-annotations = { group = "com.android.support", name = "support-annotations", version.ref = "supportAnnotations" }
+car-ui-lib = { group = "com.android.car.ui", name = "car-ui-lib", version.ref = "carUiLib" }
+generativeai = { group = "com.google.ai.client.generativeai", name = "generativeai", version.ref = "generativeai" }
+firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "firebase-crashlytics-buildtools", version.ref = "firebaseCrashlyticsBuildtools" }
+viewpager2 = { group = "androidx.viewpager2", name = "viewpager2", version = "1.1.0" }
+fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version = "1.8.4" }
+lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version = "2.8.6" }
+lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version = "2.8.6" }
+gson = { group = "com.google.code.gson", name = "gson", version = "2.10.1" }
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+gradle = { module = "com.android.tools.build:gradle", version.ref = "gradle" }
+google-services = { module = "com.google.gms:google-services", version.ref = "googleServices" }
+androidx-databinding-common = { group = "androidx.databinding", name = "databinding-common", version.ref = "databindingCommon" }
+kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlinReflect" }
+support-v4 = { group = "com.android.support", name = "support-v4", version.ref = "supportV4" }
+androidx-legacy-support-v4 = { group = "androidx.legacy", name = "legacy-support-v4", version.ref = "legacySupportV4" }
+support-v13 = { group = "com.android.support", name = "support-v13", version.ref = "supportV13" }
+androidx-legacy-support-v13 = { group = "androidx.legacy", name = "legacy-support-v13", version.ref = "legacySupportV13" }
+appcompat-v7 = { group = "com.android.support", name = "appcompat-v7", version.ref = "appcompatV7" }
+support-vector-drawable = { group = "com.android.support", name = "support-vector-drawable", version.ref = "supportVectorDrawable" }
+androidx-vectordrawable = { group = "androidx.vectordrawable", name = "vectordrawable", version.ref = "vectordrawable" }
+espresso-core = { group = "com.android.support.test.espresso", name = "espresso-core", version.ref = "androidEspressoCore" }
+androidx-preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
+espresso-contrib = { group = "com.android.support.test.espresso", name = "espresso-contrib", version.ref = "espressoContrib" }
+androidx-espresso-contrib = { group = "androidx.test.espresso", name = "espresso-contrib", version.ref = "espressoContribVersion" }
+library = { group = "com.android.databinding", name = "library", version.ref = "library" }
+androidx-databinding-runtime = { group = "androidx.databinding", name = "databinding-runtime", version.ref = "databindingRuntime" }
+baselibrary = { group = "com.android.databinding", name = "baseLibrary", version.ref = "baselibrary" }
+compiler = { group = "com.android.databinding", name = "compiler", version.ref = "compiler" }
+androidx-databinding-compiler = { group = "androidx.databinding", name = "databinding-compiler", version.ref = "databindingCompiler" }
+adapters = { group = "com.android.databinding", name = "adapters", version.ref = "adapters" }
+androidx-databinding-adapters = { group = "androidx.databinding", name = "databinding-adapters", version.ref = "databindingAdapters" }
+recyclerview-v7 = { group = "com.android.support", name = "recyclerview-v7", version.ref = "recyclerviewV7" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
+jackson-core = { group = "com.fasterxml.jackson.core", name = "jackson-core", version.ref = "jackson" }
+jackson-databind = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jackson" }
+jackson-annotations = { group = "com.fasterxml.jackson.core", name = "jackson-annotations", version.ref = "jackson" }
+androidx-navigation-fragment-ktx = { group = "androidx.navigation", name = "navigation-fragment-ktx", version.ref = "navigationFragmentKtx" }
+androidx-navigation-ui-ktx = { group = "androidx.navigation", name = "navigation-ui-ktx", version.ref = "navigationUiKtx" }
+androidx-palette-ktx = { group = "androidx.palette", name = "palette-ktx", version.ref = "paletteKtx" }

@@ -1,0 +1,6 @@
+<resources>
+    <declare-styleable name="YourCustomView">
+        <attr name="colorSelectionButtonStyle" format="reference" />
+        <attr name="iconColor" format="color" />
+    </declare-styleable>
+</resources>

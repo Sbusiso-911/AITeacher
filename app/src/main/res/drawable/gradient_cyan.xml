@@ -1,0 +1,8 @@
+<!-- res/drawable/gradient_cyan.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:startColor="#7facdc"
+        android:centerColor="#bfb8da"
+        android:endColor="#000000"
+        android:angle="0"/>
+</shape>

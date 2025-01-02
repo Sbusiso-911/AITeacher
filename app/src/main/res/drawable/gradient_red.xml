@@ -1,0 +1,9 @@
+<!-- res/drawable/gradient_red.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:startColor="#A23333"
+        android:centerColor="#c58080"
+        android:endColor="#ae4d4d"
+        android:type="sweep"
+        android:angle="360"/>
+</shape>

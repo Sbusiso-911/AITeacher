@@ -1,0 +1,93 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.playstudio.aiteacher">
+
+    <!-- Necessary Permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="com.android.vending.BILLING" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <!-- Permissions for API level 33+ (Tiramisu) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
+        tools:targetApi="33" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"
+        tools:targetApi="33" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"
+        tools:targetApi="33" />
+
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.USE_CREDENTIALS" />
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <!-- Camera feature -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launch"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AITeacher"
+        android:enableOnBackInvokedCallback="true"
+        android:name=".MyApplication"> <!-- Added this line -->
+
+        <!-- AdMob Application ID -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-9180832030816304~8161771130" />
+
+
+        <!-- OAuth2 Client ID -->
+        <meta-data
+            android:name="com.google.android.gms.auth.api.credentials.CredentialPickerConfig"
+            android:value="@string/server_client_id" />
+
+        <!-- Splash Activity -->
+        <activity
+            android:name=".SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AITeacher.Splash">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Main Activity -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize|stateHidden">
+        </activity>
+
+        <!-- Other Activities -->
+        <activity android:name=".SettingsActivity" android:theme="@style/Theme.AITeacher"/>
+        <activity android:name=".ContactUsActivity" android:theme="@style/Theme.AITeacher"/>
+        <activity android:name=".PrivacyPolicyActivity" android:theme="@style/Theme.AITeacher"/>
+        <activity android:name=".TermsOfUseActivity" android:theme="@style/Theme.AITeacher"/>
+        <activity android:name=".FontSelectionActivity" android:theme="@style/Theme.AITeacher"/>
+
+        <activity
+            android:name="com.canhub.cropper.CropImageActivity"
+            android:theme="@style/Base.Theme.AppCompat" />
+
+        <!-- Example of a custom broadcast receiver -->
+        <receiver
+            android:name=".YourBroadcastReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.playstudio.aiteacher.MainActivity" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+</manifest>

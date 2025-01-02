@@ -1,0 +1,100 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp">
+
+    <RelativeLayout
+        android:id="@+id/left_title_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="start"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:background="@android:color/holo_blue_light">
+
+        <com.playstudio.aiteacher.GradientTextView
+            android:id="@+id/action_bar_left_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="A"
+            android:textSize="38sp"
+            android:textStyle="bold"
+            android:gravity="start" />
+
+        <com.playstudio.aiteacher.GradientTextView
+            android:id="@+id/i_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="I"
+            android:textSize="38sp"
+            android:textStyle="bold"
+            android:layout_toRightOf="@id/action_bar_left_title"
+            android:layout_marginStart="0dp"
+            android:gravity="center" />
+
+        <LinearLayout
+            android:id="@+id/teacher_container"
+            android:layout_width="48dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+        android:layout_toRightOf="@id/i_text"
+        android:layout_marginStart="4dp"
+        android:layout_gravity="top">
+
+        <com.playstudio.aiteacher.GradientTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="T"
+            android:textSize="4sp"
+            android:textStyle="bold" />
+        <com.playstudio.aiteacher.GradientTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="E"
+            android:textSize="4sp"
+            android:textStyle="bold" />
+        <com.playstudio.aiteacher.GradientTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="A"
+            android:textSize="4sp"
+            android:textStyle="bold" />
+        <com.playstudio.aiteacher.GradientTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="C"
+            android:textSize="4sp"
+            android:textStyle="bold" />
+        <com.playstudio.aiteacher.GradientTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="H"
+            android:textSize="4sp"
+            android:textStyle="bold" />
+        <com.playstudio.aiteacher.GradientTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="E"
+            android:textSize="4sp"
+            android:textStyle="bold" />
+        <com.playstudio.aiteacher.GradientTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="R"
+            android:textSize="4sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</RelativeLayout>
+
+<com.playstudio.aiteacher.GradientTextView
+android:id="@+id/action_bar_title"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:text="Home"
+android:textSize="20sp"
+android:padding="16dp"
+android:gravity="center"
+android:layout_centerInParent="true" />
+
+    </RelativeLayout>

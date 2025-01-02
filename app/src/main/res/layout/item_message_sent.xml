@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="8dp"
+    android:layout_marginBottom="3dp"
+    android:background="@drawable/bg_message_sent"> <!-- Use custom background -->
+
+    <!-- Copy icon on the left -->
+    <ImageView
+        android:id="@+id/copy_icon"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:src="@drawable/ic_copy"
+        android:contentDescription="@string/copy_sent_message"
+        android:layout_marginEnd="8dp" /> <!-- Margin for spacing -->
+
+    <!-- Message TextView in the center -->
+    <TextView
+        android:id="@+id/messageTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textColor="#C1BFBE"
+        android:text="@string/sent_message"
+        android:padding="8dp" />
+
+    <!-- Emoji ImageView on the right -->
+    <ImageView
+        android:id="@+id/emojiImageView"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="8dp"
+        android:src="@drawable/ic_user_emoji"
+        android:background="@drawable/circle_white_background"
+        android:contentDescription="@string/user_emoji" />
+</LinearLayout>

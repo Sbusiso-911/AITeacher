@@ -1,0 +1,175 @@
+<resources>
+    <!-- Existing string resources -->
+    <string name="app_name">AITeacher</string>
+    <string name="settings">Settings</string>
+    <string name="main_icon">Main Icon</string>
+    <string name="close_button_desc">Close</string>
+    <string name="splash_logo_desc">App Logo</string>
+    <string name="gpt_options">GPT OPTIONS</string>
+    <string name="back_arrow_button_desc">Back</string>
+    <string name="notification_icon_desc">Notification Icon</string>
+    <string name="Buy_to_chat_with_AITeacher">Engage in a lengthy chat and Uninterrupted conversation. CLICK TO BUY!!</string>
+    <string name="send">Send</string>
+    <string name="share_button_desc">Share the last response</string>
+    <string name="badge_image_desc">Badge Image</string>
+    <string name="chat_fragment_background">Chat Fragment Background</string>
+    <string name="chat_messages_list">Chat Messages List</string>
+    <string name="message_input_layout">Message Input Layout</string>
+    <string name="type_message">Type your message here</string>
+    <string name="voice_input">Voice Input</string>
+    <string name="scan_text">Scan Text</string>
+    <string name="fetch_email_button_desc">Fetch Email</string>
+    <string name="welcome_message">WELCOME!! TO CHAT PAGE:</string>
+    <string name="typing_indicator">Typing Indicator</string>
+    <string name="voice_response">Voice Response</string>
+    <string name="tts_toggle_button_desc">Toggle Text-to-Speech</string>
+    <string name="enable_tts">Enable TTS</string>
+    <string name="disable_tts">Disable TTS</string>
+    <string name="email_sent_success">Email sent successfully</string>
+    <string name="email_sent_failure">Failed to send email: %1$s</string>
+    <string name="server_client_id">YOUR_OAUTH2_CLIENT_ID</string> <!-- Replace with your actual OAuth2 client ID -->
+    <string name="recipient_email_hint">Enter recipient email</string>
+    <string name="recipient_email_edit_text">Recipient Email</string>
+    <string name="email_subject_hint">Enter email subject</string>
+    <string name="email_subject_edit_text">Email Subject</string>
+    <string name="email_body_hint">Enter email body</string>
+    <string name="email_body_edit_text">Email Body</string>
+    <string name="email_fragment_background">Email Fragment Background</string>
+    <string name="ad_unit_id">ca-app-pub-9180832030816304/1530375646</string>
+    <string name="Read_emails">Read Emails</string>
+    <string name="button_listen_emails_desc">Button for listening to unread emails</string>
+    <string name="send_button_text">Send</string>
+    <string name="send_button_desc">Send message</string>
+
+    <!-- Adding missing strings -->
+    <string name="top_bar_scroll_view_desc">Top Bar Scroll View</string>
+    <string name="top_bar_linear_layout_desc">Top Bar Linear Layout</string>
+    <string name="tts_box_desc">Text-to-Speech Box</string>
+    <string name="fetch_email_box_desc">Fetch Email Box</string>
+    <string name="share_box_desc">Share Box</string>
+    <string name="chat_scroll_view_desc">Chat Scroll View</string>
+    <string name="chat_linear_layout_desc">Chat Linear Layout</string>
+    <string name="follow_up_questions_container_desc">Follow-up Questions Container</string>
+    <string name="message_edit_text_desc">Editable text view for typing messages</string>
+
+    <string name="copy_sent_message">Copy sent message</string>
+    <string name="user_emoji">User emoji</string>
+    <string name="sent_message">Sent message</string>
+
+    <string name="copy_received_message">Copy received message</string>
+    <string name="ai_emoji">AI emoji</string>
+    <string name="received_message">Received message</string>
+    <string name="received_message_with_emoji">Received message with emoji</string>
+
+    <string-array name="language_options">
+        <item>English</item>
+        <item>Spanish</item>
+        <item>French</item>
+        <!-- Add more languages as needed -->
+    </string-array>
+    <string-array name="language_values">
+        <item>en</item>
+        <item>es</item>
+        <item>fr</item>
+        <!-- Add more language codes as needed -->
+    </string-array>
+
+    <!-- Adding the missing string for TypeWriterTextView -->
+    <string name="type_writer_text_view_desc">Type Writer Text View</string>
+
+    <string name="terms_of_use_text">
+        most Terms of Use
+
+        THIS APP MUST NEVER BE USED FOR POLITICAL, RELIGIOUS OR MILITARY PURPOSES. UNDER NO CIRCUMSTANCES MAY BE USED TO STUDY CONTENT THAT WILL DESTROY OTHER PEOPLE LIKE WEAPONS, CRIMINAL ACTIVITIES, SEXUAL CONTENT AND ANYTHING WHATSOEVER THAT IS HARMFUL TO HUMANITY. THIS APP MUST BE USED FOR EDUCATIONAL PURPOSES AND FOR FUN.
+
+        1. Acceptance of Terms
+        By using this app, you agree to be bound by these terms of use. If you do not agree, do not use the app.
+
+        2. User Conduct
+        You agree to use the app only for lawful purposes. You must not use the app to transmit any content that is illegal, harmful, or offensive.
+
+        3. Intellectual Property
+        All content provided in this app is the property of the app developers and is protected by intellectual property laws.
+
+        4. Limitation of Liability
+        The app developers are not liable for any damages arising from the use of this app.
+
+        5. Changes to Terms
+        The app developers reserve the right to change these terms at any time. Your continued use of the app constitutes acceptance of the new terms.
+
+        6. Termination
+        The app developers may terminate your access to the app at any time, without notice, for conduct that violates these terms or is otherwise harmful to other users of the app.
+        7. App Behaviour
+        Though the app is accurate incases at times the app may give the not so accurate information. This means that at times information from this app need verification.
+    </string>
+    <string name="privacy_policy_text">
+        Privacy Policy
+
+        Effective Date: [01/05/2024]
+
+        Welcome to ChatGDP! This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application (the "App"). Please read this Privacy Policy carefully. If you do not agree with the terms of this Privacy Policy, please do not access the App.
+
+        1. Information We Collect
+        1.1 Personal Data
+        We may collect personally identifiable information, such as your name, email address, and other contact information when you register for an account or contact us for support.
+
+        1.2 Usage Data
+        We may collect information about your interactions with the App, such as the features you use, the content you view, and the actions you take. This information helps us understand how you use the App and improve your experience.
+
+        1.3 Device Data
+        We may collect information about your device, including the device type, operating system, unique device identifiers, and mobile network information.
+
+        1.4 Location Data
+        We may collect information about your location if you grant us permission to do so. This information helps us provide location-based services and improve the App.
+
+        2. How We Use Your Information
+        We use the information we collect for various purposes, including:
+        - To provide, operate, and maintain the App
+        - To improve, personalize, and expand the App
+        - To understand and analyze how you use the App
+        - To develop new products, services, features, and functionality
+        - To communicate with you, either directly or through one of our partners, including for customer service, to provide you with updates and other information relating to the App, and for marketing and promotional purposes
+        - To process your transactions and manage your orders
+        - To find and prevent fraud
+        - To comply with legal obligations
+
+        3. Sharing Your Information
+        We may share your information with third parties in the following situations:
+        - With your consent
+        - With service providers who perform services on our behalf
+        - To comply with legal obligations
+        - To protect and defend our rights and property
+        - In connection with a business transfer, such as a merger or acquisition
+
+        4. Security of Your Information
+        We use administrative, technical, and physical security measures to help protect your personal information. While we have taken reasonable steps to secure the personal information you provide to us, please be aware that no security measures are perfect or impenetrable, and no method of data transmission can be guaranteed against any interception or other type of misuse.
+
+        5. Your Data Protection Rights
+        Depending on your location, you may have the following rights regarding your personal information:
+        - The right to access – You have the right to request copies of your personal data.
+        - The right to rectification – You have the right to request that we correct any information you believe is inaccurate or complete information you believe is incomplete.
+        - The right to erasure – You have the right to request that we erase your personal data, under certain conditions.
+        - The right to restrict processing – You have the right to request that we restrict the processing of your personal data, under certain conditions.
+        - The right to object to processing – You have the right to object to our processing of your personal data, under certain conditions.
+        - The right to data portability – You have the right to request that we transfer the data that we have collected to another organization, or directly to you, under certain conditions.
+
+        If you make a request, we have one month to respond to you. If you would like to exercise any of these rights, please contact us at our provided contact information.
+
+        6. Changes to This Privacy Policy
+        We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page. You are advised to review this Privacy Policy periodically for any changes. Changes to this Privacy Policy are effective when they are posted on this page.
+
+        7. Contact Us
+        If you have any questions about this Privacy Policy, please contact us:
+        - By email: sbunkoo755@gmail.com
+
+    </string>
+    <string name="contact_details_text">Contact us at: sbunkoo755@gmail.com.</string>
+
+    <!-- Adding the missing string for History Box -->
+    <string name="history_box_desc">History Box</string>
+    <string name="history_button_desc">View chat history</string>
+
+    <!-- Adding the missing string for ChatGPT Options -->
+    <string name="chat_gpt_options_box_desc">ChatGPT Options Box</string>
+    <string name="chat_gpt_options_button_desc">Select ChatGPT Options</string>
+</resources>
