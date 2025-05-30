@@ -40,7 +40,7 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
-import android.support.annotation.RequiresApi
+import androidx.annotation.RequiresApi
 import android.text.Html
 import android.text.Spannable
 import android.text.SpannableString
@@ -59,9 +59,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.menu.MenuPopupHelper
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -114,7 +112,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import java.net.URLEncoder
 
 import android.provider.CalendarContract
-import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.RequestBody.Companion.asRequestBody
 import kotlin.coroutines.resume
 // ... other existing imports
@@ -399,6 +396,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
         selectedVoice = loadSelectedVoice()
         binding.voiceSelectionButton.text = "Voice: ${selectedVoice.replaceFirstChar { it.uppercase() }}"
+        openAILiveAudioViewModel.setVoice(selectedVoice)
 
         // Initialize the views
         expandFollowUpQuestionsButton = view.findViewById(R.id.expandFollowUpQuestionsButton)
@@ -626,72 +624,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
 
-        // In ChatFragment.kt - initializeActivityLaunchers() or class level
-        requestAudioPermissionLauncher =
-            registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-                if (isGranted) {
-                    showCustomToast("Audio permission granted. Please tap the button again.")
-                } else {
-                    showCustomToast("Audio permission denied. Cannot use voice features.")
-                }
-            }
-
-        // --- OpenAI Live Audio ViewModel Integration ---
-        // Make sure binding.openAISessionButton is a valid ID in your XML
-        // and that _binding is initialized in onCreateView
-
-        // Set the OnClickListener for openAISessionButton HERE, inside onViewCreated
-        binding.openAISessionButton.setOnClickListener {
-            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
-                requestAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-            } else {
-                openAILiveAudioViewModel.toggleSession(requireContext())
-            }
-        }
-
-        // Set up other listeners for OpenAI controls if any (e.g., openAISignalTurnEndButton)
-        binding.openAISignalTurnEndButton.setOnClickListener {
-            openAILiveAudioViewModel.signalUserTurnEnded()
-        }
-
-
-        // Your observers for openAILiveAudioViewModel states
-        viewLifecycleOwner.lifecycleScope.launch {
-            openAILiveAudioViewModel.isSessionActive.collect { isActive ->
-                binding.openAISessionButton.text = if (isActive) "🛑 Stop OpenAI Session" else "🎙️ Start OpenAI Session"
-                binding.openAISignalTurnEndButton.visibility = if (isActive) View.VISIBLE else View.GONE // Example visibility toggle
-                if (isActive && currentModel == "openai-realtime-voice") { // Be specific about which mode hides it
-                    binding.messageInputLayout.visibility = View.GONE
-                } else if (currentModel != "gemini-voice-chat") { // Don't show if Gemini voice is active
-                    binding.messageInputLayout.visibility = View.VISIBLE
-                }
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            openAILiveAudioViewModel.status.collect { status ->
-                binding.openAIStatusTextView.text = "OpenAI Live: $status"
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            openAILiveAudioViewModel.error.collect { error ->
-                error?.let {
-                    binding.openAIStatusTextView.append("\nError: $it")
-                    showCustomToast("OpenAI Live Error: $it")
-                }
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            openAILiveAudioViewModel.aiTextMessage.collect { text ->
-                binding.openAIAiResponseTextView.text = text
-            }
-        }
         // --- End OpenAI Live Audio ViewModel Integration ---
-// ... (rest of your onViewCreated)
 
 
         // In your onViewCreated()
@@ -749,9 +682,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         initializeActivityLaunchers()
         setupUIListeners()
         observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
-        setupUIListeners()
-        observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
-        binding.shareButton.setOnClickListener { shareLastResponse() }
 
         binding.shareButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.fading_background)
         binding.historyButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.fading_background)
@@ -1000,6 +930,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         // OpenAI Live Audio Controls
         binding.openAISessionButton.setOnClickListener {
             if (checkAndRequestAudioPermission(REQUEST_RECORD_AUDIO_PERMISSION)) {
+                // Ensure the selected voice is used when starting the session
+                openAILiveAudioViewModel.setVoice(selectedVoice)
                 openAILiveAudioViewModel.toggleSession(requireContext())
             }
         }
@@ -1345,9 +1277,14 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     }
 
     private fun modelSupportsTools(modelName: String): Boolean {
-        // List models known to support function calling/tools
-        return modelName.startsWith("gpt-4") || modelName.contains("gpt-3.5-turbo-0125") || modelName.contains("gpt-3.5-turbo-1106")
-        // Add other models as OpenAI updates them.
+        // Preview search models currently do not support tools
+        val unsupported = listOf("gpt-4o-search-preview", "gpt-4o-mini-search-preview")
+        if (unsupported.any { modelName.contains(it) }) return false
+
+        // Known models with function calling capability
+        return modelName.startsWith("gpt-4") ||
+            modelName.contains("gpt-3.5-turbo-0125") ||
+            modelName.contains("gpt-3.5-turbo-1106")
     }
 
     // In ChatFragment.kt
@@ -4490,6 +4427,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         selectedVoice = voice
         saveSelectedVoice(voice)
         binding.voiceSelectionButton.text = "🎙️ ${voice.replaceFirstChar { it.uppercase() }}"
+        // Propagate the voice choice to the realtime ViewModel as well
+        openAILiveAudioViewModel.setVoice(voice)
     }
 
 

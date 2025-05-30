@@ -39,6 +39,20 @@ import java.util.concurrent.TimeUnit
 
 class OpenAILiveAudioViewModel : ViewModel() {
 
+    // Optional voice and tools that can be configured from the UI
+    private var sessionVoice: String = "alloy"
+    private var sessionTools: JSONArray? = null
+
+    /** Update the voice used for text to speech responses. */
+    fun setVoice(voice: String) {
+        sessionVoice = voice
+    }
+
+    /** Supply a JSON array of tool definitions supported by the assistant. */
+    fun setTools(tools: JSONArray?) {
+        sessionTools = tools
+    }
+
     private val _isSessionActive = MutableStateFlow(false)
     val isSessionActive: StateFlow<Boolean> = _isSessionActive.asStateFlow()
 
@@ -160,7 +174,7 @@ class OpenAILiveAudioViewModel : ViewModel() {
 
             put("instructions", "You are a friendly and helpful voice assistant. Respond naturally.") // Your custom instructions
 
-            put("voice", "alloy") // Or "sage", "echo", etc. Choose one.
+            put("voice", sessionVoice)
 
             // Audio formats (already corrected to string)
             put("input_audio_format", "pcm16")
@@ -189,9 +203,10 @@ class OpenAILiveAudioViewModel : ViewModel() {
             // Optional: Max response tokens (inf means no hard limit by tokens)
             // put("max_response_output_tokens", "inf") // Server log showed this as default
 
-            // Optional: Tools (for function calling) - leave out for now if not using
-            // put("tools", JSONArray()) // Empty array if no tools initially
-            // put("tool_choice", "auto")
+            sessionTools?.let { toolsArray ->
+                put("tools", toolsArray)
+                put("tool_choice", "auto")
+            }
         }
 
         val sessionUpdateEvent = JSONObject().apply {
