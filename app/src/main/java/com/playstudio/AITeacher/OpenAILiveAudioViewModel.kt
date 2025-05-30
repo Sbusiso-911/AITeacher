@@ -62,6 +62,10 @@ class OpenAILiveAudioViewModel : ViewModel() {
         .readTimeout(0, TimeUnit.MILLISECONDS)
         .build()
 
+    // Optional tools configuration and voice selection set by the Fragment
+    private var toolsConfig: JSONArray? = null
+    private var selectedVoice: String = "alloy"
+
     private val inputSampleRate = 16000
     private val inputChannelConfig = AudioFormat.CHANNEL_IN_MONO
     private val inputAudioFormat = AudioFormat.ENCODING_PCM_16BIT
@@ -80,6 +84,14 @@ class OpenAILiveAudioViewModel : ViewModel() {
 
     private val audioOutChannel = Channel<ByteArray>(Channel.UNLIMITED)
     private var currentSessionId: String? = null // If server provides one in session.created
+
+    fun setTools(tools: JSONArray?) {
+        toolsConfig = tools
+    }
+
+    fun setVoice(voice: String) {
+        selectedVoice = voice
+    }
 
     @SuppressLint("MissingPermission")
     fun toggleSession(context: Context) {
@@ -160,7 +172,8 @@ class OpenAILiveAudioViewModel : ViewModel() {
 
             put("instructions", "You are a friendly and helpful voice assistant. Respond naturally.") // Your custom instructions
 
-            put("voice", "alloy") // Or "sage", "echo", etc. Choose one.
+            // Use the selected voice from the fragment
+            put("voice", selectedVoice)
 
             // Audio formats (already corrected to string)
             put("input_audio_format", "pcm16")
@@ -189,9 +202,10 @@ class OpenAILiveAudioViewModel : ViewModel() {
             // Optional: Max response tokens (inf means no hard limit by tokens)
             // put("max_response_output_tokens", "inf") // Server log showed this as default
 
-            // Optional: Tools (for function calling) - leave out for now if not using
-            // put("tools", JSONArray()) // Empty array if no tools initially
-            // put("tool_choice", "auto")
+            toolsConfig?.let {
+                put("tools", it)
+                put("tool_choice", "auto")
+            }
         }
 
         val sessionUpdateEvent = JSONObject().apply {

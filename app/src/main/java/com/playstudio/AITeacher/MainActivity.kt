@@ -50,8 +50,7 @@ import java.security.PublicKey
 import java.security.Signature
 import java.security.spec.X509EncodedKeySpec
 import java.util.*
-import android.widget.Button
-import android.widget.Toast
+
 import java.util.concurrent.TimeUnit
 import androidx.lifecycle.lifecycleScope
 import com.google.firebase.FirebaseApp
