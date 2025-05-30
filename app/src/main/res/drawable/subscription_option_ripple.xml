@@ -1,0 +1,13 @@
+<!-- res/drawable/subscription_option_ripple.xml -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/colorControlHighlight"> <!-- Ripple color -->
+    <item>
+        <shape>
+            <solid android:color="@android:color/transparent"/> <!-- Transparent background -->
+            <stroke
+                android:width="2dp"
+                android:color="@color/colorPrimary"/> <!-- Border color -->
+            <corners android:radius="16dp"/> <!-- Rounded corners -->
+        </shape>
+    </item>
+</ripple>

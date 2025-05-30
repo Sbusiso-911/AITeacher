@@ -16,9 +16,9 @@ class GradientTextView @JvmOverloads constructor(
     }
 
     private fun setUpGradient() {
-        // Set up your gradient colors
-        val startColor = 0xFFFF4500.toInt() // Orange Red
-        val endColor = 0xFFFFD700.toInt()   // Gold
+        val startColor = 0xFFFFFFFF.toInt()  // White (with alpha)
+        val endColor = 0xFFCCCCCC.toInt()   // Light gray
+
         val shader = LinearGradient(
             0f, 0f, 0f, textSize,
             startColor, endColor,

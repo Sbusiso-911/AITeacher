@@ -12,125 +12,141 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="16dp"
-        android:background="@drawable/chat_background_glow"
+        android:background="@color/trust_blue_background"
         tools:context=".ChatFragment"
         android:contentDescription="@string/chat_fragment_background">
 
-        <!-- Scrollable bar containing back, Fetch Email, and Share buttons -->
-        <HorizontalScrollView
-            android:id="@+id/topBarScrollView"
+        <!-- Loading overlay with calming color -->
+        <View
+            android:id="@+id/loadingOverlay"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="#8067A9C0"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Centered ProgressBar with calming color -->
+        <ProgressBar
+            android:id="@+id/progressBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:indeterminateTint="@color/trust_blue_dark"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:visibility="gone"
+            android:contentDescription="@string/loading_progress_desc"/>
+
+        <HorizontalScrollView
+            android:id="@+id/topBarScrollView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:background="@android:color/transparent"
+            android:background="@drawable/scrollview_background_rounded"
+            android:scrollbars="none"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
             android:contentDescription="@string/top_bar_scroll_view_desc">
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:weightSum="3"
-                android:padding="8dp"
-                android:baselineAligned="false"
-                android:contentDescription="@string/top_bar_linear_layout_desc">
+                android:padding="4dp">
 
-                <!-- Box for History button -->
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/historyBox"
+                <!-- All buttons now use the same style with consistent rounded corners -->
+                <Button
+                    android:id="@+id/historyButton"
+                    style="@style/TopBarButton"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:padding="8dp"
-                    android:minWidth="48dp"
-                    android:minHeight="48dp"
-                    android:layout_marginEnd="8dp"
-                    android:contentDescription="@string/history_box_desc">
+                    android:text=" History"
+                    android:contentDescription="@string/history_button_desc" />
 
-                    <!-- ImageButton for History -->
-                    <ImageButton
-                        android:id="@+id/historyButton"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:src="@drawable/ic_history"
-                        android:contentDescription="@string/history_button_desc"
-                        android:padding="8dp"
-                        android:minWidth="48dp"
-                        android:minHeight="48dp"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
+                <Button
+                    android:id="@+id/voiceSelectionButton"
+                    style="@style/TopBarButton"
+                    android:text="🎙 Voice" />
 
-                <!-- Box for ChatGPT Options button -->
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/chatGptOptionsBox"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:padding="8dp"
-                    android:minWidth="48dp"
-                    android:minHeight="48dp"
-                    android:layout_marginEnd="8dp"
-                    android:contentDescription="@string/chat_gpt_options_box_desc">
 
-                    <!-- ImageButton for ChatGPT Options -->
-                    <ImageButton
-                        android:id="@+id/chatGptOptionsButton"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:src="@drawable/ic_chat_gpt_options"
-                        android:contentDescription="@string/chat_gpt_options_button_desc"
-                        android:padding="8dp"
-                        android:minWidth="48dp"
-                        android:minHeight="48dp"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
+                <ToggleButton
+                    android:id="@+id/ttsToggleButton"
+                    style="@style/TopBarButton"
+                    android:textOff="TTS: Off"
+                    android:textOn="TTS: On"
+                    android:checked="false"/>
 
-                <!-- Box for Share button -->
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/shareBox"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:padding="8dp"
-                    android:minWidth="48dp"
-                    android:minHeight="48dp"
-                    android:layout_marginEnd="8dp"
-                    android:contentDescription="@string/share_box_desc">
+                <Button
+                    android:id="@+id/activeModelButton"
+                    style="@style/TopBarButton"
+                    android:text=" Model" />
 
-                    <!-- ImageButton for Share -->
-                    <ImageButton
-                        android:id="@+id/shareButton"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:src="@drawable/ic_share"
-                        android:contentDescription="@string/share_button_desc"
-                        android:padding="8dp"
-                        android:minWidth="48dp"
-                        android:minHeight="48dp"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
+                <Button
+                    android:id="@+id/shareButton"
+                    style="@style/TopBarButton"
+                    android:text=" Share" />
             </LinearLayout>
         </HorizontalScrollView>
+        <!-- Image editing controls -->
+        <LinearLayout
+            android:id="@+id/imageEditControls"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:background="@drawable/rounded_corners_light"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/topBarScrollView"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:contentDescription="@string/image_edit_controls">
 
+            <!-- Image preview -->
+            <ImageView
+                android:id="@+id/uploadedImageView"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:contentDescription="@string/uploaded_image_desc"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                android:background="@color/trust_blue_light" />
+
+            <!-- Text extraction progress -->
+            <ProgressBar
+                android:id="@+id/textExtractionProgress"
+                style="?android:attr/progressBarStyleLarge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:indeterminateTint="@color/trust_blue_dark"
+                android:visibility="gone"
+                android:layout_marginTop="8dp"/>
+
+            <TextView
+                android:id="@+id/textExtractionStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Extracting text..."
+                android:textColor="@color/trust_blue_dark"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif"
+                android:visibility="gone"
+                android:layout_gravity="center"
+                android:layout_marginTop="8dp"/>
+        </LinearLayout>
+
+        <!-- Chat messages area -->
         <ScrollView
             android:id="@+id/chatScrollView"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            app:layout_constraintTop_toBottomOf="@id/topBarScrollView"
-            app:layout_constraintBottom_toTopOf="@+id/messageInputLayout"
+            app:layout_constraintTop_toBottomOf="@id/imageEditControls"
+            app:layout_constraintBottom_toTopOf="@id/messageInputLayout"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:fillViewport="true"
@@ -144,64 +160,128 @@
                 android:layout_gravity="center_horizontal"
                 android:contentDescription="@string/chat_linear_layout_desc">
 
-                <!-- Welcome TextView -->
-                <TextView
-                    android:id="@+id/welcomeTextView"
+                <!-- Chat messages RecyclerView -->
+                <LinearLayout
+                    android:id="@+id/imageContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/welcome_message"
-                    android:textColor="@android:color/white"
-                    android:textSize="18sp"
-                    android:padding="16dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="8dp"
-                    android:contentDescription="@string/welcome_message" />
+                    android:background="@drawable/rounded_corners_light"
+                    android:contentDescription="@string/image_container_desc"
+                    android:orientation="vertical"
+                    android:padding="12dp">
 
-                <!-- RecyclerView for displaying chat messages -->
+                    <ImageView
+                        android:id="@+id/generatedImageView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:adjustViewBounds="true"
+                        android:contentDescription="@string/generated_image_desc"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/generatingText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:contentDescription="@string/generating_text_desc"
+                        android:fontFamily="sans-serif"
+                        android:padding="16dp"
+                        android:text="🔄 Generating..."
+                        android:textColor="@color/trust_blue_dark"
+                        android:textSize="16sp"
+                        android:visibility="gone" />
+
+                    <Button
+                        android:id="@+id/downloadButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:backgroundTint="@color/trust_blue"
+                        android:contentDescription="@string/download_button_desc"
+                        android:fontFamily="sans-serif-medium"
+                        android:padding="12dp"
+                        android:text="📥 Download Image"
+                        android:textColor="@color/white"
+                        android:visibility="gone" />
+                </LinearLayout>
+
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/recyclerView"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:scrollbars="vertical"
                     android:layout_marginBottom="8dp"
                     android:contentDescription="@string/chat_messages_list" />
 
-                <!-- Follow-up questions container -->
+                <!-- Follow-up questions section -->
                 <LinearLayout
                     android:id="@+id/followUpQuestionsContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:visibility="gone"
-                    android:padding="8dp"
+                    android:padding="12dp"
+                    android:background="@drawable/rounded_corners_light"
                     android:contentDescription="@string/follow_up_questions_container_desc">
+
+                    <Button
+                        android:id="@+id/expandFollowUpQuestionsButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="▼"
+                        android:textColor="@color/trust_blue_dark"
+                        android:background="@android:color/transparent"
+                        android:layout_gravity="center_horizontal"
+                        android:padding="8dp" />
+
+                    <HorizontalScrollView
+                        android:id="@+id/followUpQuestionsScrollView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="8dp"
+                        android:visibility="gone">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+                            <!-- Dynamic content -->
+                        </LinearLayout>
+                    </HorizontalScrollView>
                 </LinearLayout>
 
-                <!-- Follow-up questions toggle -->
+                <!-- Follow-up toggle
                 <LinearLayout
                     android:id="@+id/followUpToggleContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="12dp"
                     android:layout_gravity="center_horizontal">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Follow-up Questions"
+                        android:text="💡 Follow-up Questions"
                         android:textSize="16sp"
+                        android:textColor="@color/trust_blue_dark"
+                        android:fontFamily="sans-serif-medium"
                         android:layout_marginEnd="8dp"/>
 
                     <Switch
                         android:id="@+id/followUpToggle"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-                </LinearLayout>
+                        android:layout_height="wrap_content"
+                        android:thumbTint="@color/trust_blue_light"
+                        android:trackTint="@color/trust_blue_very_light"/>
+                </LinearLayout-->
+
+                <!-- Generated images section -->
             </LinearLayout>
         </ScrollView>
 
-        <!-- ConstraintLayout for message input and send button -->
+        <!-- Message input area - Calming blue gradient -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/messageInputLayout"
             android:layout_width="0dp"
@@ -209,25 +289,26 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:background="@android:color/white"
-            android:padding="8dp"
+            android:background="@drawable/input_background_gradient"
+            android:padding="12dp"
             android:layout_marginBottom="8dp"
             android:contentDescription="@string/message_input_layout">
 
-            <!-- EditText for typing messages -->
             <EditText
                 android:id="@+id/messageEditText"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
-                android:hint="@string/type_message"
+                android:layout_marginEnd="8dp"
+                android:hint="💬 Type a message..."
                 android:inputType="textMultiLine"
                 android:maxLines="20"
                 android:minHeight="48dp"
-                android:padding="8dp"
-                android:background="@android:color/white"
-                android:textColor="@android:color/black"
-                android:textColorHint="@android:color/black"
+                android:padding="12dp"
+                android:background="@android:color/transparent"
+                android:textColor="@color/white"
+                android:textColorHint="@color/white_50_percent"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif"
                 android:scrollHorizontally="false"
                 android:autofillHints="username"
                 android:maxWidth="488dp"
@@ -236,66 +317,159 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />
 
-            <!-- ImageButton for voice input -->
-            <ImageButton
+            <Button
                 android:id="@+id/voiceInputButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:src="@drawable/ic_mic"
+                android:text="🎤"
+                android:textSize="16sp"
+                android:textColor="@color/white"
                 android:contentDescription="@string/voice_input"
                 android:padding="8dp"
-                android:layout_marginEnd="4dp"
+                android:layout_marginEnd="8dp"
                 android:minWidth="48dp"
                 android:minHeight="48dp"
+                android:background="@drawable/circle_button_blue"
                 app:layout_constraintEnd_toStartOf="@id/scanTextButton"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />
 
-            <!-- ImageButton for scanning text -->
-            <ImageButton
+            <Button
                 android:id="@+id/scanTextButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:src="@drawable/ic_scan"
+                android:text="📷"
+                android:textSize="16sp"
+                android:textColor="@color/white"
                 android:contentDescription="@string/scan_text"
                 android:padding="8dp"
-                android:layout_marginEnd="4dp"
+                android:layout_marginEnd="8dp"
                 android:minWidth="48dp"
                 android:minHeight="48dp"
+                android:background="@drawable/circle_button_blue"
                 app:layout_constraintEnd_toStartOf="@id/sendButton"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />
 
-            <!-- ImageButton for sending messages with icon -->
             <Button
                 android:id="@+id/sendButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/send_button_text"
-                android:drawableStart="@drawable/ic_send"
-                android:padding="8dp"
+                android:text="Send"
+                android:textSize="16sp"
+                android:textColor="@color/white"
+                android:drawableStart="@drawable/ic_send_white"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="12dp"
                 android:layout_marginEnd="4dp"
                 android:minWidth="48dp"
                 android:minHeight="48dp"
                 android:contentDescription="@string/send_button_desc"
-                android:background="@android:color/black"
-                android:textColor="@android:color/white"
+                android:background="@drawable/rounded_button_blue_dark"
+                android:fontFamily="sans-serif-medium"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 android:drawablePadding="4dp" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- Overlay for subscription models -->
+        <!-- Subscription overlay with calming semi-transparent blue -->
         <View
             android:id="@+id/subscriptionOverlay"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#80000000"
+            android:background="#8067A9C0"
             android:visibility="gone"
             android:clickable="true"
             android:focusable="true"
-            android:onClick="onSubscriptionOverlayClick" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
 
+        <TextView
+            android:id="@+id/recordingStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Recording meeting..."
+            android:textColor="@color/white"
+            android:background="@color/trust_blue_semi_transparent"
+            android:padding="8dp"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif-medium"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"/>
+        <!--ToggleButton
+            android:id="@+id/webSearchToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textOff="Web Search Off"
+            android:textOn="Web Search On"
+            android:layout_marginEnd="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/messageInputLayout"
+            android:layout_marginBottom="8dp"/-->
+        <WebView
+            android:id="@+id/webView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:autoLink="web"
+            android:linksClickable="true"
+            android:textIsSelectable="true"/>
+
+        <!-- In fragment_chat.xml, similar to the Gemini controls -->
+        <LinearLayout
+            android:id="@+id/openai_live_audio_controls"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+        android:gravity="center"
+        android:padding="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/messageInputLayout"
+        android:visibility="gone"> <!-- Initially hidden -->
+
+        <Button
+            android:id="@+id/openAISessionButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🎙️ Start OpenAI Session"/>
+
+        <Button
+            android:id="@+id/openAISignalTurnEndButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="✔️ I'm Done Speaking"
+            android:visibility="gone"/> <!-- Show only if manual turn end is needed -->
+
+        <TextView
+            android:id="@+id/openAIStatusTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="OpenAI Live: Idle"
+            android:gravity="center"
+            android:padding="4dp"
+            android:layout_marginTop="8dp"/>
+
+        <TextView
+            android:id="@+id/openAIAiResponseTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="50dp"
+            android:gravity="start|top"
+            android:padding="8dp"
+            android:layout_marginTop="8dp"
+            android:background="@android:color/darker_gray"
+            android:textColor="@android:color/black"
+            android:textIsSelectable="true"/>
+    </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

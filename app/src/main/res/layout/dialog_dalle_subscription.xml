@@ -1,0 +1,108 @@
+<!-- dialog_dalle_subscription.xml -->
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@drawable/premium_dialog_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+
+        <LinearLayout
+            android:id="@+id/dialogLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/premium_dialog_background"
+            android:padding="24dp"
+            android:elevation="8dp">
+
+
+            <TextView
+                android:id="@+id/dialogTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🎨 Unlock DALL-E 3 Premium Access!"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/montserrat_bold"
+                android:textColor="@color/car_ui_preference_primary_switch_background_color"
+                android:gravity="center"
+                android:letterSpacing="0.02"
+                android:paddingBottom="16dp"/>
+
+
+            <TextView
+                android:id="@+id/benefitsHeader"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✨ Here's What You'll Get with DALL-E 3:"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/montserrat_semi_bold"
+                android:textColor="@color/white"
+                android:background="@drawable/highlight_background"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="4dp"
+                android:layout_marginBottom="16dp"/>
+
+
+            <LinearLayout
+                android:id="@+id/benefitsLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="24dp"/>
+
+
+
+            <TextView
+                android:id="@+id/guaranteeText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🖼️ Create without limits! Full access to DALL-E 3 while subscribed"
+                android:textSize="14sp"
+                android:fontFamily="@font/montserrat_medium"
+                android:textColor="@color/white"
+                android:gravity="center"
+                android:padding="12dp"
+                android:background="@drawable/guarantee_background"
+                android:layout_marginBottom="24dp"/>
+        </LinearLayout>
+
+
+        <Button
+            android:id="@+id/btnBuy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🎨 UNLOCK DALL-E 3 NOW"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/montserrat_bold"
+            android:textAllCaps="true"
+            android:letterSpacing="0.03"
+            android:paddingVertical="18dp"
+            android:background="@drawable/button_premium_gradient"
+            android:textColor="@color/white"
+            android:layout_marginTop="16dp"/>
+
+
+        <TextView
+            android:id="@+id/btnClose"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Maybe later"
+            android:textSize="14sp"
+            android:fontFamily="@font/montserrat_medium"
+            android:textColor="@color/white_70"
+            android:gravity="center"
+            android:paddingVertical="12dp"
+            android:layout_marginTop="8dp"/>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

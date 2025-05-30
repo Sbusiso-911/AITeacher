@@ -25,7 +25,10 @@
         android:layout_weight="1"
         android:textColor="#C1BFBE"
         android:text="@string/sent_message"
-        android:padding="8dp" />
+        android:padding="8dp"
+        android:autoLink="web"
+        android:linksClickable="true"
+        android:textIsSelectable="true"/>
 
     <!-- Emoji ImageView on the right -->
     <ImageView

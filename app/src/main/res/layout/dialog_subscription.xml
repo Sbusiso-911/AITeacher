@@ -1,0 +1,359 @@
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@drawable/premium_dialog_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Main dialog container  -->
+        <LinearLayout
+            android:id="@+id/dialogLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/premium_dialog_background"
+            android:padding="24dp"
+            android:elevation="8dp">
+
+
+            <TextView
+                android:id="@+id/dialogTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🚀 Unlock Premium Access Today!"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/montserrat_bold"
+                android:textColor="@color/premium_gold"
+                android:gravity="center"
+                android:letterSpacing="0.02"
+                android:paddingBottom="16dp"/>
+
+            <!-- Benefit header  -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✨ Here's What You'll Get:"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/montserrat_semi_bold"
+                android:textColor="@color/white"
+                android:background="@drawable/highlight_background"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="4dp"
+                android:layout_marginBottom="16dp"/>
+
+            <!--  -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="24dp">
+
+                <!-- Benefit 1:  -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingBottom="12dp">
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@drawable/ic_premium_star"
+                        app:tint="@color/premium_gold"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Exclusive access to all AI models (Unlimited chat)"
+                        android:textSize="16sp"
+                        android:fontFamily="@font/montserrat_medium"
+                        android:textColor="@color/white"
+                        android:paddingStart="12dp"/>
+                </LinearLayout>
+
+                <!-- Benefit 2:  -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingBottom="12dp">
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@drawable/ic_premium_users"
+                        app:tint="@color/premium_gold"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Join 70,000+ satisfied premium users"
+                        android:textSize="16sp"
+                        android:fontFamily="@font/montserrat_medium"
+                        android:textColor="@color/white"
+                        android:paddingStart="12dp"/>
+                </LinearLayout>
+
+                <!-- Benefit 3:  -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingBottom="12dp">
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@drawable/ic_premium_rocket"
+                        app:tint="@color/premium_gold"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Instant access - no waiting!"
+                        android:textSize="16sp"
+                        android:fontFamily="@font/montserrat_medium"
+                        android:textColor="@color/white"
+                        android:paddingStart="12dp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!--  header -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⏰ Limited Time Offers!"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/montserrat_semi_bold"
+                android:textColor="@color/premium_gold"
+                android:background="@drawable/highlight_background"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="4dp"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- Weekly Subscription  -->
+            <LinearLayout
+                android:id="@+id/weeklySubscription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:background="@drawable/subscription_option_popular"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Weekly Trial"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/montserrat_bold"
+                    android:textColor="@color/white"/>
+
+                <TextView
+                    android:id="@+id/weeklyPrice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="$5.99/week"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/montserrat_bold"
+                    android:textColor="@color/premium_gold"
+                    android:paddingTop="4dp"/>
+
+                <TextView
+                    android:id="@+id/weeklyOriginalPrice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Regular: $11.99/week"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/montserrat_medium"
+                    android:textColor="@color/white_70"
+                    android:paddingTop="4dp"/>
+
+                <!--  badge -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="💎 SAVE 50%"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/montserrat_bold"
+                    android:textColor="@color/premium_gold"
+                    android:background="@drawable/popular_badge"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="2dp"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+
+            <!-- Yearly Subscription -->
+            <LinearLayout
+                android:id="@+id/yearlySubscription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:background="@drawable/subscription_option_best_value"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Annual Plan"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/montserrat_bold"
+                    android:textColor="@color/white"/>
+
+                <TextView
+                    android:id="@+id/yearlyPrice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="$59.99/year"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/montserrat_bold"
+                    android:textColor="@color/premium_gold"
+                    android:paddingTop="4dp"/>
+
+                <TextView
+                    android:id="@+id/yearlyOriginalPrice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Regular: $203.30/year"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/montserrat_medium"
+                    android:textColor="@color/white_70"
+                    android:paddingTop="4dp"/>
+
+                <!-- badge -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="💰 SAVE 70%"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/montserrat_bold"
+                    android:textColor="@color/premium_gold"
+                    android:background="@drawable/savings_badge"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="2dp"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+
+            <!-- Monthly Subscription -->
+            <LinearLayout
+                android:id="@+id/monthlySubscription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:background="@drawable/subscription_option_standard"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Monthly Plan"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/montserrat_bold"
+                    android:textColor="@color/white"/>
+
+                <TextView
+                    android:id="@+id/monthlyPrice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="$12.99/month"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/montserrat_bold"
+                    android:textColor="@color/premium_gold"
+                    android:paddingTop="4dp"/>
+
+                <TextView
+                    android:id="@+id/monthlyOriginalPrice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Regular: $37.11/month"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/montserrat_medium"
+                    android:textColor="@color/white_70"
+                    android:paddingTop="4dp"/>
+
+                <!--  badge -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔥 MOST POPULAR"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/montserrat_bold"
+                    android:textColor="@color/premium_gold"
+                    android:background="@drawable/savings_badge"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="2dp"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/guaranteeText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🔓 Full access while subscribed - Learn without limits!"
+                android:textSize="14sp"
+                android:fontFamily="@font/montserrat_medium"
+                android:textColor="@color/white"
+                android:gravity="center"
+                android:padding="12dp"
+                android:background="@drawable/guarantee_background"
+                android:layout_marginBottom="24dp"/>
+        </LinearLayout>
+
+        <!-- Big Buy Button  -->
+        <Button
+            android:id="@+id/btnBuy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🔥 GET PREMIUM NOW"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/montserrat_bold"
+            android:textAllCaps="true"
+            android:letterSpacing="0.03"
+            android:paddingVertical="18dp"
+            android:background="@drawable/button_premium_gradient"
+            android:textColor="@color/white"
+            android:layout_marginTop="16dp"
+            android:enabled="false"/>
+
+        <!-- Secondary action  -->
+        <TextView
+            android:id="@+id/btnClose"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Maybe later"
+            android:textSize="14sp"
+            android:fontFamily="@font/montserrat_medium"
+            android:textColor="@color/white_70"
+            android:gravity="center"
+            android:paddingVertical="12dp"
+            android:layout_marginTop="8dp"/>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

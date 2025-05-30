@@ -106,6 +106,16 @@ jackson = "2.13.2"
 navigationFragmentKtx = "2.8.4"
 navigationUiKtx = "2.8.4"
 paletteKtx = "1.0.0"
+media3Exoplayer = "1.5.1"
+firebaseConfigKtx = "22.1.0"
+firebaseCrashlyticsBuildtoolsVersion = "3.0.3"
+androidxCoreKtx = "1.9.0"
+core = "1.48.0"
+firebaseVertexai = "16.3.0"
+common = "0.10.0"
+firebaseDatabaseKtx = "21.0.0"
+coreVersion = "1.13.0"
+runner = "1.6.1"
 
 [libraries]
 android-activation = { module = "com.sun.mail:android-activation", version.ref = "sunAndroidMail" }
@@ -233,3 +243,13 @@ jackson-annotations = { group = "com.fasterxml.jackson.core", name = "jackson-an
 androidx-navigation-fragment-ktx = { group = "androidx.navigation", name = "navigation-fragment-ktx", version.ref = "navigationFragmentKtx" }
 androidx-navigation-ui-ktx = { group = "androidx.navigation", name = "navigation-ui-ktx", version.ref = "navigationUiKtx" }
 androidx-palette-ktx = { group = "androidx.palette", name = "palette-ktx", version.ref = "paletteKtx" }
+androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3Exoplayer" }
+firebase-config-ktx = { group = "com.google.firebase", name = "firebase-config-ktx", version.ref = "firebaseConfigKtx" }
+google-firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "firebase-crashlytics-buildtools", version.ref = "firebaseCrashlyticsBuildtoolsVersion" }
+core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidxCoreKtx" }
+core = { group = "com.google.ar", name = "core", version.ref = "core" }
+firebase-vertexai = { group = "com.google.firebase", name = "firebase-vertexai", version.ref = "firebaseVertexai" }
+common = { group = "com.google.ai.client.generativeai", name = "common", version.ref = "common" }
+firebase-database-ktx = { group = "com.google.firebase", name = "firebase-database-ktx", version.ref = "firebaseDatabaseKtx" }
+androidx-core = { group = "androidx.core", name = "core", version.ref = "coreVersion" }
+androidx-runner = { group = "androidx.test", name = "runner", version.ref = "runner" }

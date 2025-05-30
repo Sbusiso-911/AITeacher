@@ -1,6 +1,6 @@
 <!-- res/drawable/message_edittext_background.xml -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="@android:color/white" />
+    <solid android:color="#000428" />
     <corners android:radius="24dp" />
     <stroke android:width="1dp" android:color="@android:color/darker_gray" />
 </shape>

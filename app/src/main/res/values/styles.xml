@@ -2,11 +2,10 @@
     <!-- Base application theme. -->
     <style name="Theme.AITeacher" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <!-- Primary branding color. -->
-        <item name="colorPrimary">@color/dark_grey</item>
+        <item name="colorPrimary">#001F56</item>
         <item name="colorPrimaryVariant">@color/custom1_blue</item>
         <item name="colorOnPrimary">@color/black</item>
-        <item name="android:textSize">14sp</item> <!-- Adjust the size as needed -->
-        <!--<item name="android:textStyle">bold</item> <! Make text bold -->
+        <item name="android:textSize">14sp</item>
 
         <!-- Secondary branding color. -->
         <item name="colorSecondary">@color/glow_start</item>
@@ -17,32 +16,51 @@
         <item name="buttonStyle">@style/CustomButton</item>
     </style>
 
+    <style name="AppTheme" parent="Theme.MaterialComponents.Light.DarkActionBar">
+        <item name="colorPrimary">@color/primaryColor</item>
+        <item name="colorPrimaryDark">@color/primaryDarkColor</item>
+        <item name="colorAccent">@color/secondaryColor</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <style name="ButtonStyle" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">@color/secondaryText</item>
+        <item name="cornerRadius">8dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:padding">12dp</item>
+    </style>
+
+    <style name="CardStyle" parent="Widget.MaterialComponents.CardView">
+        <item name="cardBackgroundColor">@color/cardBackground</item>
+        <item name="cardElevation">4dp</item>
+        <item name="cardCornerRadius">12dp</item>
+    </style>
+
     <!-- Custom button style -->
     <style name="CustomButton" parent="Widget.MaterialComponents.Button">
         <item name="android:background">@drawable/button_gradient_background</item>
         <item name="android:textColor">@color/button_text_color</item>
-        <item name="android:textSize">14sp</item> <!-- Adjust the size as needed -->
-        <item name="android:textStyle">bold</item> <!-- Make text bold -->
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <!-- Custom style for TTS button -->
     <style name="TTSButtonStyle" parent="CustomButton">
-        <item name="android:background">@drawable/ic_tts_on</item>
-        <item name="backgroundTint">@null</item> <!-- Nullify background tint -->
+        <item name="backgroundTint">@null</item>
     </style>
 
     <!-- Custom style for Email button -->
     <style name="EmailButtonStyle" parent="CustomButton">
         <item name="android:background">@drawable/email_button_background</item>
-        <item name="backgroundTint">@null</item> <!-- Nullify background tint -->
+        <item name="backgroundTint">@null</item>
     </style>
 
     <!-- Suggested Question Button Style -->
     <style name="SuggestedQuestionButtonStyle" parent="Widget.MaterialComponents.Button">
         <item name="backgroundTint">@color/clear</item>
         <item name="android:textColor">@android:color/black</item>
-        <item name="android:textSize">14sp</item> <!-- Adjust the size as needed -->
-        <item name="android:textStyle">bold</item> <!-- Make text bold -->
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <!-- Splash Screen Theme -->
@@ -58,32 +76,34 @@
 
     <!-- Define custom PreferenceCategory style with background color -->
     <style name="CustomPreferenceCategory" parent="Preference.Material">
-        <item name="android:background">#FFDE03</item> <!-- Change to your desired color -->
+        <item name="android:background">#FFDE03</item>
         <item name="android:padding">8dp</item>
     </style>
 
+
+
+    <style name="ShapeAppearance.MediumRounded" parent="ShapeAppearance.MaterialComponents.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">18dp</item> <!-- Half of button height for perfect rounding -->
+    </style>
+
     <!-- Text Appearance Styles for Custom Fonts -->
-    <!-- Font 1 -->
     <style name="Font1TextAppearance" parent="@android:style/TextAppearance">
         <item name="android:fontFamily">@font/font3</item>
     </style>
 
-    <!-- Font 2 -->
     <style name="Font2TextAppearance" parent="@android:style/TextAppearance">
         <item name="android:fontFamily">@font/font1</item>
     </style>
 
-    <!-- Font 3 -->
     <style name="Font3TextAppearance" parent="@android:style/TextAppearance">
         <item name="android:fontFamily">@font/font2</item>
     </style>
 
-    <!-- Font 4 -->
     <style name="Font4TextAppearance" parent="@android:style/TextAppearance">
         <item name="android:fontFamily">@font/font4</item>
     </style>
 
-    <!-- Font 5 -->
     <style name="Font5TextAppearance" parent="@android:style/TextAppearance">
         <item name="android:fontFamily">@font/font5</item>
     </style>
@@ -91,13 +111,25 @@
     <!-- Custom style for Clear Recent Conversations and Remove Ads buttons -->
     <style name="CustomWhiteButton" parent="Widget.MaterialComponents.Button">
         <item name="android:background">@color/white</item>
-        <item name="backgroundTint">@null</item> <!-- Remove any background tint -->
+        <item name="backgroundTint">@null</item>
         <item name="android:textColor">@android:color/black</item>
-        <item name="android:textSize">16sp</item> <!-- Adjust the size as needed -->
-    <!--<item name="android:textStyle">bold</item>  Make text bold -->
+        <item name="android:textSize">16sp</item>
     </style>
 
-    <!-- Other styles -->
+    <style name="CustomAlertDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:background">#FFFFFF</item>
+        <item name="android:textColorPrimary">#000000</item>
+    </style>
+
+    <style name="CustomDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/dialog_background</item>
+        <item name="buttonBarPositiveButtonStyle">@style/CustomButtonStyle</item>
+    </style>
+
+    <style name="CustomButtonStyle" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:background">@drawable/rounded_button</item>
+    </style>
 
     <style name="CustomEditTextStyle">
         <item name="android:textSize">18sp</item>
@@ -105,6 +137,116 @@
         <item name="android:textColorHint">@android:color/black</item>
         <item name="android:gravity">center</item>
         <item name="android:textAlignment">center</item>
+    </style>
+
+    <style name="TopBarButton" parent="Widget.AppCompat.Button">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:gravity">center</item>
+        <item name="android:padding">8dp</item>
+        <item name="android:background">@drawable/button_background_rounded_blue</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:layout_marginEnd">8dp</item>
+        <item name="android:minWidth">48dp</item>
+        <item name="android:minHeight">48dp</item>
+    </style>
+    <style name="DialogButton" parent="Widget.AppCompat.Button">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:minWidth">96dp</item>
+        <item name="android:fontFamily">@font/montserrat_medium</item>
+        <item name="android:elevation">2dp</item>
+    </style>
+
+
+    <style name="PopupMenu.TrustBlueStyle" parent="Widget.MaterialComponents.PopupMenu">
+        <item name="android:popupBackground">@color/trust_blue_light</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+    <style name="TopBarButton.TTS" parent="TopBarButton">
+        <item name="android:textColor">@color/white</item>
+        <item name="colorButtonNormal">@color/trust_blue_light</item> <!-- Default color -->
+        <item name="backgroundTint">@color/premium_primary_dark</item>
+    </style>
+
+    <style name="BlueDialogTheme" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="dialogCornerRadius">16dp</item>
+        <item name="android:windowBackground">@drawable/dialog_background_blue</item>
+        <item name="android:colorBackground">@color/trust_blue_light</item>
+        <item name="buttonBarPositiveButtonStyle">@style/BlueDialogButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/BlueDialogButton</item>
+    </style>
+
+    <style name="BlueDialogButton" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="PremiumPopupMenu" parent="Widget.AppCompat.PopupMenu">
+        <!-- Background using your blue color -->
+        <item name="android:popupBackground">@drawable/premium_menu_background</item>
+
+        <!-- Text color - use white for better contrast with blue -->
+        <item name="android:textColor">@android:color/white</item>
+
+        <!-- For icon tinting in AppCompat, we'll need to use a custom theme overlay -->
+        <item name="actionMenuTextColor">@android:color/white</item>
+        <item name="colorControlNormal">@android:color/white</item>
+
+        <!-- Text appearance -->
+        <item name="android:itemTextAppearance">@style/PremiumMenuItemTextAppearance</item>
+
+        <!-- Optional padding -->
+        <item name="android:dropDownHorizontalOffset">4dp</item>
+        <item name="android:dropDownVerticalOffset">4dp</item>
+    </style>
+
+    <style name="PremiumMenuItemTextAppearance">
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="AppTheme.Premium" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <!-- Primary brand color -->
+        <item name="colorPrimary">@color/premium_primary</item>
+        <item name="colorPrimaryVariant">@color/premium_primary_dark</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+
+        <!-- Secondary brand color -->
+        <item name="colorSecondary">@color/premium_accent</item>
+        <item name="colorSecondaryVariant">@color/premium_accent</item>
+        <item name="colorOnSecondary">@android:color/black</item>
+
+        <!-- Status bar color -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+
+        <!-- Customize your theme here -->
+        <item name="android:windowBackground">@color/premium_background</item>
+        <item name="android:textColorPrimary">@color/premium_text_primary</item>
+        <item name="android:textColorSecondary">@color/premium_text_secondary</item>
+
+        <!-- Button styles -->
+        <item name="materialButtonStyle">@style/PremiumButtonStyle</item>
+    </style>
+
+    <style name="PremiumButtonStyle" parent="Widget.MaterialComponents.Button">
+        <item name="backgroundTint">@color/premium_primary</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="cornerRadius">24dp</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+
+
+
+    <style name="PremiumDialogTheme" parent="Theme.MaterialComponents.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowContentOverlay">@null</item>
     </style>
 
     <style name="CustomAlertDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
@@ -116,17 +258,35 @@
         <item name="android:textColor">@android:color/white</item>
     </style>
 
-    <style name="CustomButtonStyle" parent="Widget.AppCompat.Button">
-        <item name="android:textColor">@android:color/white</item>
-
-       <!-- <item name="android:background">"@color/your_button_color"</item>-->
-    </style>
-
-
     <style name="RoundedButton" parent="Widget.MaterialComponents.Button">
         <item name="cornerRadius">16dp</item>
         <item name="backgroundTint">@color/light_yellow</item>
     </style>
-    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+    <style name="roundedImageView" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
 
+    <!-- Button shadow -->
+    <style name="PremiumButtonShadow">
+        <item name="android:elevation">8dp</item>
+        <item name="android:translationZ">4dp</item>
+        <item name="android:outlineAmbientShadowColor">@color/premium_shadow</item>
+        <item name="android:outlineSpotShadowColor">@color/premium_shadow</item>
+    </style>
+
+    <!-- Button text appearance -->
+    <style name="PremiumButtonTextAppearance" parent="TextAppearance.AppCompat.Button">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0.03</item>
+        <item name="android:lineSpacingExtra">4sp</item>
+        <item name="fontFamily">@font/montserrat_bold</item>
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+
+
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

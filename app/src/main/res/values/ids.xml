@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="image_url" type="id"/>
+    <item name="tooltip_title" type="id" />
+    <item name="close_button" type="id" />
+    <item name="colorWhite" type="id" />
+    <item name="hidden_version_item" type="id"/>
+    />
+</resources>

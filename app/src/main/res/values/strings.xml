@@ -8,7 +8,7 @@
     <string name="gpt_options">GPT OPTIONS</string>
     <string name="back_arrow_button_desc">Back</string>
     <string name="notification_icon_desc">Notification Icon</string>
-    <string name="Buy_to_chat_with_AITeacher">Engage in a lengthy chat and Uninterrupted conversation. CLICK TO BUY!!</string>
+    <string name="Buy_to_chat_with_AITeacher">Remove ADVERTS and unlock all Features</string>
     <string name="send">Send</string>
     <string name="share_button_desc">Share the last response</string>
     <string name="badge_image_desc">Badge Image</string>
@@ -22,9 +22,6 @@
     <string name="welcome_message">WELCOME!! TO CHAT PAGE:</string>
     <string name="typing_indicator">Typing Indicator</string>
     <string name="voice_response">Voice Response</string>
-    <string name="tts_toggle_button_desc">Toggle Text-to-Speech</string>
-    <string name="enable_tts">Enable TTS</string>
-    <string name="disable_tts">Disable TTS</string>
     <string name="email_sent_success">Email sent successfully</string>
     <string name="email_sent_failure">Failed to send email: %1$s</string>
     <string name="server_client_id">YOUR_OAUTH2_CLIENT_ID</string> <!-- Replace with your actual OAuth2 client ID -->
@@ -41,20 +38,53 @@
     <string name="send_button_text">Send</string>
     <string name="send_button_desc">Send message</string>
 
+
+    <string name="facebook_app_id">1623724354806097</string>
+
+
     <!-- Adding missing strings -->
     <string name="top_bar_scroll_view_desc">Top Bar Scroll View</string>
     <string name="top_bar_linear_layout_desc">Top Bar Linear Layout</string>
-    <string name="tts_box_desc">Text-to-Speech Box</string>
+
     <string name="fetch_email_box_desc">Fetch Email Box</string>
     <string name="share_box_desc">Share Box</string>
     <string name="chat_scroll_view_desc">Chat Scroll View</string>
     <string name="chat_linear_layout_desc">Chat Linear Layout</string>
     <string name="follow_up_questions_container_desc">Follow-up Questions Container</string>
     <string name="message_edit_text_desc">Editable text view for typing messages</string>
+    <!-- Description for the active model box -->
+    <string name="active_model_box_desc">Button to display the currently active ChatGPT model</string>
+    <string name="gpt_model_box_desc">Button to display the currently active GPT model</string>
 
+
+    <string name="premium_badge_desc">Premium status badge</string>
+    <string name="premium_tier">GOLD</string>
+    <string name="premium_benefits">✓ Priority Support\n✓ All AI Models\n✓ Unlimited Generations</string>
+
+
+
+    <string name="premium_bronze">BRONZE</string>
+    <string name="premium_silver">SILVER</string>
+    <string name="premium_gold">GOLD</string>
+    <string name="free_tier">FREE</string>
+    <string name="premium_benefits_bronze">✓ Basic AI Models\n✓ Limited Image Generation</string>
+    <string name="premium_benefits_silver">✓ Better AI Models\n✓ More Image Generations</string>
+    <string name="premium_benefits_gold">✓ All AI Models\n✓ Unlimited Generations</string>
+    <string name="premium_upsell">• No ads\n• Full AI access\n• Image generation\n• Priority support</string>
+    <string name="upgrade_now">UPGRADE NOW</string>
+
+    <string name="api_key_error">Temporary service interruption. Please try again later.</string>
+    <string name="api_key_update_required">Update Required</string>
+    <string name="api_key_update_message">A new version with improved features is available. Please update the app to continue using AI services.</string>
+    <string name="update_button">Update Now</string>
+    <string name="later_button">Later</string>
+
+    <string name="cancel" translatable="false">@android:string/cancel</string>
     <string name="copy_sent_message">Copy sent message</string>
     <string name="user_emoji">User emoji</string>
     <string name="sent_message">Sent message</string>
+
+    <string name="uploaded_image_desc">Uploaded image</string>
 
     <string name="copy_received_message">Copy received message</string>
     <string name="ai_emoji">AI emoji</string>
@@ -107,7 +137,7 @@
 
         Effective Date: [01/05/2024]
 
-        Welcome to ChatGDP! This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application (the "App"). Please read this Privacy Policy carefully. If you do not agree with the terms of this Privacy Policy, please do not access the App.
+        Welcome to AITeacher! Deep Chat AI (Advanced, Friendly and Unique). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application (the "App"). Please read this Privacy Policy carefully. If you do not agree with the terms of this Privacy Policy, please do not access the App.
 
         1. Information We Collect
         1.1 Personal Data
@@ -168,8 +198,20 @@
     <!-- Adding the missing string for History Box -->
     <string name="history_box_desc">History Box</string>
     <string name="history_button_desc">View chat history</string>
+    <string name="image_container_desc">Image Container</string>
 
     <!-- Adding the missing string for ChatGPT Options -->
     <string name="chat_gpt_options_box_desc">ChatGPT Options Box</string>
     <string name="chat_gpt_options_button_desc">Select ChatGPT Options</string>
+    <string name="image_edit_controls" />
+    <string name="generating_text_desc" />
+    <string name="download_button_desc" />
+    <string name="generated_image_desc" />
+    <string name="loading_progress_desc" />
+    <string name="subtopics_scroll_desc" />
+    <string name="topics_scroll_desc" />
+    <string name="chapters_scroll_desc" />
+    <string name="subjects_scroll_desc" />
+    <string name="recent_conversations_desc" />
+    <string name="tts_button_desc" />
 </resources>

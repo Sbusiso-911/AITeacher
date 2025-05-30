@@ -1,0 +1,7 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:startColor="#1E88E5"
+        android:endColor="#26A69A"
+        android:angle="90" /> <!-- Blue to teal gradient -->
+    <corners android:radius="24dp" /> <!-- Rounded corners -->
+</shape>

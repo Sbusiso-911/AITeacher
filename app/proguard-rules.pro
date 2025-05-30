@@ -23,3 +23,5 @@
 # In your module's proguard-rules.pro file
 -if class androidx.credentials.CredentialManager
 -keep class androidx.credentials.playservices.** { *; }
+-keep class com.arthenica.** { *; }
+-dontwarn com.arthenica.**

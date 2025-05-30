@@ -1,0 +1,6 @@
+<!-- res/values/dimens.xml -->
+<resources>
+    <!-- Other dimension values if you have them -->
+    <dimen name="benefit_item_margin">12dp</dimen>
+    <!-- Add more dimensions here if needed -->
+</resources>

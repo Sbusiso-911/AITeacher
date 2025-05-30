@@ -1,0 +1,6 @@
+<animation-list xmlns:android="http://schemas.android.com/apk/res/android" android:oneshot="false">
+    <item android:drawable="@drawable/border_frame_small1" android:duration="50" />
+    <item android:drawable="@drawable/border_frame_small2" android:duration="50" />
+    <item android:drawable="@drawable/border_frame_small3" android:duration="50" />
+    <item android:drawable="@drawable/border_frame_small4" android:duration="50" />
+</animation-list>

@@ -1,8 +1,25 @@
-<!-- res/drawable/gradient_green.xml -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <gradient
-        android:startColor="#CFF4D2"
-        android:centerColor="#7BE495"
-        android:endColor="#CFF4D2"
-        android:angle="0"/>
-</shape>
+<!-- res/drawable/gradient_green_shadow.xml -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Shadow Layer -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#60000428"
+            android:endColor="#40000490"
+            android:angle="0"/>
+            <corners android:radius="8dp"/>
+            <padding android:bottom="4dp"/>
+        </shape>
+    </item>
+
+    <!-- Content Layer -->
+    <item android:top="2dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#000428"
+                android:endColor="#000490"
+                android:angle="0"/>
+            <corners android:radius="8dp"/>
+        </shape>
+    </item>
+</layer-list>

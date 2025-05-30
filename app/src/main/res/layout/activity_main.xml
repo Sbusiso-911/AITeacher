@@ -49,143 +49,120 @@
 
                     <!-- Outer Badge Background -->
                     <View
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/badge_background"
+                        android:id="@+id/badgeBackground"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/subscription_option_popular"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent" />
 
-                    <!-- Badge ImageView -->
+                    <!-- Badge ImageView (now on the right) -->
                     <ImageView
                         android:id="@+id/badgeImageView"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:src="@drawable/bronze_badge"
                         android:contentDescription="@string/badge_image_desc"
-                        android:layout_marginStart="8dp"
-                        app:layout_constraintStart_toStartOf="parent"
+                        android:layout_marginEnd="16dp"
+                        app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent" />
 
-                    <!-- Status TextView -->
+                    <!-- "Pro" Text (middle-left) -->
                     <TextView
                         android:id="@+id/badgeTextView"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:text="Pro"
                         android:textColor="@android:color/white"
-                        android:padding="4dp"
+                        android:gravity="center"
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:background="@drawable/pro_background"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent"
-                        android:layout_marginEnd="8dp"/>
+                        android:layout_marginStart="16dp"/>
+                    <!-- "Premium Active" Text (middle top, bold) -->
+                    <TextView
+                        android:id="@+id/subscriptionStatusText"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="Premium Active"
+                        android:textColor="@color/green"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/badgeImageView"
+                        android:layout_marginTop="16dp"/>
+
+                    <!-- Timer Text (middle bottom) -->
+                    <TextView
+                        android:id="@+id/subscriptionTimer"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="12 days remaining"
+                        android:textColor="@android:color/white"
+                        android:textSize="14sp"
+                        android:gravity="center"
+                        app:layout_constraintTop_toBottomOf="@id/subscriptionStatusText"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/badgeImageView"
+                        android:layout_marginBottom="16dp"/>
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <!-- Button for purchasing options with icon -->
-                <com.google.android.material.button.MaterialButton
+
+
+
+
+                <com.playstudio.aiteacher.GradientButton
                     android:id="@+id/buyButton"
-                    android:layout_width="240dp"
-                    android:layout_height="120dp"
-                    android:text="@string/Buy_to_chat_with_AITeacher"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="✨ UNLOCK PREMIUM ✨\nRemove Ads • GET All AI Models - More accurate responses + Image generator • unlimited chat"
                     android:textColor="@android:color/white"
-                    android:backgroundTint="@color/primary_color"
+                    android:textSize="18sp"
+                    android:letterSpacing="0.03"
+                    android:lineSpacingExtra="2sp"
+                    android:fontFamily="@font/montserrat_bold"
+                    android:gravity="center"
+                    android:padding="24dp"
                     android:layout_marginTop="16dp"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_marginHorizontal="24dp"
+                    android:elevation="8dp"
+                    android:stateListAnimator="@null"
+                    android:outlineProvider="background"
                     app:layout_constraintTop_toBottomOf="@id/badge_container"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintWidth_percent="0.8" />
-
-                <!-- Background gradient for icons and animation -->
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/icons_gradient_background"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:background="@drawable/gradient_background"
-                    app:layout_constraintTop_toBottomOf="@id/buyButton"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent">
-
-                    <!-- Notification icon with text -->
-                    <LinearLayout
-                        android:id="@+id/notificationLayout"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_marginStart="16dp"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        android:layout_marginTop="16dp">
-
-                        <ImageView
-                            android:id="@+id/notificationIcon"
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:src="@drawable/ic_notification"
-                            android:contentDescription="@string/notification_icon_desc" />
-
-                        <TextView
-                            android:id="@+id/notificationText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Notification"
-                            android:textColor="@color/text_color"
-                            android:textSize="16sp"
-                            android:gravity="center"
-                            android:layout_marginTop="4dp" />
-                    </LinearLayout>
-
-                    <!-- Lottie animation -->
-                    <com.airbnb.lottie.LottieAnimationView
-                        android:id="@+id/lottieAnimation"
-                        android:layout_width="0dp"
-                        android:layout_height="200dp"
-                        android:layout_marginTop="16dp"
-                        app:lottie_autoPlay="true"
-                        app:lottie_loop="true"
-                        app:lottie_rawRes="@raw/animation"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintStart_toEndOf="@id/notificationLayout"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        tools:ignore="NotSibling" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-                <!-- Welcome TextView -->
-                <TextView
-                    android:id="@+id/welcomeTextView"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="Welcome to AI Teacher!
-Your AI-powered assistant is here to help you learn, create, and solve problems effortlessly.
-
-Ask me anything or choose from the suggested questions below to get started!"
-                    android:textColor="@color/text_color"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:padding="16dp"
-                    android:background="@drawable/welcome_text_gradient"
-                    app:layout_constraintTop_toBottomOf="@id/icons_gradient_background"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    android:layout_marginTop="24dp"
-                    tools:ignore="NotSibling" />
-
+                    app:layout_constraintWidth_percent="0.9"
+                    app:buttonCornerRadius="32dp"
+                    android:textAllCaps="false"
+                android:shadowColor="#80000000"
+                android:shadowDx="1"
+                android:shadowDy="1"
+                android:shadowRadius="2"
+                app:startColor="@color/premium_gradient_start"
+                app:endColor="@color/premium_gradient_end"
+                app:strokeWidth="2dp"
+                app:strokeColor="@android:color/white"/>
                 <!-- HorizontalScrollView for recent conversation icons -->
                 <HorizontalScrollView
                     android:id="@+id/recentConversationsLayout"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:scrollbars="none"
-                    app:layout_constraintTop_toBottomOf="@id/welcomeTextView"
+                    app:layout_constraintTop_toBottomOf="@+id/buyButton"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    android:layout_marginTop="8dp">
+                    android:layout_marginTop="8dp"
+                    android:contentDescription="@string/recent_conversations_desc">
+
+
 
                     <LinearLayout
                         android:id="@+id/recentConversationsContainer"
@@ -196,484 +173,242 @@ Ask me anything or choose from the suggested questions below to get started!"
                     </LinearLayout>
                 </HorizontalScrollView>
 
-                <!-- First set of suggested questions arranged in L shapes -->
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/suggestedQuestionsLayout"
+                <!-- Subjects Section -->
+                <LinearLayout
+                    android:id="@+id/subjectsTitleContainer"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingStart="16dp"
+                    android:paddingTop="16dp"
+                    android:paddingEnd="16dp"
                     app:layout_constraintTop_toBottomOf="@id/recentConversationsLayout"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    android:layout_marginTop="16dp">
+                    app:layout_constraintEnd_toEndOf="parent">
 
-                    <!-- First question (200h x 100w) -->
-                    <ImageView
-                        android:id="@+id/question1"
-                        android:layout_width="160dp"
-                        android:layout_height="320dp"
-                        android:src="@drawable/question1_image"
-                        android:contentDescription="How can I remember everything that I learn?"
-                        android:background="@drawable/gradient_background"
-                        android:layout_margin="16dp"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Explore Subjects"
+                        android:textColor="@color/shining_navy_dark"
+                        android:textSize="18sp"
+                        android:fontFamily="@font/montserrat_semi_bold"
+                        android:layout_marginBottom="8dp"/>
 
-                    <!-- Second question (100h x 100w) -->
-                    <ImageView
-                        android:id="@+id/question2"
-                        android:layout_width="160dp"
-                        android:layout_height="160dp"
-                        android:src="@drawable/question2_image"
-                        android:contentDescription="How to get more likes and followers in your social media post?"
-                        android:background="@drawable/gradient_background"
-                        android:layout_margin="16dp"
-                        app:layout_constraintStart_toEndOf="@id/question1"
-                        app:layout_constraintTop_toTopOf="parent" />
+                    <HorizontalScrollView
+                        android:id="@+id/subjectsScrollView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:scrollbars="none"
+                        android:paddingVertical="8dp"
+                        android:importantForAccessibility="yes"
+                        android:contentDescription="@string/subjects_scroll_desc">
 
-                    <!-- Third question (200h x 200w) -->
-                    <ImageView
-                        android:id="@+id/question3"
-                        android:layout_width="160dp"
-                        android:layout_height="160dp"
-                        android:src="@drawable/question3_image"
-                        android:contentDescription="What methods do DJ's utilise to prevent jarring transitions and ensure smooth continuity when transitioning to the next song?"
-                        android:background="@drawable/gradient_background"
-                        android:layout_margin="16dp"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/question1" />
+                        <LinearLayout
+                            android:id="@+id/subjectsLayout"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:paddingEnd="16dp">
+                            <!-- Subject cards will be added programmatically -->
+                        </LinearLayout>
+                    </HorizontalScrollView>
+                </LinearLayout>
 
-                    <!-- Fourth question (400h x 200w) -->
-                    <ImageView
-                        android:id="@+id/question4"
-                        android:layout_width="160dp"
-                        android:layout_height="320dp"
-                        android:src="@drawable/question4_image"
-                        android:contentDescription="Strategies to improve financial situation ?"
-                        android:background="@drawable/gradient_background"
-                        android:layout_margin="16dp"
-                        app:layout_constraintStart_toEndOf="@id/question3"
-                        app:layout_constraintTop_toBottomOf="@id/question2" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-                <!-- Second HorizontalScrollView for additional suggested questions -->
-                <HorizontalScrollView
-                    android:id="@+id/additionalSuggestedQuestionsLayout"
+                <!-- Chapters Section -->
+                <LinearLayout
+                    android:id="@+id/chaptersLayout"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:scrollbars="none"
-                    app:layout_constraintTop_toBottomOf="@id/suggestedQuestionsLayout"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:visibility="gone"
+                    app:layout_constraintTop_toBottomOf="@id/subjectsTitleContainer"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
+
+                    <!-- Chapter title -->
+                    <TextView
+                        android:id="@+id/chaptersTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Chapters"
+                        android:textColor="@color/shining_navy_dark"
+                        android:textSize="18sp"
+                        android:fontFamily="@font/montserrat_semi_bold"
+                        android:layout_marginBottom="8dp"/>
+
+                    <!-- Chapter Buttons will be added dynamically -->
+                </LinearLayout>
+
+                <!-- Topics Section -->
+                <LinearLayout
+                    android:id="@+id/topicsLayout"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:visibility="gone"
+                    app:layout_constraintTop_toBottomOf="@id/chaptersLayout"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
+
+                    <!-- Topic title -->
+                    <TextView
+                        android:id="@+id/topicsTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Topics"
+                        android:textColor="@color/shining_navy_dark"
+                        android:textSize="18sp"
+                        android:fontFamily="@font/montserrat_semi_bold"
+                        android:layout_marginBottom="8dp"/>
+
+                    <!-- Topic Buttons will be added dynamically -->
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/subtopicsLayout"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:visibility="gone"
+                    app:layout_constraintTop_toBottomOf="@id/topicsLayout"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    android:layout_marginTop="16dp">
+                    android:clipToPadding="false">
 
+                    <!-- Title will be added here programmatically -->
+
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:scrollbars="none"
+                        android:fillViewport="true">
+
+                        <GridLayout
+                            android:id="@+id/subtopicsGrid"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:columnCount="2"
+                            android:rowCount="0"
+                            android:padding="8dp"/>
+                    </HorizontalScrollView>
+                </LinearLayout>
+
+
+
+
+                <!-- Update the additionalButtonsLayout section -->
+                <LinearLayout
+                    android:id="@+id/additionalButtonsLayout"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="8dp"
+                    app:layout_constraintTop_toBottomOf="@id/subtopicsLayout"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
+
+                    <!-- Quick Questions Row -->
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:padding="8dp"
-                        android:layout_margin="8dp"
-                        android:gravity="center_vertical">
+                        android:layout_marginBottom="4dp">
 
-                        <!-- Additional suggested questions text views with gradient background -->
-                        <TextView
-                            android:id="@+id/question5"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:text="Will AI really take\npeople’s jobs, and how\ncan I prepare for\nthat future?"
-                            android:background="@drawable/button_gradient_background"
-                            android:layout_margin="8dp"
-                            android:gravity="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
+                        <Button
+                            android:id="@+id/jobQuestionsButton"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:text="💼 Job Impact"
+                            android:textColor="@android:color/white"
+                            android:textSize="14sp"
+                            android:drawablePadding="4dp"
+                            android:background="@drawable/premium_dialog_background"
+                            android:layout_marginEnd="4dp"/>
 
-                        <TextView
-                            android:id="@+id/question6"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:text="What’s one small habit\nthat could completely change\nmy life in a\nyear?"
-                            android:background="@drawable/button_gradient_background"
-                            android:layout_margin="8dp"
-                            android:gravity="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <TextView
-                            android:id="@+id/question7"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:text="What’s something everyone believes\nbut might not be\ntrue?"
-                            android:background="@drawable/button_gradient_background"
-                            android:layout_margin="8dp"
-                            android:gravity="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <TextView
-                            android:id="@+id/question8"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:text="What’s the simplest way to\nmake a great first\nimpression?"
-                            android:background="@drawable/button_gradient_background"
-                            android:layout_margin="8dp"
-                            android:gravity="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <TextView
-                            android:id="@+id/question9"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:text="What’s a skill nobody teaches,\nbut everyone should learn?"
-                            android:background="@drawable/button_gradient_background"
-                            android:layout_margin="8dp"
-                            android:gravity="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <TextView
-                            android:id="@+id/question10"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:text="Can I truly be creative,\nor is it something\nyou’re born with?"
-                            android:background="@drawable/button_gradient_background"
-                            android:layout_margin="8dp"
-                            android:gravity="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <TextView
-                            android:id="@+id/question11"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:text="How does screen time affect\nyour body and brain,\nand what are small\nchanges you can make\nto reduce it?"
-                            android:background="@drawable/button_gradient_background"
-                            android:layout_margin="8dp"
-                            android:gravity="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <TextView
-                            android:id="@+id/question12"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:text="What’s a skill I can\nlearn now to stay\nrelevant in the\nfuture?"
-                            android:background="@drawable/button_gradient_background"
-                            android:layout_margin="8dp"
-                            android:gravity="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <TextView
-                            android:id="@+id/question13"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:text="What is the best way\nto deal with peer\npressure in high-stakes\nsituations without losing\nyour confidence?"
-                            android:background="@drawable/button_gradient_background"
-                            android:layout_margin="8dp"
-                            android:gravity="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <TextView
-                            android:id="@+id/question14"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:layout_margin="8dp"
-                            android:background="@drawable/button_gradient_background"
-                            android:gravity="center"
-                            android:text="Are we becoming too dependent\non technology?"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <TextView
-                            android:id="@+id/question15"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:layout_margin="8dp"
-                            android:background="@drawable/button_gradient_background"
-                            android:gravity="center"
-                            android:text="How does stress affect your\nlong-term health, and what\nare some simple ways\nto reduce it daily?"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <TextView
-                            android:id="@+id/question16"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:layout_margin="8dp"
-                            android:background="@drawable/button_gradient_background"
-                            android:gravity="center"
-                            android:text="How do I build trust\nquickly in a negotiation?"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <TextView
-                            android:id="@+id/question17"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:text="How does social media impact\nyour self-esteem, and what\ncan you do to\nstay positive online?"
-                            android:background="@drawable/button_gradient_background"
-                            android:layout_margin="8dp"
-                            android:gravity="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <!-- Eighteenth vertical question -->
-                        <TextView
-                            android:id="@+id/question18"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:layout_margin="8dp"
-                            android:background="@drawable/button_gradient_background"
-                            android:gravity="center"
-                            android:text="Why is self-discipline so\ndifficult to build, and\nwhat habits make it\neasier to stay on\ntrack?"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <!-- Nineteenth vertical question -->
-                        <TextView
-                            android:id="@+id/question19"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:layout_margin="8dp"
-                            android:background="@drawable/button_gradient_background"
-                            android:gravity="center"
-                            android:text="How do I stay creative\nin a world of\nshortcuts and automation?"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <!-- Twentieth vertical question -->
-                        <TextView
-                            android:id="@+id/question20"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:layout_margin="8dp"
-                            android:background="@drawable/button_gradient_background"
-                            android:gravity="center"
-                            android:text="Will the rapid pace of\ninnovation make it harder\nto keep up or\neasier to succeed?"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
+                        <Button
+                            android:id="@+id/quickWorkButton"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:text="📋 Quick Work"
+                            android:textColor="@android:color/white"
+                            android:textSize="14sp"
+                            android:drawablePadding="4dp"
+                            android:background="@drawable/premium_dialog_background"
+                            android:layout_marginEnd="4dp"
+                            android:elevation="4dp"
+                            android:stateListAnimator="@null"/>
                     </LinearLayout>
-                </HorizontalScrollView>
 
-                <!-- Fourth set of vertical questions in a HorizontalScrollView -->
-                <HorizontalScrollView
-                    android:id="@+id/verticalQuestionsScrollView"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:scrollbars="none"
-                    app:layout_constraintTop_toBottomOf="@id/additionalSuggestedQuestionsLayout"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    android:layout_marginTop="16dp">
-
+                    <!-- Top Row -->
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:padding="8dp"
-                        android:layout_margin="8dp"
-                        android:gravity="center_vertical">
+                        android:layout_marginBottom="4dp">
 
-                        <!-- First vertical question -->
-                        <TextView
-                            android:id="@+id/verticalQuestion1"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:text="How to stay protected\nagainst hackers"
-                            android:background="@drawable/button_gradient_background"
-                            android:layout_margin="8dp"
-                            android:gravity="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
+                        <ImageButton
+                            android:id="@+id/buttonNew1"
+                            android:layout_width="0dp"
+                            android:layout_height="200dp"
+                            android:layout_weight="1"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/extract_text_icon"
+                            android:background="@android:color/transparent"
+                            android:contentDescription="Extract text from Image,pdf ,and word"
+                            android:layout_marginEnd="4dp"/>
 
-                        <!-- Second vertical question -->
-                        <TextView
-                            android:id="@+id/verticalQuestion2"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:text="What are hiring managers\nreally looking for in\na candidate?"
-                            android:background="@drawable/button_gradient_background"
-                            android:layout_margin="8dp"
-                            android:gravity="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <!-- Third vertical question -->
-                        <TextView
-                            android:id="@+id/verticalQuestion3"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:text="How to develop a\ngrowth mindset?"
-                            android:background="@drawable/button_gradient_background"
-                            android:layout_margin="8dp"
-                            android:gravity="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <!-- Fourth vertical question -->
-                        <TextView
-                            android:id="@+id/verticalQuestion4"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:text="How to create a\nsuccessful YouTube channel?"
-                            android:background="@drawable/button_gradient_background"
-                            android:layout_margin="8dp"
-                            android:gravity="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <!-- Fifth vertical question -->
-                        <TextView
-                            android:id="@+id/verticalQuestion5"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:text="What are the best\nways to learn\ncoding?"
-                            android:background="@drawable/button_gradient_background"
-                            android:layout_margin="8dp"
-                            android:gravity="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <!-- Sixth vertical question -->
-                        <TextView
-                            android:id="@+id/verticalQuestion6"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:text="What’s the role of\nstorytelling in convincing\nsomeone to accept\nmy offer?"
-                            android:background="@drawable/button_gradient_background"
-                            android:layout_margin="8dp"
-                            android:gravity="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
-                        <!-- Seventh vertical question -->
-                        <TextView
-                            android:id="@+id/verticalQuestion7"
-                            android:layout_width="300dp"
-                            android:layout_height="160dp"
-                            android:text="What’s the best way to\nhandle a no and\nturn it into\na yes?"
-                            android:background="@drawable/button_gradient_background"
-                            android:layout_margin="8dp"
-                            android:gravity="center"
-                            android:textColor="@android:color/black"
-                            android:textSize="16sp"
-                            android:padding="16dp"
-                            android:lineSpacingExtra="4dp"
-                            android:breakStrategy="high_quality" />
-
+                        <ImageButton
+                            android:id="@+id/buttonNew2"
+                            android:layout_width="0dp"
+                            android:layout_height="200dp"
+                            android:layout_weight="1"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/voice_ask_icon"
+                            android:background="@android:color/transparent"
+                            android:contentDescription="Ask Ai with your Voice"/>
                     </LinearLayout>
-                </HorizontalScrollView>
 
-                <!-- Last two suggested questions sitting next to each other -->
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/lastSuggestedQuestionsLayout"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintTop_toBottomOf="@id/verticalQuestionsScrollView"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    android:layout_marginTop="16dp">
+                    <!-- Bottom Row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
 
-                    <!-- First of the last two questions (250h x 125w) -->
-                    <ImageView
-                        android:id="@+id/lastQuestion1"
-                        android:layout_width="160dp"
-                        android:layout_height="320dp"
-                        android:src="@drawable/last_question1_image"
-                        android:contentDescription="Best ways to lose weight quickly"
-                        android:background="@drawable/gradient_background"
-                        android:layout_margin="16dp"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        <ImageButton
+                            android:id="@+id/buttonNew3"
+                            android:layout_width="0dp"
+                            android:layout_height="200dp"
+                            android:layout_weight="1"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/create_images_icon"
+                            android:background="@android:color/transparent"
+                            android:contentDescription="Create Stunning Images"
+                            android:layout_marginEnd="4dp"/>
 
-                    <!-- Second of the last two questions (250h x 125w) -->
-                    <ImageView
-                        android:id="@+id/lastQuestion2"
-                        android:layout_width="160dp"
-                        android:layout_height="320dp"
-                        android:src="@drawable/last_question2_image"
-                        android:contentDescription="What are some of the best cooking tips?"
-                        android:background="@drawable/gradient_background"
-                        android:layout_margin="16dp"
-                        app:layout_constraintStart_toEndOf="@id/lastQuestion1"
-                        app:layout_constraintTop_toTopOf="parent" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-                <!-- Placeholder view -->
+                        <ImageButton
+                            android:id="@+id/btnExtractEmail"
+                            android:layout_width="0dp"
+                            android:layout_height="200dp"
+                            android:layout_weight="1"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/extract_email_icon"
+                            android:background="@android:color/transparent"
+                            android:contentDescription="Extract text from Email"/>
+                    </LinearLayout>
+                </LinearLayout>
+                <!-- Placeholder View -->
                 <View
                     android:id="@+id/someOtherView"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
                     android:visibility="gone"
-                    app:layout_constraintTop_toBottomOf="@id/lastSuggestedQuestionsLayout"
+                    app:layout_constraintTop_toBottomOf="@id/additionalButtonsLayout"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent" />
 
@@ -692,7 +427,7 @@ Ask me anything or choose from the suggested questions below to get started!"
                     android:background="@drawable/conversation_background"
                     android:padding="8dp" />
 
-                <!-- ConstraintLayout for message input and send button -->
+                <!-- Message Input Layout -->
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/messageInputLayout"
                     android:layout_width="0dp"
@@ -703,15 +438,6 @@ Ask me anything or choose from the suggested questions below to get started!"
                     android:padding="14dp"
                     android:layout_marginBottom="14dp">
 
-                    <!-- Guideline to help center the EditText horizontally -->
-                    <androidx.constraintlayout.widget.Guideline
-                        android:id="@+id/guideline"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        app:layout_constraintGuide_begin="16dp" />
-
-                    <!-- EditText for typing messages-->
                     <EditText
                         android:id="@+id/messageEditText"
                         android:layout_width="match_parent"
@@ -722,8 +448,8 @@ Ask me anything or choose from the suggested questions below to get started!"
                         android:inputType="textMultiLine"
                         android:maxLines="8"
                         android:padding="24dp"
-                        android:textColor="@android:color/black"
-                        android:textColorHint="@android:color/black"
+                        android:textColor="@android:color/white"
+                        android:textColorHint="@android:color/white"
                         android:background="@drawable/message_edittext_background"
                         android:gravity="center"
                         android:textAlignment="center"
@@ -735,7 +461,7 @@ Ask me anything or choose from the suggested questions below to get started!"
             </androidx.constraintlayout.widget.ConstraintLayout>
         </ScrollView>
 
-        <!-- FrameLayout for dynamic AdView -->
+        <!-- Ad Container -->
         <FrameLayout
             android:id="@+id/adContainer"
             android:layout_width="match_parent"
@@ -746,16 +472,15 @@ Ask me anything or choose from the suggested questions below to get started!"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
-            <!-- AdView for displaying larger banner ads -->
             <com.google.android.gms.ads.AdView
                 android:id="@+id/adView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 ads:adSize="LARGE_BANNER"
-                ads:adUnitId="ca-app-pub-3940256099942544/6300978111"/>
+                ads:adUnitId="ca-app-pub-9180832030816304/6496270014"/>
         </FrameLayout>
 
-        <!-- Fragment container for chat elements -->
+        <!-- Fragment Container -->
         <FrameLayout
             android:id="@+id/fragment_container"
             android:layout_width="match_parent"
@@ -766,6 +491,14 @@ Ask me anything or choose from the suggested questions below to get started!"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/emailRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="8dp"
+            android:clipToPadding="false"
+            android:visibility="gone" />  <!-- Initially hidden -->
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
