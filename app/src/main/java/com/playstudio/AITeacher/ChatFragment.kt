@@ -254,6 +254,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     // In ChatFragment class
     private val okHttpClient = OkHttpClient.Builder() /* ... */ .build()
 
+    private val computerUseManager = ComputerUseManager()
+
 
 
     companion object {
@@ -392,6 +394,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        computerUseManager.attachActivity(requireActivity())
         Log.d("ChatFragment", "onViewCreated called")
 
         selectedVoice = loadSelectedVoice()
@@ -932,6 +935,16 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 openAILiveAudioViewModel.toggleSession(requireContext())
             }
         }
+        binding.startComputerUseButton.setOnClickListener {
+            val prompt = binding.messageEditText.text.toString()
+            lifecycleScope.launch {
+                val response = computerUseManager.startSession(prompt)
+                response?.let {
+                    val text = extractComputerUseText(it)
+                    binding.computerUseResponseTextView.text = text
+                }
+            }
+        }
         binding.openAISignalTurnEndButton.setOnClickListener {
             openAILiveAudioViewModel.signalUserTurnEnded()
         }
@@ -1049,6 +1062,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         binding.openaiLiveAudioControls.visibility = View.GONE
         binding.openAIStatusTextView.visibility = View.GONE
         binding.openAIAiResponseTextView.visibility = View.GONE
+        binding.computerUseControls.visibility = View.GONE
 
 
         when (model) {
@@ -1065,6 +1079,13 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 binding.generatedImageView.visibility = View.VISIBLE // Or visible after generation
                 // Standard text input is still used for DALL-E prompt
                 binding.followUpQuestionsContainer.visibility = View.GONE
+            }
+            "computer-use-preview" -> {
+                binding.scanTextButton.visibility = View.GONE
+                binding.voiceInputButton.visibility = View.GONE
+                binding.ttsToggleButton.visibility = View.GONE
+                binding.followUpQuestionsContainer.visibility = View.GONE
+                binding.computerUseControls.visibility = View.VISIBLE
             }
             // Add cases for other models if they have very specific UI needs
             else -> {
@@ -2713,6 +2734,14 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         if (!isUser && isTtsEnabled) {
             speakOut(messageContent)
         }
+    }
+
+    private fun extractComputerUseText(response: JSONObject): String {
+        val outputArray = response.optJSONArray("output") ?: return ""
+        val msgObj = outputArray.optJSONObject(0) ?: return ""
+        val contentArray = msgObj.optJSONArray("content") ?: return ""
+        val first = contentArray.optJSONObject(0) ?: return ""
+        return first.optString("text", "")
     }
 
 
