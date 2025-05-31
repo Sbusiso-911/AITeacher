@@ -254,6 +254,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     // In ChatFragment class
     private val okHttpClient = OkHttpClient.Builder() /* ... */ .build()
 
+    private val computerUseManager = ComputerUseManager()
+
 
 
     companion object {
@@ -393,6 +395,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Log.d("ChatFragment", "onViewCreated called")
+
+        computerUseManager.attachActivity(requireActivity())
 
         selectedVoice = loadSelectedVoice()
         binding.voiceSelectionButton.text = "Voice: ${selectedVoice.replaceFirstChar { it.uppercase() }}"
@@ -932,6 +936,12 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 openAILiveAudioViewModel.toggleSession(requireContext())
             }
         }
+        binding.startComputerUseButton.setOnClickListener {
+            val prompt = binding.messageEditText.text.toString()
+            lifecycleScope.launch {
+                computerUseManager.startSession(prompt)
+            }
+        }
         binding.openAISignalTurnEndButton.setOnClickListener {
             openAILiveAudioViewModel.signalUserTurnEnded()
         }
@@ -1049,6 +1059,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         binding.openaiLiveAudioControls.visibility = View.GONE
         binding.openAIStatusTextView.visibility = View.GONE
         binding.openAIAiResponseTextView.visibility = View.GONE
+        binding.computerUseControls.visibility = View.GONE
 
 
         when (model) {
@@ -1065,6 +1076,15 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 binding.generatedImageView.visibility = View.VISIBLE // Or visible after generation
                 // Standard text input is still used for DALL-E prompt
                 binding.followUpQuestionsContainer.visibility = View.GONE
+            }
+            "computer-use-preview" -> {
+                binding.messageInputLayout.visibility = View.GONE
+                binding.scanTextButton.visibility = View.GONE
+                binding.voiceInputButton.visibility = View.GONE
+                binding.sendButton.visibility = View.GONE
+                binding.ttsToggleButton.visibility = View.GONE
+                binding.followUpQuestionsContainer.visibility = View.GONE
+                binding.computerUseControls.visibility = View.VISIBLE
             }
             // Add cases for other models if they have very specific UI needs
             else -> {
