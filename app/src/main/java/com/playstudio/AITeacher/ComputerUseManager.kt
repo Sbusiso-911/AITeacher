@@ -23,7 +23,13 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
-class ComputerUseManager(private val activity: Activity) {
+class ComputerUseManager(private var activity: Activity? = null) {
+
+    constructor() : this(null)
+
+    fun attachActivity(activity: Activity) {
+        this.activity = activity
+    }
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -119,7 +125,8 @@ class ComputerUseManager(private val activity: Activity) {
     }
 
     fun captureScreenshot(): String {
-        val rootView: View = activity.window.decorView.rootView
+        val act = activity ?: return ""
+        val rootView: View = act.window.decorView.rootView
         val bitmap = Bitmap.createBitmap(rootView.width, rootView.height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         rootView.draw(canvas)
