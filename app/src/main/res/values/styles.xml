@@ -163,6 +163,19 @@
     </style>
 
 
+    <style name="AppButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minWidth">120dp</item>
+        <item name="android:padding">8dp</item>
+        <item name="backgroundTint">@color/trust_blue</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="AppButton.Secondary" parent="AppButton">
+        <item name="backgroundTint">@color/trust_blue_light</item>
+    </style>
+
     <style name="PopupMenu.TrustBlueStyle" parent="Widget.MaterialComponents.PopupMenu">
         <item name="android:popupBackground">@color/trust_blue_light</item>
         <item name="android:textColor">@color/black</item>

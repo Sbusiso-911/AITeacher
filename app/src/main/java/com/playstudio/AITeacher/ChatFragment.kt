@@ -112,6 +112,7 @@ import com.playstudio.aiteacher.viewmodel.OpenAILiveAudioViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.net.URLEncoder
+import com.playstudio.aiteacher.ComputerUseManager
 
 import android.provider.CalendarContract
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -201,6 +202,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     // At the top of ChatFragment, with other viewModel declarations
     private val openAILiveAudioViewModel: OpenAILiveAudioViewModel by viewModels()
 
+
+    // Manager for OpenAI computer-use API
+    private val computerUseManager by lazy { ComputerUseManager(requireActivity()) }
     private lateinit var chatTextView: TextView
     private var interstitialAd: InterstitialAd? = null
     private var isInterstitialAdLoaded = false
@@ -214,8 +218,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private var isLoading = false
     private var _binding: FragmentChatBinding? = null
     private val binding get() = _binding!!
-   // private lateinit var chatAdapter: ChatAdapter
-   // private val chatMessages = mutableListOf<ChatMessage>()
+    // private lateinit var chatAdapter: ChatAdapter
+    // private val chatMessages = mutableListOf<ChatMessage>()
     private var isGreetingSent = false
     private val greetings = listOf(
         "Hello! How can I assist you today? 😊",
@@ -939,6 +943,16 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 showCustomToast("Required permissions not granted.")
             }
         }
+
+        // Computer Use Controls
+        binding.computerUseStartButton.setOnClickListener {
+            val prompt = binding.messageEditText.text.toString()
+            if (prompt.isNotEmpty()) {
+                startComputerUse(prompt)
+            } else {
+                showCustomToast("Enter a prompt first")
+            }
+        }
         // Initialize captureImageLauncher, cropImageLauncher, pickImageLauncher, pickDocumentLauncher
         // ... (your existing launcher initializations, ensure contexts are correct)
         captureImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { /* ... */ }
@@ -1007,6 +1021,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             openAILiveAudioViewModel.signalUserTurnEnded()
         }
 
+
         // Gemini Live Audio Controls (if used)
         // binding.geminiRecordButton.setOnClickListener {
         //     if (checkAndRequestAudioPermission(REQUEST_RECORD_AUDIO_PERMISSION_GEMINI)) { // Different request code if needed
@@ -1017,6 +1032,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
         binding.voiceSelectionButton.setOnClickListener { showVoiceSelectionDialog() }
         // ... other listeners
+
     }
 
 
@@ -1120,7 +1136,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         binding.openaiLiveAudioControls.visibility = View.GONE
         binding.openAIStatusTextView.visibility = View.GONE
         binding.openAIAiResponseTextView.visibility = View.GONE
-
+        binding.computerUseControls.visibility = View.GONE
 
         when (model) {
 
@@ -1137,12 +1153,79 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 // Standard text input is still used for DALL-E prompt
                 binding.followUpQuestionsContainer.visibility = View.GONE
             }
+            "computer-use-preview" -> {
+                binding.messageInputLayout.visibility = View.VISIBLE
+                binding.sendButton.visibility = View.GONE
+                binding.scanTextButton.visibility = View.GONE
+                binding.voiceInputButton.visibility = View.GONE
+                binding.ttsToggleButton.visibility = View.GONE
+                binding.followUpQuestionsContainer.visibility = View.GONE
+                binding.computerUseControls.visibility = View.VISIBLE
+                binding.openaiLiveAudioControls.visibility = View.GONE
+                binding.openAIStatusTextView.visibility = View.GONE
+                binding.openAIAiResponseTextView.visibility = View.GONE
+            }
             // Add cases for other models if they have very specific UI needs
             else -> {
                 // Standard text model
                 binding.messageEditText.hint = "Type your message..."
             }
         }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private fun startComputerUse() {
+        val prompt = binding.messageEditText.text.toString()
+        if (prompt.isBlank()) {
+            showCustomToast("Enter a prompt first")
+            return
+        }
+        binding.messageEditText.text.clear()
+        viewLifecycleOwner.lifecycleScope.launch {
+            runComputerUseSession(prompt)
+        }
+    }
+
+    private suspend fun runComputerUseSession(prompt: String) {
+        var response = computerUseManager.startSession(prompt) ?: return
+        var responseId = response.optString("id")
+        while (true) {
+            val output = response.optJSONArray("output") ?: break
+            var call: JSONObject? = null
+            for (i in 0 until output.length()) {
+                val item = output.getJSONObject(i)
+                if (item.getString("type") == "computer_call") {
+                    call = item
+                    break
+                }
+            }
+            if (call == null) break
+            val callId = call.getString("call_id")
+            val action = call.getJSONObject("action")
+            computerUseManager.handleModelAction(action)
+            val screenshot = computerUseManager.captureScreenshot()
+            response = computerUseManager.sendScreenshot(responseId, callId, screenshot) ?: break
+            responseId = response.optString("id")
+        }
+    }
+    private fun extractComputerUseText(response: JSONObject): String {
+        val outputArray = response.optJSONArray("output") ?: return ""
+        val msgObj = outputArray.optJSONObject(0) ?: return ""
+        val contentArray = msgObj.optJSONArray("content") ?: return ""
+        val first = contentArray.optJSONObject(0) ?: return ""
+        return first.optString("text", "")
     }
     private fun processUserMessageSend(userMessage: String) {
         // Central point for sending a message based on currentModel and limits
@@ -3636,7 +3719,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             "DeepSeek 🐬 - Fast and efficient AI for chat\nExample: Quick answers, challenging math problems, debug complex code, or brainstorm innovative solutions.",
             "GPT-4.1 Mini 🖼️ - Image analysis and understanding\nExample: Analyze images, extract information, or generate descriptions.",
             "Gemini Voice Chat 🎙️ - Google real-time voice\nExample: Engage in spoken dialogue with Gemini.", // ADDED Gemini Voice Chat
-            "OpenAI Realtime Voice 🔊 - OpenAI low-latency voice\nExample: Conversational AI with OpenAI."
+            "OpenAI Realtime Voice 🔊 - OpenAI low-latency voice\nExample: Conversational AI with OpenAI.",
+            "Computer Use 🖥️ - Automate tasks via browser screenshots"
+
         )
 
         val listView = dialogView.findViewById<ListView>(R.id.optionsListView)
@@ -3664,7 +3749,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     14 -> "deepseek"
                     15 -> "gpt-4.1-mini"
                     16 -> "gemini-voice-chat"     // Identifier for Gemini Voice Chat
-                    17 -> "openai-realtime-voice" // Identifier for OpenAI Realtime Voice
+                    17 -> "openai-realtime-voice"// Identifier for OpenAI Realtime Voice
+                    18 -> "computer-use-preview"
                     else -> "gpt-3.5-turbo"       // Default fallback
                 }
 
@@ -3711,6 +3797,20 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                         updateActiveModelButton("OpenAI Voice")
                         showCustomToast("Switched to OpenAI Realtime Voice")
                     }
+                    "computer-use-preview" -> {
+                        binding.computerUseControls.visibility = View.VISIBLE
+                        binding.messageInputLayout.visibility = View.VISIBLE
+                        binding.sendButton.visibility = View.GONE
+                        binding.scanTextButton.visibility = View.GONE
+                        binding.voiceInputButton.visibility = View.GONE
+                        binding.ttsToggleButton.visibility = View.GONE
+                        binding.followUpQuestionsContainer.visibility = View.GONE
+                        binding.generatedImageView.visibility = View.GONE
+                        binding.downloadButton.visibility = View.GONE
+                        binding.generatingText.visibility = View.GONE
+                        updateActiveModelButton("Computer Use")
+                        showCustomToast("Switched to Computer Use")
+                    }
                     else -> {
                         // Standard Text-Based Chat UI (for all other models)
 
@@ -3751,9 +3851,16 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         dialog.show()
     }
 
-    // In ChatFragment.kt
-// In ChatFragment.kt
 
+
+
+
+    private fun startComputerUse(prompt: String) {
+        lifecycleScope.launch {
+            val response = computerUseManager.startSession(prompt)
+            Log.d("ChatFragment", "ComputerUse response: $response")
+        }
+    }
     private fun handleGeminiCompletion(message: String) {
         val geminiApiKey = "YOUR_GEMINI_API_KEY" // Replace with actual key, ideally from secure storage
         val geminiUrl = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent"

@@ -61,7 +61,20 @@
     <string name="premium_tier">GOLD</string>
     <string name="premium_benefits">✓ Priority Support\n✓ All AI Models\n✓ Unlimited Generations</string>
 
+    <!-- OpenAI Strings -->
+    <string name="openai_start_session">🎙️ Start OpenAI Session</string>
+    <string name="openai_start_session_desc">Button to start OpenAI voice session</string>
+    <string name="openai_end_turn">✔️ I\'m Done Speaking</string>
+    <string name="openai_end_turn_desc">Button to signal end of speaking turn</string>
+    <string name="openai_status_idle">OpenAI Live: Idle</string>
+    <string name="openai_status_desc">Current status of OpenAI session</string>
+    <string name="openai_response_desc">AI generated response</string>
+    <string name="openai_controls_container">OpenAI voice controls</string>
 
+    <!-- Computer Use Strings -->
+    <string name="start_computer_use">Start Computer Use</string>
+    <string name="start_computer_use_desc">Button to start computer control session</string>
+    <string name="computer_use_controls">Computer use controls</string>
 
     <string name="premium_bronze">BRONZE</string>
     <string name="premium_silver">SILVER</string>

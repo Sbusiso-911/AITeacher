@@ -136,7 +136,7 @@ class OpenAILiveAudioViewModel : ViewModel() {
                     cleanupSessionResources()
                 }
             }
-             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+            override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
                 Log.i("OpenAILiveAudioVM", "WebSocket Closing: $code / $reason")
                 viewModelScope.launch { _status.value = "Session closing..." }
             }

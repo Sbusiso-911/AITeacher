@@ -425,51 +425,88 @@
             android:linksClickable="true"
             android:textIsSelectable="true"/>
 
-        <!-- In fragment_chat.xml, similar to the Gemini controls -->
+        <!-- OpenAI Live Audio Controls -->
         <LinearLayout
             android:id="@+id/openai_live_audio_controls"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-        android:gravity="center"
-        android:padding="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/messageInputLayout"
-        android:visibility="gone"> <!-- Initially hidden -->
-
-        <Button
-            android:id="@+id/openAISessionButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="🎙️ Start OpenAI Session"/>
-
-        <Button
-            android:id="@+id/openAISignalTurnEndButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="✔️ I'm Done Speaking"
-            android:visibility="gone"/> <!-- Show only if manual turn end is needed -->
-
-        <TextView
-            android:id="@+id/openAIStatusTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="OpenAI Live: Idle"
             android:gravity="center"
-            android:padding="4dp"
-            android:layout_marginTop="8dp"/>
-
-        <TextView
-            android:id="@+id/openAIAiResponseTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="50dp"
-            android:gravity="start|top"
             android:padding="8dp"
-            android:layout_marginTop="8dp"
-            android:background="@android:color/darker_gray"
-            android:textColor="@android:color/black"
-            android:textIsSelectable="true"/>
-    </LinearLayout>
+            android:background="@drawable/rounded_corners_light"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/messageInputLayout"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="@string/openai_controls_container">
+
+            <Button
+                android:id="@+id/openAISessionButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/openai_start_session"
+                android:contentDescription="@string/openai_start_session_desc"
+                style="@style/AppButton"
+                android:layout_marginBottom="8dp"/>
+
+            <Button
+                android:id="@+id/openAISignalTurnEndButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/openai_end_turn"
+                android:contentDescription="@string/openai_end_turn_desc"
+                style="@style/AppButton.Secondary"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/openAIStatusTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/openai_status_idle"
+                android:gravity="center"
+                android:padding="4dp"
+                android:textColor="@color/trust_blue_dark"
+                android:contentDescription="@string/openai_status_desc"/>
+
+            <TextView
+                android:id="@+id/openAIAiResponseTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="50dp"
+                android:gravity="start|top"
+                android:padding="8dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/rounded_corners_light"
+                android:textColor="@color/black"
+                android:textIsSelectable="true"
+                android:contentDescription="@string/openai_response_desc"/>
+        </LinearLayout>
+
+        <!-- Computer Use Controls -->
+        <LinearLayout
+            android:id="@+id/computer_use_controls"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="8dp"
+            android:background="@drawable/rounded_corners_light"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/openai_live_audio_controls"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="@string/computer_use_controls">
+
+            <Button
+                android:id="@+id/computerUseStartButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/start_computer_use"
+                android:contentDescription="@string/start_computer_use_desc"
+                style="@style/AppButton"/>
+        </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
