@@ -426,11 +426,11 @@
             android:textIsSelectable="true"/>
 
         <!-- In fragment_chat.xml, similar to the Gemini controls -->
-        <LinearLayout
-            android:id="@+id/openai_live_audio_controls"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
+    <LinearLayout
+        android:id="@+id/openai_live_audio_controls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:gravity="center"
         android:padding="8dp"
         app:layout_constraintBottom_toTopOf="@+id/messageInputLayout"
@@ -471,5 +471,31 @@
             android:textColor="@android:color/black"
             android:textIsSelectable="true"/>
     </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/computerUseControls"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="8dp"
+            app:layout_constraintBottom_toTopOf="@+id/messageInputLayout"
+            android:visibility="gone">
+
+            <Button
+                android:id="@+id/startComputerUseButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Start Computer Use" />
+
+            <TextView
+                android:id="@+id/computerUseResponseTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:layout_marginTop="8dp"
+                android:background="@android:color/darker_gray"
+                android:textColor="@android:color/black" />
+        </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

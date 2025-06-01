@@ -254,6 +254,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     // In ChatFragment class
     private val okHttpClient = OkHttpClient.Builder() /* ... */ .build()
 
+    private val computerUseManager = ComputerUseManager()
+
 
 
     companion object {
@@ -393,6 +395,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Log.d("ChatFragment", "onViewCreated called")
+
+        computerUseManager.attachActivity(requireActivity())
 
         selectedVoice = loadSelectedVoice()
         binding.voiceSelectionButton.text = "Voice: ${selectedVoice.replaceFirstChar { it.uppercase() }}"
@@ -932,6 +936,10 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 openAILiveAudioViewModel.toggleSession(requireContext())
             }
         }
+        binding.startComputerUseButton.setOnClickListener {
+            val prompt = binding.messageEditText.text.toString()
+            startComputerUse(prompt)
+        }
         binding.openAISignalTurnEndButton.setOnClickListener {
             openAILiveAudioViewModel.signalUserTurnEnded()
         }
@@ -1049,6 +1057,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         binding.openaiLiveAudioControls.visibility = View.GONE
         binding.openAIStatusTextView.visibility = View.GONE
         binding.openAIAiResponseTextView.visibility = View.GONE
+        binding.computerUseControls.visibility = View.GONE
 
 
         when (model) {
@@ -1066,12 +1075,77 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 // Standard text input is still used for DALL-E prompt
                 binding.followUpQuestionsContainer.visibility = View.GONE
             }
+            "computer-use-preview" -> {
+                binding.messageInputLayout.visibility = View.VISIBLE
+                binding.scanTextButton.visibility = View.GONE
+                binding.voiceInputButton.visibility = View.GONE
+                binding.sendButton.visibility = View.GONE
+                binding.ttsToggleButton.visibility = View.GONE
+                binding.followUpQuestionsContainer.visibility = View.GONE
+                binding.computerUseControls.visibility = View.VISIBLE
+            }
             // Add cases for other models if they have very specific UI needs
             else -> {
                 // Standard text model
                 binding.messageEditText.hint = "Type your message..."
             }
         }
+    }
+
+    private fun startComputerUse(prompt: String) {
+        if (prompt.isBlank()) {
+            showCustomToast("Enter a prompt first")
+            return
+        }
+        binding.messageEditText.text.clear()
+        lifecycleScope.launch {
+            runComputerUseSession(prompt)
+        }
+    }
+
+    private suspend fun runComputerUseSession(prompt: String) {
+        var response = computerUseManager.startSession(prompt) ?: return
+        var responseId = response.optString("id")
+        updateComputerUseReply(response)
+        while (true) {
+            val output = response.optJSONArray("output") ?: break
+            var call: JSONObject? = null
+            for (i in 0 until output.length()) {
+                val item = output.getJSONObject(i)
+                if (item.getString("type") == "computer_call") {
+                    call = item
+                    break
+                }
+            }
+            if (call == null) break
+            val callId = call.getString("call_id")
+            val action = call.getJSONObject("action")
+            computerUseManager.handleModelAction(action)
+            val screenshot = computerUseManager.captureScreenshot()
+            response = computerUseManager.sendScreenshot(responseId, callId, screenshot) ?: break
+            responseId = response.optString("id")
+            updateComputerUseReply(response)
+        }
+    }
+
+    private fun updateComputerUseReply(response: JSONObject) {
+        val text = extractComputerUseText(response)
+        if (text.isNotBlank()) {
+            binding.computerUseResponseTextView.text = text
+        }
+    }
+
+    private fun extractComputerUseText(response: JSONObject): String {
+        val outputArray = response.optJSONArray("output") ?: return ""
+        for (i in 0 until outputArray.length()) {
+            val obj = outputArray.getJSONObject(i)
+            if (obj.getString("type") == "message") {
+                val content = obj.getJSONArray("content")
+                val first = content.optJSONObject(0) ?: continue
+                return first.optString("text", "")
+            }
+        }
+        return ""
     }
     private fun processUserMessageSend(userMessage: String) {
         // Central point for sending a message based on currentModel and limits
