@@ -45,7 +45,7 @@ class ComputerUseManager(private val activity: Activity) {
             put("input", JSONArray().put(JSONObject().apply {
                 put("role", "user")
                 put("content", JSONArray().put(JSONObject().apply {
-                    put("type", "text")
+                    put("type", "input_text")  // Changed from "text" to "input_text"
                     put("text", prompt)
                 }))
             }))
@@ -207,4 +207,3 @@ class ComputerUseManager(private val activity: Activity) {
         inst.sendStringSync(text)
     }
 }
-
