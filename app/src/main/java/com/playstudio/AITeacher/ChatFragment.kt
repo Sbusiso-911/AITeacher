@@ -254,6 +254,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     // In ChatFragment class
     private val okHttpClient = OkHttpClient.Builder() /* ... */ .build()
 
+    private val computerUseManager = ComputerUseManager()
+
 
 
     companion object {
@@ -393,6 +395,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Log.d("ChatFragment", "onViewCreated called")
+        computerUseManager.attachActivity(requireActivity())
 
         selectedVoice = loadSelectedVoice()
         binding.voiceSelectionButton.text = "Voice: ${selectedVoice.replaceFirstChar { it.uppercase() }}"
@@ -932,6 +935,17 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 openAILiveAudioViewModel.toggleSession(requireContext())
             }
         }
+        binding.startComputerUseButton.setOnClickListener {
+            val prompt = binding.messageEditText.text.toString()
+            if (prompt.isNotBlank()) {
+                binding.messageEditText.text.clear()
+                lifecycleScope.launch {
+                    runComputerUseSession(prompt)
+                }
+            } else {
+                showCustomToast("Enter a prompt first")
+            }
+        }
         binding.openAISignalTurnEndButton.setOnClickListener {
             openAILiveAudioViewModel.signalUserTurnEnded()
         }
@@ -1049,6 +1063,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         binding.openaiLiveAudioControls.visibility = View.GONE
         binding.openAIStatusTextView.visibility = View.GONE
         binding.openAIAiResponseTextView.visibility = View.GONE
+        binding.computerUseControls.visibility = View.GONE
+        binding.computerUseResponseTextView.visibility = View.GONE
 
 
         when (model) {
@@ -1065,6 +1081,16 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 binding.generatedImageView.visibility = View.VISIBLE // Or visible after generation
                 // Standard text input is still used for DALL-E prompt
                 binding.followUpQuestionsContainer.visibility = View.GONE
+            }
+            "computer-use-preview" -> {
+                binding.messageInputLayout.visibility = View.VISIBLE
+                binding.scanTextButton.visibility = View.GONE
+                binding.voiceInputButton.visibility = View.GONE
+                binding.sendButton.visibility = View.GONE
+                binding.ttsToggleButton.visibility = View.GONE
+                binding.followUpQuestionsContainer.visibility = View.GONE
+                binding.computerUseControls.visibility = View.VISIBLE
+                binding.computerUseResponseTextView.text = ""
             }
             // Add cases for other models if they have very specific UI needs
             else -> {
@@ -2914,6 +2940,45 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 }
             }
         })
+    }
+
+    private suspend fun runComputerUseSession(prompt: String) {
+        var response = computerUseManager.startSession(prompt) ?: return
+        var responseId = response.optString("id")
+        while (true) {
+            val output = response.optJSONArray("output") ?: break
+            var call: JSONObject? = null
+            for (i in 0 until output.length()) {
+                val item = output.getJSONObject(i)
+                if (item.getString("type") == "computer_call") {
+                    call = item
+                    break
+                }
+            }
+            if (call == null) {
+                val text = extractComputerUseText(response)
+                withContext(Dispatchers.Main) {
+                    binding.computerUseResponseTextView.visibility = View.VISIBLE
+                    binding.computerUseResponseTextView.text = text
+                    addMessageToChat(text, false)
+                }
+                break
+            }
+            val callId = call.getString("call_id")
+            val action = call.getJSONObject("action")
+            computerUseManager.handleModelAction(action)
+            val screenshot = computerUseManager.captureScreenshot()
+            response = computerUseManager.sendScreenshot(responseId, callId, screenshot) ?: break
+            responseId = response.optString("id")
+        }
+    }
+
+    private fun extractComputerUseText(response: JSONObject): String {
+        val outputArray = response.optJSONArray("output") ?: return ""
+        val msgObj = outputArray.optJSONObject(0) ?: return ""
+        val contentArray = msgObj.optJSONArray("content") ?: return ""
+        val first = contentArray.optJSONObject(0) ?: return ""
+        return first.optString("text", "")
     }
 
     private fun incrementChatCount() {
