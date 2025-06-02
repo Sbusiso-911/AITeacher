@@ -115,10 +115,12 @@ import java.net.URLEncoder
 import com.playstudio.aiteacher.ComputerUseManager
 
 import android.provider.CalendarContract
+import android.provider.Settings
+import android.view.accessibility.AccessibilityManager
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.RequestBody.Companion.asRequestBody
 import kotlin.coroutines.resume
-// ... other existing imports
+
 
 
 class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
@@ -178,6 +180,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             .show()
     }
 
+    // In your Activity or Fragment
+    private lateinit var startComputerUseButton: Button
+    private lateinit var computerUseResponseTextView: TextView
 
     private var speechRecognizer: SpeechRecognizer? = null
 
@@ -204,7 +209,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
     // Manager for OpenAI computer-use API
-    private val computerUseManager by lazy { ComputerUseManager(requireActivity()) }
+    //private val computerUseManager by lazy { ComputerUseManager(requireActivity()) }
     private lateinit var chatTextView: TextView
     private var interstitialAd: InterstitialAd? = null
     private var isInterstitialAdLoaded = false
@@ -265,6 +270,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
     companion object {
 
+        private const val COMPUTER_USE_PERMISSION_REQUEST = 1001
         // Add with your other constants
         private const val REQUEST_RECORD_AUDIO_PERMISSION = 101
 
@@ -369,6 +375,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         (requireActivity() as? AppCompatActivity)?.supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
             setHomeAsUpIndicator(R.drawable.ic_arrow_back)
+            computerUseManager.accessibilityService = MyAccessibilityService.instance
         }
         //loadInterstitialAd() // Load the interstitial ad when the fragment resumes
     }
@@ -571,7 +578,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 showCustomToast("Image capture cancelled")
             }
         }
-
+// In onViewCreated or onResume of ChatFragment
+        computerUseManager.accessibilityService = MyAccessibilityService.instance
         cropImageLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == Activity.RESULT_OK) {
@@ -621,7 +629,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     showCustomToast("Audio permission denied. Cannot use voice features.")
                 }
             }
-
 
 
 
@@ -943,20 +950,37 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 showCustomToast("Required permissions not granted.")
             }
         }
+// Enhanced button click handler with permission checks
 
-        // Computer Use Controls
-        binding.computerUseStartButton.setOnClickListener {
-            val prompt = binding.messageEditText.text.toString()
-            if (prompt.isNotEmpty()) {
-                startComputerUse(prompt)
+        // Example button click in ChatFragment
+        binding.startComputerUseButton.setOnClickListener {
+            val prompt = binding.messageEditText.text.toString().trim()
+            if (prompt.isNotBlank()) {
+                addMessageToChat(prompt, true, containsRichContent = false) // Show user's prompt
+                binding.messageEditText.text.clear()
+                showTypingIndicator() // Show general "AI working"
+
+                lifecycleScope.launch {
+                    val sessionSummary = computerUseManager.startComputerUseSession(prompt)
+                    // Typing indicator will be removed by the first message from onUpdate,
+                    // or you can explicitly remove it here if no messages were sent via onUpdate.
+                    // If ComputerUseManager sends messages via onUpdate, they will call addMessageToChat,
+                    // which should ideally handle removing the typing indicator.
+                    // removeTypingIndicator() // Might be redundant if onUpdate calls addMessageToChat
+                    Log.d("ChatFragment", "ComputerUseManager final session summary: $sessionSummary")
+                    // Optionally, display the finalSummary if it contains info not sent via onUpdate
+                    // addMessageToChat("Session summary: $sessionSummary", false, containsRichContent = false)
+                }
             } else {
-                showCustomToast("Enter a prompt first")
+                showCustomToast("Please enter a prompt for computer use.")
             }
         }
+
+
         // Initialize captureImageLauncher, cropImageLauncher, pickImageLauncher, pickDocumentLauncher
         // ... (your existing launcher initializations, ensure contexts are correct)
-        captureImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { /* ... */ }
-        cropImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { /* ... */ }
+        //captureImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { /* ... */ }
+        //cropImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { /* ... */ }
 
         pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let { processSelectedFile(it) }
@@ -1120,6 +1144,29 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         val chatPrefs = requireContext().getSharedPreferences(PREFS_NAME_CHAT, Context.MODE_PRIVATE)
         chatPrefs.edit().putBoolean(KEY_GREETING_SENT + conversationId, true).apply()
     }
+
+
+
+    // Updated ChatFragment methods for computer use
+
+    private var conversationHistory = JSONArray()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     private fun switchUiForModel(model: String) {
         Log.d("ChatFragment", "Switching UI for model: $model")
         // Default to text chat UI
@@ -1137,6 +1184,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         binding.openAIStatusTextView.visibility = View.GONE
         binding.openAIAiResponseTextView.visibility = View.GONE
         binding.computerUseControls.visibility = View.GONE
+
+
 
         when (model) {
 
@@ -1186,47 +1235,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
 
-    private fun startComputerUse() {
-        val prompt = binding.messageEditText.text.toString()
-        if (prompt.isBlank()) {
-            showCustomToast("Enter a prompt first")
-            return
-        }
-        binding.messageEditText.text.clear()
-        viewLifecycleOwner.lifecycleScope.launch {
-            runComputerUseSession(prompt)
-        }
-    }
-
-    private suspend fun runComputerUseSession(prompt: String) {
-        var response = computerUseManager.startSession(prompt) ?: return
-        var responseId = response.optString("id")
-        while (true) {
-            val output = response.optJSONArray("output") ?: break
-            var call: JSONObject? = null
-            for (i in 0 until output.length()) {
-                val item = output.getJSONObject(i)
-                if (item.getString("type") == "computer_call") {
-                    call = item
-                    break
-                }
-            }
-            if (call == null) break
-            val callId = call.getString("call_id")
-            val action = call.getJSONObject("action")
-            computerUseManager.handleModelAction(action)
-            val screenshot = computerUseManager.captureScreenshot()
-            response = computerUseManager.sendScreenshot(responseId, callId, screenshot) ?: break
-            responseId = response.optString("id")
-        }
-    }
-    private fun extractComputerUseText(response: JSONObject): String {
-        val outputArray = response.optJSONArray("output") ?: return ""
-        val msgObj = outputArray.optJSONObject(0) ?: return ""
-        val contentArray = msgObj.optJSONArray("content") ?: return ""
-        val first = contentArray.optJSONObject(0) ?: return ""
-        return first.optString("text", "")
-    }
     private fun processUserMessageSend(userMessage: String) {
         // Central point for sending a message based on currentModel and limits
         hideKeyboard()
@@ -1257,6 +1265,21 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         } else {
             showCustomToast("Daily limit for $currentModel reached.")
             showRewardedAd() // Offer ad to continue
+        }
+    }
+
+
+
+
+
+    private val computerUseManager by lazy {
+        ComputerUseManager(requireActivity()) { messageFromManager ->
+            // This is the onUpdate callback
+            addMessageToChat(
+                messageContent = messageFromManager,
+                isUser = false,
+                containsRichContent = false // Adjust as needed
+            )
         }
     }
     // MODIFIED handleChatCompletion with Tool Calling Logic
@@ -2202,6 +2225,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             )
             false
         }
+
     }
 
 
@@ -3855,12 +3879,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
 
-    private fun startComputerUse(prompt: String) {
-        lifecycleScope.launch {
-            val response = computerUseManager.startSession(prompt)
-            Log.d("ChatFragment", "ComputerUse response: $response")
-        }
-    }
+
     private fun handleGeminiCompletion(message: String) {
         val geminiApiKey = "YOUR_GEMINI_API_KEY" // Replace with actual key, ideally from secure storage
         val geminiUrl = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent"

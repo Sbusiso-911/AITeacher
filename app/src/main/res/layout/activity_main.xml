@@ -142,14 +142,14 @@
                     app:layout_constraintWidth_percent="0.9"
                     app:buttonCornerRadius="32dp"
                     android:textAllCaps="false"
-                android:shadowColor="#80000000"
-                android:shadowDx="1"
-                android:shadowDy="1"
-                android:shadowRadius="2"
-                app:startColor="@color/premium_gradient_start"
-                app:endColor="@color/premium_gradient_end"
-                app:strokeWidth="2dp"
-                app:strokeColor="@android:color/white"/>
+                    android:shadowColor="#80000000"
+                    android:shadowDx="1"
+                    android:shadowDy="1"
+                    android:shadowRadius="2"
+                    app:startColor="@color/premium_gradient_start"
+                    app:endColor="@color/premium_gradient_end"
+                    app:strokeWidth="2dp"
+                    app:strokeColor="@android:color/white"/>
                 <!-- HorizontalScrollView for recent conversation icons -->
                 <HorizontalScrollView
                     android:id="@+id/recentConversationsLayout"

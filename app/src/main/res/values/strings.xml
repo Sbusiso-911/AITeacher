@@ -76,6 +76,9 @@
     <string name="start_computer_use_desc">Button to start computer control session</string>
     <string name="computer_use_controls">Computer use controls</string>
 
+
+    <string name="accessibility_service_description">This service allows the AI Teacher app to perform automated actions on your screen to help with computer use tasks.</string>
+
     <string name="premium_bronze">BRONZE</string>
     <string name="premium_silver">SILVER</string>
     <string name="premium_gold">GOLD</string>
