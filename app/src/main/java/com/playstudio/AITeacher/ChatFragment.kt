@@ -1067,18 +1067,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
     // In ChatFragment.kt
 
-    private fun checkAndRequestAudioPermission(requestCode: Int): Boolean { // requestCode can be used if you had different actions post-permission
-        return if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO)
-            == PackageManager.PERMISSION_GRANTED
-        ) {
-            true // Permission is already granted
-        } else {
-            // Permission is not granted, request it using the launcher.
-            // The launcher's callback will handle the result.
-            requestAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-            false // Permission was not granted at the time of this check
-        }
-    }
     private fun observeViewModels() {
         // OpenAI Live Audio ViewModel Observers
         viewLifecycleOwner.lifecycleScope.launch {
@@ -3376,11 +3364,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             baseResponse
         }
     }
-    private fun speakOut(text: String) {
-        if (isTtsEnabled) {
-            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
-        }
-    }
 
     private fun isNetworkAvailable(): Boolean {
         val connectivityManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -4158,17 +4141,87 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         binding.subscriptionOverlay.visibility = View.GONE
     }
 
-    private fun updateActiveModelButton(modelName: String) {
-        binding.activeModelButton.text = modelName
+private fun updateActiveModelButton(modelName: String) {
+    binding.activeModelButton.text = modelName
+}
+
+
+    // --------------------------
+    // Voice and Speech Functions
+    // --------------------------
+
+    private fun checkAndRequestAudioPermission(requestCode: Int): Boolean {
+        return if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO)
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            true
+        } else {
+            requestAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            false
+        }
     }
 
+    private fun initializeSpeechRecognizer() {
+        if (SpeechRecognizer.isRecognitionAvailable(requireContext())) {
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(requireContext())
+            speechRecognizer?.setRecognitionListener(object : RecognitionListener {
+                override fun onReadyForSpeech(params: Bundle?) {
+                    showCustomToast("Listening...")
+                }
+
+                override fun onBeginningOfSpeech() {
+                    binding.voiceInputButton.text = "🛑"
+                }
+
+                override fun onRmsChanged(rmsdB: Float) {}
+
+                override fun onBufferReceived(buffer: ByteArray?) {}
+
+                override fun onEndOfSpeech() {
+                    binding.voiceInputButton.text = "🎤"
+                }
+
+                override fun onError(error: Int) {
+                    showCustomToast("Error: $error")
+                    binding.voiceInputButton.text = "🎤"
+                }
+
+                override fun onResults(results: Bundle?) {
+                    val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    if (!matches.isNullOrEmpty()) {
+                        binding.messageEditText.setText(matches[0])
+                        binding.messageEditText.setSelection(matches[0].length)
+                    }
+                }
+
+                override fun onPartialResults(partialResults: Bundle?) {}
+
+                override fun onEvent(eventType: Int, params: Bundle?) {}
+            })
+        } else {
+            showCustomToast("Speech recognition is not available on this device.")
+        }
+    }
+
+    private fun startVoiceRecognition() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now...")
+        }
+        try {
+            startActivityForResult(intent, REQUEST_CODE_SPEECH_INPUT)
+        } catch (e: ActivityNotFoundException) {
+            showCustomToast("Speech recognition not supported on this device")
+        }
+    }
 
     private fun handleTextToSpeech(text: String) {
         if (isTtsEnabled) {
             val json = JSONObject().apply {
                 put("model", "tts-1")
                 put("input", text)
-                put("voice", selectedVoice) // Use the selected voice
+                put("voice", selectedVoice)
             }
 
             val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
@@ -4211,6 +4264,73 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             })
         }
     }
+
+    private fun speakOut(text: String) {
+        if (isTtsEnabled) {
+            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
+        }
+    }
+
+    private fun updateSelectedVoice(voice: String) {
+        selectedVoice = voice
+        saveSelectedVoice(voice)
+        binding.voiceSelectionButton.text = "🎙️ ${voice.replaceFirstChar { it.uppercase() }}"
+    }
+
+    private fun updateTtsButtonState() {
+        binding.ttsToggleButton.apply {
+            backgroundTintList = ColorStateList.valueOf(
+                ContextCompat.getColor(
+                    context,
+                    if (isTtsEnabled) R.color.greenn else R.color.card_surface
+                )
+            )
+            isChecked = isTtsEnabled
+        }
+    }
+
+    private fun showVoiceSelectionDialog() {
+        val voices = arrayOf("Alloy", "Echo", "Fable", "Onyx", "Nova", "Shimmer")
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle("Select TTS Voice")
+        builder.setItems(voices) { _, which ->
+            val selectedVoice = voices[which].lowercase(Locale.ROOT)
+            updateSelectedVoice(selectedVoice)
+            showCustomToast("Selected voice: ${voices[which]}")
+        }
+        builder.setNegativeButton("Cancel", null)
+        builder.show()
+    }
+
+    private var selectedVoice = "alloy"
+    private val SELECTED_VOICE_KEY = "selected_voice"
+
+    private fun saveSelectedVoice(voice: String) {
+        val sharedPreferences = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        sharedPreferences.edit().putString(SELECTED_VOICE_KEY, voice).apply()
+    }
+
+    private fun loadSelectedVoice(): String {
+        val sharedPreferences = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return sharedPreferences.getString(SELECTED_VOICE_KEY, "alloy") ?: "alloy"
+    }
+
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            val result = tts?.setLanguage(Locale.US)
+            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Log.e("ChatFragment", "Language not supported")
+                showCustomToast("TTS language not supported")
+            } else {
+                Log.d("ChatFragment", "TTS initialized successfully")
+            }
+        } else {
+            Log.e("ChatFragment", "TTS initialization failed")
+            showCustomToast("TTS initialization failed")
+        }
+    }
+
+
 
     private fun sendImageToOpenAI(bitmap: Bitmap) {
         val base64Image = encodeImageToBase64(bitmap)
@@ -4376,59 +4496,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         val end = binding.messageEditText.selectionEnd
         binding.messageEditText.text.delete(start, end)
         showCustomToast("Text deleted")
-    }
-    private fun initializeSpeechRecognizer() {
-        if (SpeechRecognizer.isRecognitionAvailable(requireContext())) {
-            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(requireContext())
-            speechRecognizer?.setRecognitionListener(object : RecognitionListener {
-                override fun onReadyForSpeech(params: Bundle?) {
-                    showCustomToast("Listening...")
-                }
-
-                override fun onBeginningOfSpeech() {
-                    binding.voiceInputButton.text = "🛑"
-                }
-
-                override fun onRmsChanged(rmsdB: Float) {}
-
-                override fun onBufferReceived(buffer: ByteArray?) {}
-
-                override fun onEndOfSpeech() {
-                    binding.voiceInputButton.text = "🎤"
-                }
-
-                override fun onError(error: Int) {
-                    showCustomToast("Error: $error")
-                    binding.voiceInputButton.text = "🎤"
-                }
-
-                override fun onResults(results: Bundle?) {
-                    val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                    if (!matches.isNullOrEmpty()) {
-                        binding.messageEditText.setText(matches[0])
-                        binding.messageEditText.setSelection(matches[0].length)
-                    }
-                }
-
-                override fun onPartialResults(partialResults: Bundle?) {}
-
-                override fun onEvent(eventType: Int, params: Bundle?) {}
-            })
-        } else {
-            showCustomToast("Speech recognition is not available on this device.")
-        }
-    }
-    private fun startVoiceRecognition() {
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now...")
-        }
-        try {
-            startActivityForResult(intent, REQUEST_CODE_SPEECH_INPUT)
-        } catch (e: ActivityNotFoundException) {
-            showCustomToast("Speech recognition not supported on this device")
-        }
     }
 
 
@@ -4612,28 +4679,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
     }
 
-    private fun updateSelectedVoice(voice: String) {
-        selectedVoice = voice
-        saveSelectedVoice(voice)
-        binding.voiceSelectionButton.text = "🎙️ ${voice.replaceFirstChar { it.uppercase() }}"
-    }
-
-
-
-    private fun updateTtsButtonState() {
-        binding.ttsToggleButton.apply {
-            // For ToggleButton, use setBackgroundTintList
-            backgroundTintList = ColorStateList.valueOf(
-                ContextCompat.getColor(
-                    context,
-                    if (isTtsEnabled) R.color.greenn else R.color.card_surface
-                )
-            )
-
-            // ToggleButton handles text automatically
-            isChecked = isTtsEnabled
-        }
-    }
 
     private fun hideKeyboard() {
         val imm = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -4646,20 +4691,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
     }
 
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            val result = tts?.setLanguage(Locale.US)
-            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                Log.e("ChatFragment", "Language not supported")
-                showCustomToast("TTS language not supported")
-            } else {
-                Log.d("ChatFragment", "TTS initialized successfully")
-            }
-        } else {
-            Log.e("ChatFragment", "TTS initialization failed")
-            showCustomToast("TTS initialization failed")
-        }
-    }
 
     override fun onDestroyView() {
         super.onDestroyView()
@@ -5011,32 +5042,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         dialog.show()
     }
 
-    private fun showVoiceSelectionDialog() {
-        val voices = arrayOf("Alloy", "Echo", "Fable", "Onyx", "Nova", "Shimmer")
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("Select TTS Voice")
-        builder.setItems(voices) { dialog, which ->
-            val selectedVoice = voices[which].lowercase(Locale.ROOT)
-            updateSelectedVoice(selectedVoice)
-            showCustomToast("Selected voice: ${voices[which]}")
-        }
-        builder.setNegativeButton("Cancel", null)
-        builder.show()
-    }
-
-    private var selectedVoice = "alloy" // Default voice
-
-    private val SELECTED_VOICE_KEY = "selected_voice"
-
-    private fun saveSelectedVoice(voice: String) {
-        val sharedPreferences = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        sharedPreferences.edit().putString(SELECTED_VOICE_KEY, voice).apply()
-    }
-
-    private fun loadSelectedVoice(): String {
-        val sharedPreferences = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return sharedPreferences.getString(SELECTED_VOICE_KEY, "alloy") ?: "alloy"
-    }
 
     // In ChatFragment.kt
 
