@@ -40,7 +40,7 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
-import androidx.annotation.RequiresApi
+import android.support.annotation.RequiresApi
 import android.text.Html
 import android.text.Spannable
 import android.text.SpannableString
@@ -59,7 +59,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.menu.MenuPopupHelper
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -110,11 +112,15 @@ import com.playstudio.aiteacher.viewmodel.OpenAILiveAudioViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.net.URLEncoder
+import com.playstudio.aiteacher.ComputerUseManager
 
 import android.provider.CalendarContract
+import android.provider.Settings
+import android.view.accessibility.AccessibilityManager
+import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.RequestBody.Companion.asRequestBody
 import kotlin.coroutines.resume
-// ... other existing imports
+
 
 
 class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
@@ -174,6 +180,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             .show()
     }
 
+    // In your Activity or Fragment
+    private lateinit var startComputerUseButton: Button
+    private lateinit var computerUseResponseTextView: TextView
 
     private var speechRecognizer: SpeechRecognizer? = null
 
@@ -198,6 +207,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     // At the top of ChatFragment, with other viewModel declarations
     private val openAILiveAudioViewModel: OpenAILiveAudioViewModel by viewModels()
 
+
+    // Manager for OpenAI computer-use API
+    //private val computerUseManager by lazy { ComputerUseManager(requireActivity()) }
     private lateinit var chatTextView: TextView
     private var interstitialAd: InterstitialAd? = null
     private var isInterstitialAdLoaded = false
@@ -211,8 +223,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private var isLoading = false
     private var _binding: FragmentChatBinding? = null
     private val binding get() = _binding!!
-   // private lateinit var chatAdapter: ChatAdapter
-   // private val chatMessages = mutableListOf<ChatMessage>()
+    // private lateinit var chatAdapter: ChatAdapter
+    // private val chatMessages = mutableListOf<ChatMessage>()
     private var isGreetingSent = false
     private val greetings = listOf(
         "Hello! How can I assist you today? 😊",
@@ -258,6 +270,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
     companion object {
 
+        private const val COMPUTER_USE_PERMISSION_REQUEST = 1001
         // Add with your other constants
         private const val REQUEST_RECORD_AUDIO_PERMISSION = 101
 
@@ -362,6 +375,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         (requireActivity() as? AppCompatActivity)?.supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
             setHomeAsUpIndicator(R.drawable.ic_arrow_back)
+            computerUseManager.accessibilityService = MyAccessibilityService.instance
         }
         //loadInterstitialAd() // Load the interstitial ad when the fragment resumes
     }
@@ -564,7 +578,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 showCustomToast("Image capture cancelled")
             }
         }
-
+// In onViewCreated or onResume of ChatFragment
+        computerUseManager.accessibilityService = MyAccessibilityService.instance
         cropImageLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == Activity.RESULT_OK) {
@@ -622,8 +637,72 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
 
+        // In ChatFragment.kt - initializeActivityLaunchers() or class level
+        requestAudioPermissionLauncher =
+            registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+                if (isGranted) {
+                    showCustomToast("Audio permission granted. Please tap the button again.")
+                } else {
+                    showCustomToast("Audio permission denied. Cannot use voice features.")
+                }
+            }
 
+        // --- OpenAI Live Audio ViewModel Integration ---
+        // Make sure binding.openAISessionButton is a valid ID in your XML
+        // and that _binding is initialized in onCreateView
+
+        // Set the OnClickListener for openAISessionButton HERE, inside onViewCreated
+        binding.openAISessionButton.setOnClickListener {
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                requestAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            } else {
+                openAILiveAudioViewModel.toggleSession(requireContext())
+            }
+        }
+
+        // Set up other listeners for OpenAI controls if any (e.g., openAISignalTurnEndButton)
+        binding.openAISignalTurnEndButton.setOnClickListener {
+            openAILiveAudioViewModel.signalUserTurnEnded()
+        }
+
+
+        // Your observers for openAILiveAudioViewModel states
+        viewLifecycleOwner.lifecycleScope.launch {
+            openAILiveAudioViewModel.isSessionActive.collect { isActive ->
+                binding.openAISessionButton.text = if (isActive) "🛑 Stop OpenAI Session" else "🎙️ Start OpenAI Session"
+                binding.openAISignalTurnEndButton.visibility = if (isActive) View.VISIBLE else View.GONE // Example visibility toggle
+                if (isActive && currentModel == "openai-realtime-voice") { // Be specific about which mode hides it
+                    binding.messageInputLayout.visibility = View.GONE
+                } else if (currentModel != "gemini-voice-chat") { // Don't show if Gemini voice is active
+                    binding.messageInputLayout.visibility = View.VISIBLE
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            openAILiveAudioViewModel.status.collect { status ->
+                binding.openAIStatusTextView.text = "OpenAI Live: $status"
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            openAILiveAudioViewModel.error.collect { error ->
+                error?.let {
+                    binding.openAIStatusTextView.append("\nError: $it")
+                    showCustomToast("OpenAI Live Error: $it")
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            openAILiveAudioViewModel.aiTextMessage.collect { text ->
+                binding.openAIAiResponseTextView.text = text
+            }
+        }
         // --- End OpenAI Live Audio ViewModel Integration ---
+// ... (rest of your onViewCreated)
 
 
         // In your onViewCreated()
@@ -681,6 +760,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         initializeActivityLaunchers()
         setupUIListeners()
         observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
+        setupUIListeners()
+        observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
+        binding.shareButton.setOnClickListener { shareLastResponse() }
 
         binding.shareButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.fading_background)
         binding.historyButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.fading_background)
@@ -868,10 +950,37 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 showCustomToast("Required permissions not granted.")
             }
         }
+// Enhanced button click handler with permission checks
+
+        // Example button click in ChatFragment
+        binding.startComputerUseButton.setOnClickListener {
+            val prompt = binding.messageEditText.text.toString().trim()
+            if (prompt.isNotBlank()) {
+                addMessageToChat(prompt, true, containsRichContent = false) // Show user's prompt
+                binding.messageEditText.text.clear()
+                showTypingIndicator() // Show general "AI working"
+
+                lifecycleScope.launch {
+                    val sessionSummary = computerUseManager.startComputerUseSession(prompt)
+                    // Typing indicator will be removed by the first message from onUpdate,
+                    // or you can explicitly remove it here if no messages were sent via onUpdate.
+                    // If ComputerUseManager sends messages via onUpdate, they will call addMessageToChat,
+                    // which should ideally handle removing the typing indicator.
+                    // removeTypingIndicator() // Might be redundant if onUpdate calls addMessageToChat
+                    Log.d("ChatFragment", "ComputerUseManager final session summary: $sessionSummary")
+                    // Optionally, display the finalSummary if it contains info not sent via onUpdate
+                    // addMessageToChat("Session summary: $sessionSummary", false, containsRichContent = false)
+                }
+            } else {
+                showCustomToast("Please enter a prompt for computer use.")
+            }
+        }
+
+
         // Initialize captureImageLauncher, cropImageLauncher, pickImageLauncher, pickDocumentLauncher
         // ... (your existing launcher initializations, ensure contexts are correct)
-        captureImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { /* ... */ }
-        cropImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { /* ... */ }
+        //captureImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { /* ... */ }
+        //cropImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { /* ... */ }
 
         pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let { processSelectedFile(it) }
@@ -936,6 +1045,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             openAILiveAudioViewModel.signalUserTurnEnded()
         }
 
+
         // Gemini Live Audio Controls (if used)
         // binding.geminiRecordButton.setOnClickListener {
         //     if (checkAndRequestAudioPermission(REQUEST_RECORD_AUDIO_PERMISSION_GEMINI)) { // Different request code if needed
@@ -946,6 +1056,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
         binding.voiceSelectionButton.setOnClickListener { showVoiceSelectionDialog() }
         // ... other listeners
+
     }
 
 
@@ -956,6 +1067,18 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
     // In ChatFragment.kt
 
+    private fun checkAndRequestAudioPermission(requestCode: Int): Boolean { // requestCode can be used if you had different actions post-permission
+        return if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO)
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            true // Permission is already granted
+        } else {
+            // Permission is not granted, request it using the launcher.
+            // The launcher's callback will handle the result.
+            requestAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            false // Permission was not granted at the time of this check
+        }
+    }
     private fun observeViewModels() {
         // OpenAI Live Audio ViewModel Observers
         viewLifecycleOwner.lifecycleScope.launch {
@@ -1021,6 +1144,29 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         val chatPrefs = requireContext().getSharedPreferences(PREFS_NAME_CHAT, Context.MODE_PRIVATE)
         chatPrefs.edit().putBoolean(KEY_GREETING_SENT + conversationId, true).apply()
     }
+
+
+
+    // Updated ChatFragment methods for computer use
+
+    private var conversationHistory = JSONArray()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     private fun switchUiForModel(model: String) {
         Log.d("ChatFragment", "Switching UI for model: $model")
         // Default to text chat UI
@@ -1037,6 +1183,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         binding.openaiLiveAudioControls.visibility = View.GONE
         binding.openAIStatusTextView.visibility = View.GONE
         binding.openAIAiResponseTextView.visibility = View.GONE
+        binding.computerUseControls.visibility = View.GONE
+
 
 
         when (model) {
@@ -1054,6 +1202,18 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 // Standard text input is still used for DALL-E prompt
                 binding.followUpQuestionsContainer.visibility = View.GONE
             }
+            "computer-use-preview" -> {
+                binding.messageInputLayout.visibility = View.VISIBLE
+                binding.sendButton.visibility = View.GONE
+                binding.scanTextButton.visibility = View.GONE
+                binding.voiceInputButton.visibility = View.GONE
+                binding.ttsToggleButton.visibility = View.GONE
+                binding.followUpQuestionsContainer.visibility = View.GONE
+                binding.computerUseControls.visibility = View.VISIBLE
+                binding.openaiLiveAudioControls.visibility = View.GONE
+                binding.openAIStatusTextView.visibility = View.GONE
+                binding.openAIAiResponseTextView.visibility = View.GONE
+            }
             // Add cases for other models if they have very specific UI needs
             else -> {
                 // Standard text model
@@ -1061,6 +1221,20 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             }
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     private fun processUserMessageSend(userMessage: String) {
         // Central point for sending a message based on currentModel and limits
         hideKeyboard()
@@ -1091,6 +1265,21 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         } else {
             showCustomToast("Daily limit for $currentModel reached.")
             showRewardedAd() // Offer ad to continue
+        }
+    }
+
+
+
+
+
+    private val computerUseManager by lazy {
+        ComputerUseManager(requireActivity()) { messageFromManager ->
+            // This is the onUpdate callback
+            addMessageToChat(
+                messageContent = messageFromManager,
+                isUser = false,
+                containsRichContent = false // Adjust as needed
+            )
         }
     }
     // MODIFIED handleChatCompletion with Tool Calling Logic
@@ -1262,11 +1451,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     }
 
     private fun modelSupportsTools(modelName: String): Boolean {
-        // Disable tools for search-preview models
-        if (modelName.contains("search-preview")) return false
-        return modelName.startsWith("gpt-4") ||
-                modelName.contains("gpt-3.5-turbo-0125") ||
-                modelName.contains("gpt-3.5-turbo-1106")
+        // List models known to support function calling/tools
+        return modelName.startsWith("gpt-4") || modelName.contains("gpt-3.5-turbo-0125") || modelName.contains("gpt-3.5-turbo-1106")
+        // Add other models as OpenAI updates them.
     }
 
     // In ChatFragment.kt
@@ -2038,6 +2225,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             )
             false
         }
+
     }
 
 
@@ -3188,6 +3376,12 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             baseResponse
         }
     }
+    private fun speakOut(text: String) {
+        if (isTtsEnabled) {
+            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
+        }
+    }
+
     private fun isNetworkAvailable(): Boolean {
         val connectivityManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val activeNetworkInfo = connectivityManager.activeNetworkInfo
@@ -3549,7 +3743,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             "DeepSeek 🐬 - Fast and efficient AI for chat\nExample: Quick answers, challenging math problems, debug complex code, or brainstorm innovative solutions.",
             "GPT-4.1 Mini 🖼️ - Image analysis and understanding\nExample: Analyze images, extract information, or generate descriptions.",
             "Gemini Voice Chat 🎙️ - Google real-time voice\nExample: Engage in spoken dialogue with Gemini.", // ADDED Gemini Voice Chat
-            "OpenAI Realtime Voice 🔊 - OpenAI low-latency voice\nExample: Conversational AI with OpenAI."
+            "OpenAI Realtime Voice 🔊 - OpenAI low-latency voice\nExample: Conversational AI with OpenAI.",
+            "Computer Use 🖥️ - Automate tasks via browser screenshots"
+
         )
 
         val listView = dialogView.findViewById<ListView>(R.id.optionsListView)
@@ -3577,7 +3773,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     14 -> "deepseek"
                     15 -> "gpt-4.1-mini"
                     16 -> "gemini-voice-chat"     // Identifier for Gemini Voice Chat
-                    17 -> "openai-realtime-voice" // Identifier for OpenAI Realtime Voice
+                    17 -> "openai-realtime-voice"// Identifier for OpenAI Realtime Voice
+                    18 -> "computer-use-preview"
                     else -> "gpt-3.5-turbo"       // Default fallback
                 }
 
@@ -3624,6 +3821,20 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                         updateActiveModelButton("OpenAI Voice")
                         showCustomToast("Switched to OpenAI Realtime Voice")
                     }
+                    "computer-use-preview" -> {
+                        binding.computerUseControls.visibility = View.VISIBLE
+                        binding.messageInputLayout.visibility = View.VISIBLE
+                        binding.sendButton.visibility = View.GONE
+                        binding.scanTextButton.visibility = View.GONE
+                        binding.voiceInputButton.visibility = View.GONE
+                        binding.ttsToggleButton.visibility = View.GONE
+                        binding.followUpQuestionsContainer.visibility = View.GONE
+                        binding.generatedImageView.visibility = View.GONE
+                        binding.downloadButton.visibility = View.GONE
+                        binding.generatingText.visibility = View.GONE
+                        updateActiveModelButton("Computer Use")
+                        showCustomToast("Switched to Computer Use")
+                    }
                     else -> {
                         // Standard Text-Based Chat UI (for all other models)
 
@@ -3664,8 +3875,10 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         dialog.show()
     }
 
-    // In ChatFragment.kt
-// In ChatFragment.kt
+
+
+
+
 
     private fun handleGeminiCompletion(message: String) {
         val geminiApiKey = "YOUR_GEMINI_API_KEY" // Replace with actual key, ideally from secure storage
@@ -3955,7 +4168,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             val json = JSONObject().apply {
                 put("model", "tts-1")
                 put("input", text)
-                put("voice", selectedVoice)
+                put("voice", selectedVoice) // Use the selected voice
             }
 
             val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
@@ -3996,33 +4209,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     }
                 }
             })
-        }
-    }
-
-    private fun speakOut(text: String) {
-        if (isTtsEnabled) {
-            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
-        }
-    }
-
-    private fun updateTtsButtonState() {
-        binding.ttsToggleButton.apply {
-            backgroundTintList = ColorStateList.valueOf(
-                ContextCompat.getColor(
-                    context,
-                    if (isTtsEnabled) R.color.greenn else R.color.card_surface
-                )
-            )
-            isChecked = isTtsEnabled
-        }
-    }
-
-    private fun checkAndRequestAudioPermission(requestCode: Int): Boolean {
-        return if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-            true
-        } else {
-            requestAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-            false
         }
     }
 
@@ -4432,6 +4618,22 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         binding.voiceSelectionButton.text = "🎙️ ${voice.replaceFirstChar { it.uppercase() }}"
     }
 
+
+
+    private fun updateTtsButtonState() {
+        binding.ttsToggleButton.apply {
+            // For ToggleButton, use setBackgroundTintList
+            backgroundTintList = ColorStateList.valueOf(
+                ContextCompat.getColor(
+                    context,
+                    if (isTtsEnabled) R.color.greenn else R.color.card_surface
+                )
+            )
+
+            // ToggleButton handles text automatically
+            isChecked = isTtsEnabled
+        }
+    }
 
     private fun hideKeyboard() {
         val imm = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
