@@ -40,7 +40,7 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
-import android.support.annotation.RequiresApi
+import androidx.annotation.RequiresApi
 import android.text.Html
 import android.text.Spannable
 import android.text.SpannableString
@@ -59,9 +59,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.menu.MenuPopupHelper
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -114,7 +112,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import java.net.URLEncoder
 
 import android.provider.CalendarContract
-import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.RequestBody.Companion.asRequestBody
 import kotlin.coroutines.resume
 // ... other existing imports
@@ -310,6 +307,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         private const val DAILY_LIMIT_DEEPSEEK = 40
         //private const val REQUEST_RECORD_AUDIO_PERMISSION = 300
         private const val REQUEST_STORAGE_PERMISSION = 301
+
+        private val SUPPORTED_VOICES = setOf("alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse")
     }
 
 
@@ -626,72 +625,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
 
-        // In ChatFragment.kt - initializeActivityLaunchers() or class level
-        requestAudioPermissionLauncher =
-            registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-                if (isGranted) {
-                    showCustomToast("Audio permission granted. Please tap the button again.")
-                } else {
-                    showCustomToast("Audio permission denied. Cannot use voice features.")
-                }
-            }
-
-        // --- OpenAI Live Audio ViewModel Integration ---
-        // Make sure binding.openAISessionButton is a valid ID in your XML
-        // and that _binding is initialized in onCreateView
-
-        // Set the OnClickListener for openAISessionButton HERE, inside onViewCreated
-        binding.openAISessionButton.setOnClickListener {
-            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
-                requestAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-            } else {
-                openAILiveAudioViewModel.toggleSession(requireContext())
-            }
-        }
-
-        // Set up other listeners for OpenAI controls if any (e.g., openAISignalTurnEndButton)
-        binding.openAISignalTurnEndButton.setOnClickListener {
-            openAILiveAudioViewModel.signalUserTurnEnded()
-        }
-
-
-        // Your observers for openAILiveAudioViewModel states
-        viewLifecycleOwner.lifecycleScope.launch {
-            openAILiveAudioViewModel.isSessionActive.collect { isActive ->
-                binding.openAISessionButton.text = if (isActive) "🛑 Stop OpenAI Session" else "🎙️ Start OpenAI Session"
-                binding.openAISignalTurnEndButton.visibility = if (isActive) View.VISIBLE else View.GONE // Example visibility toggle
-                if (isActive && currentModel == "openai-realtime-voice") { // Be specific about which mode hides it
-                    binding.messageInputLayout.visibility = View.GONE
-                } else if (currentModel != "gemini-voice-chat") { // Don't show if Gemini voice is active
-                    binding.messageInputLayout.visibility = View.VISIBLE
-                }
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            openAILiveAudioViewModel.status.collect { status ->
-                binding.openAIStatusTextView.text = "OpenAI Live: $status"
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            openAILiveAudioViewModel.error.collect { error ->
-                error?.let {
-                    binding.openAIStatusTextView.append("\nError: $it")
-                    showCustomToast("OpenAI Live Error: $it")
-                }
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            openAILiveAudioViewModel.aiTextMessage.collect { text ->
-                binding.openAIAiResponseTextView.text = text
-            }
-        }
         // --- End OpenAI Live Audio ViewModel Integration ---
-// ... (rest of your onViewCreated)
 
 
         // In your onViewCreated()
@@ -749,9 +683,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         initializeActivityLaunchers()
         setupUIListeners()
         observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
-        setupUIListeners()
-        observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
-        binding.shareButton.setOnClickListener { shareLastResponse() }
 
         binding.shareButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.fading_background)
         binding.historyButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.fading_background)
@@ -1027,18 +958,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
     // In ChatFragment.kt
 
-    private fun checkAndRequestAudioPermission(requestCode: Int): Boolean { // requestCode can be used if you had different actions post-permission
-        return if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO)
-            == PackageManager.PERMISSION_GRANTED
-        ) {
-            true // Permission is already granted
-        } else {
-            // Permission is not granted, request it using the launcher.
-            // The launcher's callback will handle the result.
-            requestAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-            false // Permission was not granted at the time of this check
-        }
-    }
     private fun observeViewModels() {
         // OpenAI Live Audio ViewModel Observers
         viewLifecycleOwner.lifecycleScope.launch {
@@ -1345,9 +1264,11 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     }
 
     private fun modelSupportsTools(modelName: String): Boolean {
-        // List models known to support function calling/tools
-        return modelName.startsWith("gpt-4") || modelName.contains("gpt-3.5-turbo-0125") || modelName.contains("gpt-3.5-turbo-1106")
-        // Add other models as OpenAI updates them.
+        // Disable tools for search-preview models
+        if (modelName.contains("search-preview")) return false
+        return modelName.startsWith("gpt-4") ||
+                modelName.contains("gpt-3.5-turbo-0125") ||
+                modelName.contains("gpt-3.5-turbo-1106")
     }
 
     // In ChatFragment.kt
@@ -3269,12 +3190,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             baseResponse
         }
     }
-    private fun speakOut(text: String) {
-        if (isTtsEnabled) {
-            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
-        }
-    }
-
     private fun isNetworkAvailable(): Boolean {
         val connectivityManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val activeNetworkInfo = connectivityManager.activeNetworkInfo
@@ -4042,7 +3957,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             val json = JSONObject().apply {
                 put("model", "tts-1")
                 put("input", text)
-                put("voice", selectedVoice) // Use the selected voice
+                put("voice", selectedVoice)
             }
 
             val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
@@ -4086,9 +4001,78 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
     }
 
+    private fun speakOut(text: String) {
+        if (isTtsEnabled) {
+            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
+        }
+    }
+
+    private fun updateTtsButtonState() {
+        binding.ttsToggleButton.apply {
+            backgroundTintList = ColorStateList.valueOf(
+                ContextCompat.getColor(
+                    context,
+                    if (isTtsEnabled) R.color.greenn else R.color.card_surface
+                )
+            )
+            isChecked = isTtsEnabled
+        }
+    }
+
+    private fun checkAndRequestAudioPermission(requestCode: Int): Boolean {
+        return if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            true
+        } else {
+            requestAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            false
+        }
+    }
+
     private fun sendImageToOpenAI(bitmap: Bitmap) {
         val base64Image = encodeImageToBase64(bitmap)
         analyzeImage(base64Image)
+    }
+
+    // --- Speech Recognition Helpers ---
+    private fun initializeSpeechRecognizer() {
+        if (SpeechRecognizer.isRecognitionAvailable(requireContext())) {
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(requireContext())
+            speechRecognizer?.setRecognitionListener(object : RecognitionListener {
+                override fun onReadyForSpeech(params: Bundle?) { showCustomToast("Listening...") }
+                override fun onBeginningOfSpeech() { binding.voiceInputButton.text = "🛑" }
+                override fun onRmsChanged(rmsdB: Float) {}
+                override fun onBufferReceived(buffer: ByteArray?) {}
+                override fun onEndOfSpeech() { binding.voiceInputButton.text = "🎤" }
+                override fun onError(error: Int) {
+                    showCustomToast("Error: $error")
+                    binding.voiceInputButton.text = "🎤"
+                }
+                override fun onResults(results: Bundle?) {
+                    val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    if (!matches.isNullOrEmpty()) {
+                        binding.messageEditText.setText(matches[0])
+                        binding.messageEditText.setSelection(matches[0].length)
+                    }
+                }
+                override fun onPartialResults(partialResults: Bundle?) {}
+                override fun onEvent(eventType: Int, params: Bundle?) {}
+            })
+        } else {
+            showCustomToast("Speech recognition is not available on this device.")
+        }
+    }
+
+    private fun startVoiceRecognition() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now...")
+        }
+        try {
+            startActivityForResult(intent, REQUEST_CODE_SPEECH_INPUT)
+        } catch (e: ActivityNotFoundException) {
+            showCustomToast("Speech recognition not supported on this device")
+        }
     }
 
     private fun resizeBitmap(bitmap: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {
@@ -4250,59 +4234,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         val end = binding.messageEditText.selectionEnd
         binding.messageEditText.text.delete(start, end)
         showCustomToast("Text deleted")
-    }
-    private fun initializeSpeechRecognizer() {
-        if (SpeechRecognizer.isRecognitionAvailable(requireContext())) {
-            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(requireContext())
-            speechRecognizer?.setRecognitionListener(object : RecognitionListener {
-                override fun onReadyForSpeech(params: Bundle?) {
-                    showCustomToast("Listening...")
-                }
-
-                override fun onBeginningOfSpeech() {
-                    binding.voiceInputButton.text = "🛑"
-                }
-
-                override fun onRmsChanged(rmsdB: Float) {}
-
-                override fun onBufferReceived(buffer: ByteArray?) {}
-
-                override fun onEndOfSpeech() {
-                    binding.voiceInputButton.text = "🎤"
-                }
-
-                override fun onError(error: Int) {
-                    showCustomToast("Error: $error")
-                    binding.voiceInputButton.text = "🎤"
-                }
-
-                override fun onResults(results: Bundle?) {
-                    val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                    if (!matches.isNullOrEmpty()) {
-                        binding.messageEditText.setText(matches[0])
-                        binding.messageEditText.setSelection(matches[0].length)
-                    }
-                }
-
-                override fun onPartialResults(partialResults: Bundle?) {}
-
-                override fun onEvent(eventType: Int, params: Bundle?) {}
-            })
-        } else {
-            showCustomToast("Speech recognition is not available on this device.")
-        }
-    }
-    private fun startVoiceRecognition() {
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now...")
-        }
-        try {
-            startActivityForResult(intent, REQUEST_CODE_SPEECH_INPUT)
-        } catch (e: ActivityNotFoundException) {
-            showCustomToast("Speech recognition not supported on this device")
-        }
     }
 
 
@@ -4492,22 +4423,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         binding.voiceSelectionButton.text = "🎙️ ${voice.replaceFirstChar { it.uppercase() }}"
     }
 
-
-
-    private fun updateTtsButtonState() {
-        binding.ttsToggleButton.apply {
-            // For ToggleButton, use setBackgroundTintList
-            backgroundTintList = ColorStateList.valueOf(
-                ContextCompat.getColor(
-                    context,
-                    if (isTtsEnabled) R.color.greenn else R.color.card_surface
-                )
-            )
-
-            // ToggleButton handles text automatically
-            isChecked = isTtsEnabled
-        }
-    }
 
     private fun hideKeyboard() {
         val imm = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -4909,7 +4824,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
     private fun loadSelectedVoice(): String {
         val sharedPreferences = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return sharedPreferences.getString(SELECTED_VOICE_KEY, "alloy") ?: "alloy"
+        val voice = sharedPreferences.getString(SELECTED_VOICE_KEY, "alloy") ?: "alloy"
+        return if (SUPPORTED_VOICES.contains(voice)) voice else "alloy"
     }
 
     // In ChatFragment.kt
