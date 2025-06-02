@@ -81,6 +81,17 @@ class OpenAILiveAudioViewModel : ViewModel() {
     private val audioOutChannel = Channel<ByteArray>(Channel.UNLIMITED)
     private var currentSessionId: String? = null // If server provides one in session.created
 
+    private var sessionVoice: String = "alloy"
+    private var sessionTools: JSONArray? = null
+
+    fun setVoice(voice: String) {
+        sessionVoice = voice
+    }
+
+    fun setTools(tools: JSONArray?) {
+        sessionTools = tools
+    }
+
     @SuppressLint("MissingPermission")
     fun toggleSession(context: Context) {
         if (_isSessionActive.value) {
@@ -160,7 +171,7 @@ class OpenAILiveAudioViewModel : ViewModel() {
 
             put("instructions", "You are a friendly and helpful voice assistant. Respond naturally.") // Your custom instructions
 
-            put("voice", "alloy") // Or "sage", "echo", etc. Choose one.
+            put("voice", sessionVoice)
 
             // Audio formats (already corrected to string)
             put("input_audio_format", "pcm16")
@@ -189,9 +200,9 @@ class OpenAILiveAudioViewModel : ViewModel() {
             // Optional: Max response tokens (inf means no hard limit by tokens)
             // put("max_response_output_tokens", "inf") // Server log showed this as default
 
-            // Optional: Tools (for function calling) - leave out for now if not using
-            // put("tools", JSONArray()) // Empty array if no tools initially
-            // put("tool_choice", "auto")
+            sessionTools?.let { tools ->
+                put("tools", tools)
+            }
         }
 
         val sessionUpdateEvent = JSONObject().apply {
