@@ -993,23 +993,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
 
-    private fun setupChatRecyclerView() {
-        chatAdapter = com.playstudio.aiteacher.ChatAdapter(
-            onCitationClicked = { showCitationDialog(it) },
-            onFollowUpQuestionClicked = { question ->
-                binding.messageEditText.setText(question)
-                // Optionally send message or just prefill
-            },
-            onLoadMoreRequested = {
-                // Implement if you have pagination
-            }
-        )
-        binding.recyclerView.apply {
-            layoutManager = LinearLayoutManager(requireContext()).apply { stackFromEnd = true }
-            adapter = chatAdapter
-            // itemAnimator = null // Consider DefaultItemAnimator for better UX if no issues
-        }
-    }
 
     private fun setupUIListeners() {
         binding.sendButton.setOnClickListener {
@@ -1113,16 +1096,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             updateSubscriptionStatus(subscriptionViewModel.isAdFree.value ?: false, expirationTime)
         }
     }
-    private fun loadSharedPrefs() {
-        val appPrefs = requireContext().getSharedPreferences(PREFS_NAME_APP, Context.MODE_PRIVATE)
-        selectedVoice = appPrefs.getString(SELECTED_VOICE_KEY, "alloy") ?: "alloy"
-        binding.voiceSelectionButton.text = "Voice: ${selectedVoice.replaceFirstChar { it.uppercase() }}"
-        // Load conversationId for the last session or default to a new one
-        conversationId = appPrefs.getString("last_conversation_id", null) ?: generateConversationId().also {
-            appPrefs.edit().putString("last_conversation_id", it).apply()
-        }
-        isFollowUpEnabled = appPrefs.getBoolean("follow_up_enabled", true)
-    }
     private fun isGreetingSentForCurrentConversation(): Boolean {
         val chatPrefs = requireContext().getSharedPreferences(PREFS_NAME_CHAT, Context.MODE_PRIVATE)
         return chatPrefs.getBoolean(KEY_GREETING_SENT + conversationId, false)
@@ -1135,9 +1108,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
 
-    // Updated ChatFragment methods for computer use
 
-    private var conversationHistory = JSONArray()
 
 
 
@@ -1796,113 +1767,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
     }
 
-    // This would be called by a UI button or potentially another AI tool ("stop_meeting_recording")
-// For now, let's assume a UI button calls a public method in the fragment, which then calls this.
-// This function is NOT directly called by the AI in the initial tool flow.
-    suspend fun processAndSummarizeMeeting(): String? = withContext(Dispatchers.IO) {
-        if (!isMeetingRecording && currentMeetingAudioFile == null) {
-            Log.w("ChatFragmentTool", "No active recording or file to summarize.")
-            return@withContext null // Or an error string
-        }
-
-        if (isMeetingRecording) { // Stop it first if still running
-            try {
-                mediaRecorder?.stop()
-                mediaRecorder?.release()
-            } catch (e: Exception) {
-                Log.e("ChatFragmentTool", "Error stopping media recorder during summarize: ${e.message}")
-            }
-            isMeetingRecording = false
-            mediaRecorder = null
-        }
-
-        val fileToSummarize = currentMeetingAudioFile
-        currentMeetingAudioFile = null // Reset for next recording
-
-        if (fileToSummarize == null || !fileToSummarize.exists() || fileToSummarize.length() == 0L) {
-            Log.e("ChatFragmentTool", "Meeting audio file is invalid or empty for summarization.")
-            return@withContext JSONObject().apply { put("error", "No valid meeting audio to summarize.") }.toString()
-        }
-
-        Log.i("ChatFragmentTool", "Processing meeting recording for summarization: ${fileToSummarize.absolutePath}")
-        showCustomToast("Processing meeting summary...") // Show on UI thread
-
-        // Step 1: Transcribe (using OpenAI Audio API - 'whisper-1' or similar)
-        val transcript: String? = try {
-            val requestFile = fileToSummarize.asRequestBody("audio/m4a".toMediaTypeOrNull())
-            val requestBody = MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart("file", fileToSummarize.name, requestFile)
-                .addFormDataPart("model", "whisper-1") // Or your preferred transcription model
-                // .addFormDataPart("response_format", "json") // 'json' gives structured output with text
-                .build()
-
-            val request = Request.Builder()
-                .url("https://api.openai.com/v1/audio/transcriptions")
-                .header("Authorization", "Bearer ${BuildConfig.API_KEY}") // Ensure BuildConfig.API_KEY is OpenAI key
-                .post(requestBody)
-                .build()
-
-            val response = okHttpClient.newCall(request).execute()
-            if (response.isSuccessful) {
-                val responseBody = response.body?.string()
-                responseBody?.let { JSONObject(it).getString("text") }
-            } else {
-                Log.e("ChatFragmentTool", "Transcription API error: ${response.code} - ${response.message}")
-                null
-            }
-        } catch (e: Exception) {
-            Log.e("ChatFragmentTool", "Exception during transcription: ${e.message}", e)
-            null
-        }
-
-        if (transcript.isNullOrBlank()) {
-            Log.e("ChatFragmentTool", "Transcription failed or produced empty text.")
-            fileToSummarize.delete() // Clean up
-            return@withContext JSONObject().apply { put("error", "Failed to transcribe the meeting audio.") }.toString()
-        }
-
-        Log.i("ChatFragmentTool", "Transcription successful. Length: ${transcript.length}")
-        fileToSummarize.delete() // Clean up original audio file after successful transcription
-
-        // Step 2: Summarize (using OpenAI Chat Completions API)
-        val summaryPrompt = "Please provide a concise summary of the following meeting transcript:\n\nTranscript:\n\"\"\"\n$transcript\n\"\"\"\n\nSummary:"
-        val messagesArray = JSONArray().put(JSONObject().apply {
-            put("role", "user")
-            put("content", summaryPrompt)
-        })
-        val summaryRequestBodyJson = JSONObject().apply {
-            put("model", "gpt-3.5-turbo") // Or gpt-4o for better summaries
-            put("messages", messagesArray)
-            put("temperature", 0.5)
-            put("max_tokens", 300) // Adjust as needed
-        }
-        val summaryBody = summaryRequestBodyJson.toString().toRequestBody("application/json".toMediaTypeOrNull())
-        val summaryRequest = Request.Builder()
-            .url("https://api.openai.com/v1/chat/completions")
-            .post(summaryBody)
-            .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
-            .addHeader("Content-Type", "application/json")
-            .build()
-
-        try {
-            val summaryResponse = okHttpClient.newCall(summaryRequest).execute()
-            if (summaryResponse.isSuccessful) {
-                val summaryResponseBody = summaryResponse.body?.string()
-                summaryResponseBody?.let {
-                    val summaryText = JSONObject(it).getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content").trim()
-                    Log.i("ChatFragmentTool", "Summarization successful.")
-                    // Return the summary text itself. The calling UI logic will add it to chat.
-                    return@withContext summaryText // Just the summary string
-                }
-            } else {
-                Log.e("ChatFragmentTool", "Summarization API error: ${summaryResponse.code} - ${summaryResponse.message}")
-            }
-        } catch (e: Exception) {
-            Log.e("ChatFragmentTool", "Exception during summarization: ${e.message}", e)
-        }
-        return@withContext JSONObject().apply { put("error", "Failed to summarize the meeting.") }.toString() // Fallback error
-    }
 
 
 
@@ -2857,27 +2721,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
         return builder.toString()
     }
-    private fun addMessageToChat(
-        messageContent: String,
-        isUser: Boolean,
-        citations: List<com.playstudio.aiteacher.ChatFragment.Citation> = emptyList(),
-        followUpQuestions: List<String> = emptyList(),
-        containsRichContent: Boolean = false // Pass this flag
-    ) {
-        val newChatMessage = ChatMessage(
-            id = System.currentTimeMillis().toString(),
-            content = messageContent,
-            isUser = isUser,
-            citations = citations,
-            followUpQuestions = followUpQuestions,
-            containsRichContent = containsRichContent
-        )
-        addMessageToList(newChatMessage)
-
-        if (!isUser && isTtsEnabled) {
-            speakOut(messageContent)
-        }
-    }
 
 
     private fun generateDynamicFollowUpQuestions(reply: String, callback: (List<String>) -> Unit) {
@@ -2950,15 +2793,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             }
         }
     }
-    private fun handleNetworkError(e: IOException) {
-        lifecycleScope.launch(Dispatchers.Main) {
-            showCustomToast("Network error: ${e.message}")
-            removeTypingIndicator()
-        }
-    }
-
     private fun playAudioFromFile(file: File) {
-        val mediaPlayer = MediaPlayer().apply {
+        MediaPlayer().apply {
             setDataSource(file.absolutePath)
             prepare()
             start()
@@ -3303,24 +3139,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 checkAndShowSubscriptionPrompt()
             }
         }
-    }
-
-    private fun handleDalle3Request(message: String) {
-        addMessageToChat(message, true)
-        handleImageGeneration(message)
-        binding.messageEditText.text.clear()
-        incrementModelUsage("dall-e-3")
-    }
-
-    private fun showSubscriptionRequiredDialog() {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Subscription Required")
-            .setMessage("This feature requires an active subscription")
-            .setPositiveButton("Subscribe") { _, _ ->
-                subscriptionClickListener?.onSubscriptionClick()
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
     }
 
     // In ChatFragment.kt - THIS IS THE VERSION TO KEEP AND USE
@@ -5283,30 +5101,6 @@ private fun updateActiveModelButton(modelName: String) {
 
 
             // Add other permission request codes here as needed
-        }
-    }
-    private fun checkAndRequestPermissions(permissions: Array<String>, requestCode: Int) {
-        val permissionsToRequest = permissions.filter {
-            ContextCompat.checkSelfPermission(requireContext(), it) != PackageManager.PERMISSION_GRANTED
-        }.toTypedArray()
-
-        if (permissionsToRequest.isNotEmpty()) {
-            requestPermissions(permissionsToRequest, requestCode)
-        } else {
-            onPermissionsGranted(requestCode)
-        }
-    }
-
-    private fun onPermissionsGranted(requestCode: Int) {
-        when (requestCode) {
-            CAMERA_REQUEST_CODE -> dispatchTakePictureIntent()
-            WRITE_EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE -> {
-                val imageUrl = binding.imageContainer.getTag(R.id.image_url) as? String
-                if (imageUrl != null) {
-                    downloadImage(imageUrl)
-                }
-            }
-            PICK_DOCUMENT_REQUEST_CODE -> openDocumentPicker()
         }
     }
 
