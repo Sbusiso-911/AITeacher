@@ -84,6 +84,7 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.playstudio.aiteacher.databinding.FragmentChatBinding
 import com.playstudio.aiteacher.utils.FileUtils
+import com.playstudio.aiteacher.utils.ChatHistoryUtils
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -5173,6 +5174,21 @@ private fun updateActiveModelButton(modelName: String) {
 
         editor.putString(chatHistoryKey, updatedChatsArray.toString())
         editor.apply()
+
+        // Also store a simple history list using ChatHistoryUtils for HistoryActivity
+        val historyStrings = mutableListOf<String>()
+        for (i in 0 until updatedChatsArray.length()) {
+            val chatObj = updatedChatsArray.getJSONObject(i)
+            val messagesArr = chatObj.getJSONArray("messages")
+            val sb = StringBuilder()
+            for (j in 0 until messagesArr.length()) {
+                val msgObj = messagesArr.getJSONObject(j)
+                val prefix = if (msgObj.getBoolean("isUser")) "User: " else "AI: "
+                sb.append(prefix).append(msgObj.getString("content")).append("\n")
+            }
+            historyStrings.add(sb.toString().trim())
+        }
+        ChatHistoryUtils.saveChatHistory(requireContext(), historyStrings)
     }
 
 
