@@ -59,9 +59,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.menu.MenuPopupHelper
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -5293,7 +5291,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
                     dispatchTakePictureIntent()
                 } else {
-                    showCustomToast("Camera permission required")
+)
                 }
             }
 
