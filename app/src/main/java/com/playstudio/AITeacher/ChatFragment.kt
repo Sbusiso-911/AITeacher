@@ -916,33 +916,33 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let { processSelectedFile(it) }
         }
-    pickDocumentLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-        uri?.let { processSelectedFile(it) }
-    }
-}
-
-private fun setupChatRecyclerView() {
-    chatAdapter = com.playstudio.aiteacher.ChatAdapter(
-        onCitationClicked = { showCitationDialog(it) },
-        onFollowUpQuestionClicked = { question ->
-            binding.messageEditText.setText(question)
-            binding.messageEditText.setSelection(question.length)
-        },
-        onLoadMoreRequested = {
-            if (!isLoadingMoreMessages) {
-                loadOlderMessages()
-            }
+        pickDocumentLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+            uri?.let { processSelectedFile(it) }
         }
-    )
-
-    binding.recyclerView.apply {
-        layoutManager = LinearLayoutManager(requireContext()).apply { stackFromEnd = true }
-        adapter = chatAdapter
-        setHasFixedSize(true)
-        itemAnimator = null
-        setItemViewCacheSize(20)
     }
-}
+
+    private fun setupChatRecyclerView() {
+        chatAdapter = com.playstudio.aiteacher.ChatAdapter(
+            onCitationClicked = { showCitationDialog(it) },
+            onFollowUpQuestionClicked = { question ->
+                binding.messageEditText.setText(question)
+                binding.messageEditText.setSelection(question.length)
+            },
+            onLoadMoreRequested = {
+                if (!isLoadingMoreMessages) {
+                    loadOlderMessages()
+                }
+            }
+        )
+
+        binding.recyclerView.apply {
+            layoutManager = LinearLayoutManager(requireContext()).apply { stackFromEnd = true }
+            adapter = chatAdapter
+            setHasFixedSize(true)
+            itemAnimator = null
+            setItemViewCacheSize(20)
+        }
+    }
 
 
 
@@ -1168,8 +1168,6 @@ private fun setupChatRecyclerView() {
         // Central point for sending a message based on currentModel and limits
         hideKeyboard()
         binding.messageEditText.text.clear()
-        // Show the user's message immediately
-        addMessageToChat(userMessage, true)
 
         if (isUserSubscribed || canSendMessage) {
             handleMessage(userMessage)
@@ -2577,31 +2575,53 @@ private fun setupChatRecyclerView() {
                     return@launch
                 }
 
-                responseBody?.let {
+                responseBody?.let { responseBodyString ->
                     try {
-                        val jsonResponse = JSONObject(it)
+                        val jsonResponse = JSONObject(responseBodyString)
                         if (jsonResponse.has("choices")) {
                             val choices = jsonResponse.getJSONArray("choices")
                             if (choices.length() > 0) {
                                 val reply = choices.getJSONObject(0).getJSONObject("message")
                                     .getString("content").trim()
 
-                                // Parse and pass citations/followUps if this model provides them
-                                    )
-                                    // //generateFollowUpQuestions(reply) // If needed
+                                withContext(Dispatchers.Main) {
+                                    // Add the AI response to chat
+                                    addMessageToChat(reply, false) // Assuming false means it's from AI
+                                    removeTypingIndicator()
+
+                                    // Parse and pass citations/followUps if this model provides them
+                                    // generateFollowUpQuestions(reply) // If needed
+
                                     if (isTtsEnabled) {
                                         handleTextToSpeech(reply)
                                     }
                                     incrementInteractionCount()
                                 }
-                            } else { /* ... no choices handling ... */ }
-                        } else { /* ... no 'choices' field handling ... */ }
-                    } catch (e: JSONException) { /* ... JSON parsing error handling ... */ }
-                } ?: withContext(Dispatchers.Main) { /* ... null response body handling ... */ }
-            } catch (e: IOException) { /* ... IO error handling ... */ }
+                            }
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                showCustomToast("No response choices received")
+                                removeTypingIndicator()
+                            }
+                        }
+                    } catch (e: JSONException) {
+                        withContext(Dispatchers.Main) {
+                            showCustomToast("Error parsing response: ${e.message}")
+                            removeTypingIndicator()
+                        }
+                    }
+                } ?: withContext(Dispatchers.Main) {
+                    showCustomToast("Empty response received")
+                    removeTypingIndicator()
+                }
+            } catch (e: IOException) {
+                withContext(Dispatchers.Main) {
+                    showCustomToast("Network error: ${e.message}")
+                    removeTypingIndicator()
+                }
+            }
         }
-
-    // In ChatFragment.kt
+    }
 
     private fun handleErrorResponse(response: Response) {
         lifecycleScope.launch(Dispatchers.Main) {
@@ -3104,7 +3124,9 @@ private fun setupChatRecyclerView() {
     }
 
     private fun handleDalle3Request(message: String) {
+        addMessageToChat(message, true)
         handleImageGeneration(message)
+        binding.messageEditText.text.clear()
         incrementModelUsage("dall-e-3")
     }
 
@@ -3205,7 +3227,9 @@ private fun setupChatRecyclerView() {
             }
             "gemini" -> {
                 if (checkDailyLimit("gemini", DAILY_LIMIT_GEMINI)) {
+                    addMessageToChat(message, true)
                     handleGeminiCompletion(message)
+                    binding.messageEditText.text.clear()
                     incrementModelUsage("gemini")
                 } else {
                     showCustomToast("Daily limit for Gemini reached.")
@@ -3213,7 +3237,9 @@ private fun setupChatRecyclerView() {
             }
             "deepseek" -> {
                 if (checkDailyLimit("deepseek", DAILY_LIMIT_DEEPSEEK)) {
+                    addMessageToChat(message, true)
                     handleDeepSeekCompletion(message)
+                    binding.messageEditText.text.clear()
                     incrementModelUsage("deepseek")
                 } else {
                     showCustomToast("Daily limit for DeepSeek reached.")
@@ -3221,7 +3247,9 @@ private fun setupChatRecyclerView() {
             }
             "claude-sonnet-4" -> {
                 if (checkDailyLimit("claude-sonnet-4", DAILY_LIMIT_CLAUDE_SONNET4)) {
+                    addMessageToChat(message, true)
                     handleClaudeCompletion(message, "claude-sonnet-4-20250514")
+                    binding.messageEditText.text.clear()
                     incrementModelUsage("claude-sonnet-4")
                 } else {
                     showCustomToast("Daily limit for Claude Sonnet 4 reached.")
@@ -3229,7 +3257,9 @@ private fun setupChatRecyclerView() {
             }
             "claude-opus-4" -> {
                 if (checkDailyLimit("claude-opus-4", DAILY_LIMIT_CLAUDE_OPUS4)) {
+                    addMessageToChat(message, true)
                     handleClaudeCompletion(message, "claude-opus-4-20250514")
+                    binding.messageEditText.text.clear()
                     incrementModelUsage("claude-opus-4")
                 } else {
                     showCustomToast("Daily limit for Claude Opus 4 reached.")
@@ -3237,21 +3267,26 @@ private fun setupChatRecyclerView() {
             }
             "o3-mini" -> {
                 if (checkDailyLimit("o3-mini", DAILY_LIMIT_GPT4)) {
+                    addMessageToChat(message, true)
                     handleReasoningModelCompletion(message, "o3-mini")
+                    binding.messageEditText.text.clear()
                     incrementModelUsage("o3-mini")
                 } else {
                     showCustomToast("Daily limit for O3 Mini reached.")
                 }
             }
             else -> {
+                addMessageToChat(message, true)
                 if (isUserSubscribed && subscriptionExpirationTime > System.currentTimeMillis() || canSendMessage) {
                     sendMessageToAPI(response)
+                    binding.messageEditText.text.clear()
                     if (!isUserSubscribed) {
                         canSendMessage = false
                     }
                 } else if (checkDailyMessageLimit()) {
                     incrementMessageCount()
                     sendMessageToAPI(response)
+                    binding.messageEditText.text.clear()
                 } else {
                     //showInterstitialAd() // Show interstitial ad if daily message limit is reached
                 }
@@ -3713,7 +3748,7 @@ private fun setupChatRecyclerView() {
                     "gpt-4o-mini-search-preview"
                 )
                 currentModel = selectedModelIdentifier
-                
+
                 switchUiForModel(currentModel)
                 val displayName = if (position < options.size) options[position].substringBefore(" -") else "Chat"
                 updateActiveModelButton(displayName)
@@ -3881,7 +3916,7 @@ private fun setupChatRecyclerView() {
     // In ChatFragment.kt
 
     private fun handleDeepSeekCompletion(message: String) {
-        val deepSeekApiKey = "sk-365290c51f54434e983914c5fae190a8" // Consider secure storage
+        val deepSeekApiKey = "api_here" // Consider secure storage
         val deepSeekUrl = "https://api.deepseek.com/v1/chat/completions"
 
         val messagesArray = JSONArray().apply {
@@ -3955,21 +3990,21 @@ private fun setupChatRecyclerView() {
                                     .getString("content").trim()
 
                                 withContext(Dispatchers.Main) {
-            removeTypingIndicator()
-            generateDynamicFollowUpQuestions(reply) { questions ->
-                addMessageToChat(
-                    messageContent = reply,
-                    isUser = false,
-                    followUpQuestions = questions,
-                    containsRichContent = determineIfRichContent(reply)
-                )
-                addFollowUpQuestionsToChat(questions)
-                if (isTtsEnabled) {
-                    handleTextToSpeech(reply)
-                }
-                incrementInteractionCount()
-            }
-        }
+                                    removeTypingIndicator()
+                                    generateDynamicFollowUpQuestions(reply) { questions ->
+                                        addMessageToChat(
+                                            messageContent = reply,
+                                            isUser = false,
+                                            followUpQuestions = questions,
+                                            containsRichContent = determineIfRichContent(reply)
+                                        )
+                                        addFollowUpQuestionsToChat(questions)
+                                        if (isTtsEnabled) {
+                                            handleTextToSpeech(reply)
+                                        }
+                                        incrementInteractionCount()
+                                    }
+                                }
                             } else {
                                 withContext(Dispatchers.Main) {
                                     showCustomToast("No choices found in DeepSeek response")
@@ -4081,21 +4116,21 @@ private fun setupChatRecyclerView() {
                         }
 
                         withContext(Dispatchers.Main) {
-                removeTypingIndicator()
-                generateDynamicFollowUpQuestions(reply) { questions ->
-                    addMessageToChat(
-                        messageContent = reply,
-                        isUser = false,
-                        followUpQuestions = questions,
-                        containsRichContent = determineIfRichContent(reply)
-                    )
-                    addFollowUpQuestionsToChat(questions)
-                    if (isTtsEnabled) {
-                        handleTextToSpeech(reply)
-                    }
-                    incrementInteractionCount()
-                }
-            }
+                            removeTypingIndicator()
+                            generateDynamicFollowUpQuestions(reply) { questions ->
+                                addMessageToChat(
+                                    messageContent = reply,
+                                    isUser = false,
+                                    followUpQuestions = questions,
+                                    containsRichContent = determineIfRichContent(reply)
+                                )
+                                addFollowUpQuestionsToChat(questions)
+                                if (isTtsEnabled) {
+                                    handleTextToSpeech(reply)
+                                }
+                                incrementInteractionCount()
+                            }
+                        }
                     } catch (e: JSONException) {
                         Log.e("ChatFragment", "Error parsing Claude response", e)
                         withContext(Dispatchers.Main) {
@@ -4129,9 +4164,9 @@ private fun setupChatRecyclerView() {
         binding.subscriptionOverlay.visibility = View.GONE
     }
 
-private fun updateActiveModelButton(modelName: String) {
-    binding.activeModelButton.text = modelName
-}
+    private fun updateActiveModelButton(modelName: String) {
+        binding.activeModelButton.text = modelName
+    }
 
 
     // --------------------------
