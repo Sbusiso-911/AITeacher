@@ -186,6 +186,19 @@ class RichMessageWebView @JvmOverloads constructor(
             "<code>${match.groupValues[1].htmlEscape()}</code>"
         }
 
+        // Process markdown links [text](url)
+        processed = processed.replace("\\[([^\\]]+)\\]\((https?://[^)]+)\)".toRegex()) { match ->
+            val text = match.groupValues[1]
+            val url = match.groupValues[2]
+            "<a href=\"$url\">${text.htmlEscape()}</a>"
+        }
+
+        // Convert plain URLs into clickable links
+        processed = processed.replace("(?<!\")((https?://|www\.)[\w\-._~:/?#@!$&'()*+,;=%]+)".toRegex()) { match ->
+            val url = if (match.value.startsWith("http")) match.value else "http://${match.value}"
+            "<a href=\"$url\">${match.value}</a>"
+        }
+
         return processed
     }
 
