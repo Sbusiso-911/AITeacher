@@ -11,6 +11,7 @@ import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.text.style.ForegroundColorSpan
 import android.text.style.UnderlineSpan
+import android.text.util.Linkify
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -112,6 +113,7 @@ class ChatAdapter(
         fun bind(chatMessage: ChatMessage) {
             binding.messageTextView.text = Html.fromHtml(chatMessage.content, Html.FROM_HTML_MODE_COMPACT) // Or LEGACY if needed
             binding.messageTextView.movementMethod = LinkMovementMethod.getInstance()
+            Linkify.addLinks(binding.messageTextView, Linkify.WEB_URLS)
             // binding.messageTextView.textAlignment = View.TEXT_ALIGNMENT_TEXT_END // Already set in XML likely
 
             itemView.setOnLongClickListener {
@@ -176,6 +178,7 @@ class ChatAdapter(
                 if (binding.messageTextView.parent == null) {
                     binding.messageContentContainer.addView(binding.messageTextView)
                 }
+                Linkify.addLinks(binding.messageTextView, Linkify.WEB_URLS)
             }
             binding.messageTextView.movementMethod = LinkMovementMethod.getInstance()
 
