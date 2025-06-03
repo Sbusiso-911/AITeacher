@@ -951,33 +951,33 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let { processSelectedFile(it) }
         }
-    pickDocumentLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-        uri?.let { processSelectedFile(it) }
-    }
-}
-
-private fun setupChatRecyclerView() {
-    chatAdapter = com.playstudio.aiteacher.ChatAdapter(
-        onCitationClicked = { showCitationDialog(it) },
-        onFollowUpQuestionClicked = { question ->
-            binding.messageEditText.setText(question)
-            binding.messageEditText.setSelection(question.length)
-        },
-        onLoadMoreRequested = {
-            if (!isLoadingMoreMessages) {
-                loadOlderMessages()
-            }
+        pickDocumentLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+            uri?.let { processSelectedFile(it) }
         }
-    )
-
-    binding.recyclerView.apply {
-        layoutManager = LinearLayoutManager(requireContext()).apply { stackFromEnd = true }
-        adapter = chatAdapter
-        setHasFixedSize(true)
-        itemAnimator = null
-        setItemViewCacheSize(20)
     }
-}
+
+    private fun setupChatRecyclerView() {
+        chatAdapter = com.playstudio.aiteacher.ChatAdapter(
+            onCitationClicked = { showCitationDialog(it) },
+            onFollowUpQuestionClicked = { question ->
+                binding.messageEditText.setText(question)
+                binding.messageEditText.setSelection(question.length)
+            },
+            onLoadMoreRequested = {
+                if (!isLoadingMoreMessages) {
+                    loadOlderMessages()
+                }
+            }
+        )
+
+        binding.recyclerView.apply {
+            layoutManager = LinearLayoutManager(requireContext()).apply { stackFromEnd = true }
+            adapter = chatAdapter
+            setHasFixedSize(true)
+            itemAnimator = null
+            setItemViewCacheSize(20)
+        }
+    }
 
 
 
@@ -3754,7 +3754,7 @@ private fun setupChatRecyclerView() {
                     "gpt-4o-mini-search-preview"
                 )
                 currentModel = selectedModelIdentifier
-                
+
                 switchUiForModel(currentModel)
                 val displayName = if (position < options.size) options[position].substringBefore(" -") else "Chat"
                 updateActiveModelButton(displayName)
@@ -4050,7 +4050,7 @@ private fun setupChatRecyclerView() {
     }
 
     private fun handleClaudeCompletion(message: String, model: String) {
-        val claudeApiKey = "YOUR_CLAUDE_API_KEY" // Replace with your key
+        val claudeApiKey = "apikeyhere" // Replace with your key
         val claudeUrl = "https://api.anthropic.com/v1/messages"
 
         val messagesArray = JSONArray().apply {
@@ -4170,9 +4170,9 @@ private fun setupChatRecyclerView() {
         binding.subscriptionOverlay.visibility = View.GONE
     }
 
-private fun updateActiveModelButton(modelName: String) {
-    binding.activeModelButton.text = modelName
-}
+    private fun updateActiveModelButton(modelName: String) {
+        binding.activeModelButton.text = modelName
+    }
 
 
     // --------------------------
