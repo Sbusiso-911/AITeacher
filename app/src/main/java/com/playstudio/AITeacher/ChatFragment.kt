@@ -361,15 +361,10 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     ): View {
 
         _binding = FragmentChatBinding.inflate(inflater, container, false)
-        setHasOptionsMenu(true) // Ensure the fragment can handle menu options
         return binding.root
     }
 
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.harmburger_menu, menu)
-        super.onCreateOptionsMenu(menu, inflater)
-    }
 
     override fun onResume() {
         super.onResume()
@@ -383,23 +378,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.menu_new_conversation -> {
-                startNewConversation()
-                true
-            }
-            R.id.menu_help -> {
-                showHelpDialog()
-                true
-            }
-            R.id.menu_report -> {
-                showReportDialog()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
+
 
 
 
