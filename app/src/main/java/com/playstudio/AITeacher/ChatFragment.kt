@@ -1172,7 +1172,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             }
             "computer-use-preview" -> {
                 binding.messageInputLayout.visibility = View.VISIBLE
-                binding.sendButton.visibility = View.GONE
+                binding.sendButton.visibility = View.VISIBLE
                 binding.scanTextButton.visibility = View.GONE
                 binding.voiceInputButton.visibility = View.GONE
                 binding.ttsToggleButton.visibility = View.GONE
@@ -2221,9 +2221,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             if (scrollToBottom && currentList.isNotEmpty()) {
                 binding.recyclerView.smoothScrollToPosition(currentList.size - 1)
             }
-        }
-        if (!chatMessage.isTyping) {
-            saveChatHistory()
+            if (!chatMessage.isTyping) {
+                saveChatHistory(currentList)
+            }
         }
     }
     private fun addOlderMessagesToList(olderMessages: List<ChatMessage>) {
@@ -2240,7 +2240,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             // binding.recyclerView.scrollToPosition(olderMessages.size -1) // might be too abrupt
             isLoadingMoreMessages = false // Reset loading flag
         }
-        saveChatHistory() // Save history including older messages
+        saveChatHistory(currentList) // Save history including older messages
     }
 
     // In ChatFragment.kt
@@ -3749,7 +3749,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     "computer-use-preview" -> {
                         binding.computerUseControls.visibility = View.VISIBLE
                         binding.messageInputLayout.visibility = View.VISIBLE
-                        binding.sendButton.visibility = View.GONE
+                        binding.sendButton.visibility = View.VISIBLE
                         binding.scanTextButton.visibility = View.GONE
                         binding.voiceInputButton.visibility = View.GONE
                         binding.ttsToggleButton.visibility = View.GONE
@@ -5040,8 +5040,8 @@ private fun updateActiveModelButton(modelName: String) {
         }
     }
 
-    private fun saveChatHistory() {
-        val currentMessages = chatAdapter.currentList.filterNot { it.isTyping }
+    private fun saveChatHistory(messagesOverride: List<ChatMessage>? = null) {
+        val currentMessages = (messagesOverride ?: chatAdapter.currentList).filterNot { it.isTyping }
         if (currentMessages.isEmpty() && conversationId == null) return
 
         val currentConvId = conversationId ?: generateConversationId().also { conversationId = it }
