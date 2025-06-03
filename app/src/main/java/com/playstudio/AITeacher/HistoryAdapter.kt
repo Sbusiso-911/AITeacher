@@ -8,14 +8,15 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.playstudio.aiteacher.R
 
+import com.playstudio.aiteacher.history.ConversationEntity
+
 class HistoryAdapter(
-    private val conversations: List<String>,
-    private val onCopyClick: (String) -> Unit
+    private var conversations: List<ConversationEntity>,
+    private val onItemClick: (ConversationEntity) -> Unit
 ) : RecyclerView.Adapter<HistoryAdapter.HistoryViewHolder>() {
 
     class HistoryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val conversationTextView: TextView = itemView.findViewById(R.id.conversation_text)
-        val copyImageView: ImageView = itemView.findViewById(R.id.copy_icon)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HistoryViewHolder {
@@ -25,13 +26,16 @@ class HistoryAdapter(
 
     override fun onBindViewHolder(holder: HistoryViewHolder, position: Int) {
         val conversation = conversations[position]
-        holder.conversationTextView.text = conversation
-        holder.copyImageView.setOnClickListener {
-            onCopyClick(conversation)
-        }
+        holder.conversationTextView.text = conversation.title
+        holder.itemView.setOnClickListener { onItemClick(conversation) }
     }
 
     override fun getItemCount(): Int {
         return conversations.size
+    }
+
+    fun submitList(newList: List<ConversationEntity>) {
+        conversations = newList
+        notifyDataSetChanged()
     }
 }
