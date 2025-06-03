@@ -206,6 +206,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
     // At the top of ChatFragment, with other viewModel declarations
     private val openAILiveAudioViewModel: OpenAILiveAudioViewModel by viewModels()
+    private var lastOpenAiMessage: String? = null
 
 
     // Manager for OpenAI computer-use API
@@ -699,6 +700,10 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         viewLifecycleOwner.lifecycleScope.launch {
             openAILiveAudioViewModel.aiTextMessage.collect { text ->
                 binding.openAIAiResponseTextView.text = text
+                if (text.isNotBlank() && text != lastOpenAiMessage) {
+                    addMessageToChat(text, false)
+                    lastOpenAiMessage = text
+                }
             }
         }
         // --- End OpenAI Live Audio ViewModel Integration ---
