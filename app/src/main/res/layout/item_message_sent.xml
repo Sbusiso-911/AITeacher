@@ -2,41 +2,90 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
+    android:orientation="vertical"
     android:padding="8dp"
     android:layout_marginBottom="3dp"
-    android:background="@drawable/bg_message_sent"> <!-- Use custom background -->
+    android:background="@drawable/bg_message_received"> <!-- Make sure this drawable exists -->
 
-    <!-- Copy icon on the left -->
-    <ImageView
-        android:id="@+id/copy_icon"
-        android:layout_width="16dp"
-        android:layout_height="16dp"
-        android:src="@drawable/ic_copy"
-        android:contentDescription="@string/copy_sent_message"
-        android:layout_marginEnd="8dp" /> <!-- Margin for spacing -->
+    <!-- Horizontal layout for emoji, message, and copy icon -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="start|center_vertical"> <!-- Added center_vertical -->
 
-    <!-- Message TextView in the center -->
-    <TextView
-        android:id="@+id/messageTextView"
+        <ImageView
+            android:id="@+id/emojiImageView"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="8dp"
+            android:src="@drawable/ic_ai_emoji"
+            android:background="@drawable/circle_white_background"
+        android:contentDescription="@string/ai_emoji" />
+
+        <!-- THIS IS THE CONTAINER FOR THE ACTUAL MESSAGE TEXT/WEBVIEW -->
+        <FrameLayout
+            android:id="@+id/messageContentContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:textColor="@color/white"
-        android:text="@string/sent_message"
-        android:padding="8dp"
+        android:background="@drawable/bg_message_received"
+        android:padding="8dp">
+
+        <com.playstudio.aiteacher.TypeWriterTextView
+            android:id="@+id/messageTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#E1DFDF"
         android:autoLink="web"
         android:linksClickable="true"
-        android:textIsSelectable="true"/>
+        android:textIsSelectable="true"
+        android:visibility="gone"/> <!-- Initially gone, shown if not rich content -->
+        <!-- WebView will be added here by the adapter if containsRichContent is true -->
+    </FrameLayout>
 
-    <!-- Emoji ImageView on the right -->
     <ImageView
-        android:id="@+id/emojiImageView"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_marginStart="8dp"
-        android:src="@drawable/ic_user_emoji"
-        android:background="@drawable/circle_white_background"
-        android:contentDescription="@string/user_emoji" />
+        android:id="@+id/copy_icon"
+    android:layout_width="24dp"
+    android:layout_height="24dp"
+    android:layout_marginStart="8dp"
+    android:src="@drawable/ic_copy"
+    android:contentDescription="@string/copy_received_message"
+    android:clickable="true"
+    android:focusable="true"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:padding="4dp"/> <!-- Padding for touch area -->
 </LinearLayout>
+
+    <!-- Follow-up questions section (container for header and buttons) -->
+<LinearLayout
+android:id="@+id/followUpSection"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:visibility="gone"
+    android:layout_marginStart="32dp"
+    android:layout_marginTop="4dp">
+
+<Button
+android:id="@+id/followUpHeaderButton"
+    style="?android:attr/borderlessButtonStyle"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Suggested Follow-ups ▼"
+    android:textAllCaps="false"
+    android:textColor="#808080"
+    android:textSize="12sp"
+    android:minHeight="0dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp"/>
+
+<LinearLayout
+android:id="@+id/followUpButtonsContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:visibility="gone" />
+    </LinearLayout>
+
+    </LinearLayout>
