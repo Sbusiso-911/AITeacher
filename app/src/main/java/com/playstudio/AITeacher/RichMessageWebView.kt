@@ -4,6 +4,8 @@ package com.playstudio.aiteacher  // Change to your app's package name
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.AttributeSet
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
@@ -32,7 +34,14 @@ class RichMessageWebView @JvmOverloads constructor(
 
         webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                return false
+                context.startActivity(Intent(Intent.ACTION_VIEW, request.url))
+                return true
+            }
+
+            // Support older Android versions
+            override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+                url?.let { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) }
+                return true
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
@@ -184,6 +193,19 @@ class RichMessageWebView @JvmOverloads constructor(
         // Process inline code
         processed = processed.replace("`([^`]+)`".toRegex()) { match ->
             "<code>${match.groupValues[1].htmlEscape()}</code>"
+        }
+
+        // Process markdown links [text](url)
+        processed = processed.replace("\\[([^\\]]+)\\]\((https?://[^)]+)\)".toRegex()) { match ->
+            val text = match.groupValues[1]
+            val url = match.groupValues[2]
+            "<a href=\"$url\">${text.htmlEscape()}</a>"
+        }
+
+        // Convert plain URLs into clickable links
+        processed = processed.replace("(?<!\")((https?://|www\.)[\w\-._~:/?#@!$&'()*+,;=%]+)".toRegex()) { match ->
+            val url = if (match.value.startsWith("http")) match.value else "http://${match.value}"
+            "<a href=\"$url\">${match.value}</a>"
         }
 
         return processed
