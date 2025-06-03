@@ -371,6 +371,20 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 android:drawablePadding="4dp" />
+
+            <!-- Send button used when Computer Use mode is active -->
+            <ImageButton
+                android:id="@+id/startComputerUseButton"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_send_white"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:tint="@color/white"
+                android:contentDescription="@string/send_button_desc"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <!-- Subscription overlay with calming semi-transparent blue -->
@@ -509,11 +523,6 @@
                 style="@style/AppButton"/>
 
 
-            <Button
-                android:id="@+id/startComputerUseButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Start Computer Use" />
 
             <TextView
                 android:id="@+id/computerUseResponseTextView"
