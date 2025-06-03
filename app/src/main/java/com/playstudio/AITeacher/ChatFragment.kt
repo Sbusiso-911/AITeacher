@@ -111,9 +111,9 @@ import com.google.gson.annotations.SerializedName
 import com.playstudio.aiteacher.viewmodel.OpenAILiveAudioViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.Job
 import java.net.URLEncoder
 import com.playstudio.aiteacher.ComputerUseManager
-import com.playstudio.aiteacher.utils.ChatHistoryUtils
 
 import android.provider.CalendarContract
 import android.provider.Settings
@@ -182,7 +182,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     }
 
     // In your Activity or Fragment
-    private lateinit var startComputerUseButton: Button
     private lateinit var computerUseResponseTextView: TextView
 
     private var speechRecognizer: SpeechRecognizer? = null
@@ -193,6 +192,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private val MAX_API_KEY_ERRORS_BEFORE_UPDATE = 3
     private var outputFile: String = ""
     private var meetingTranscript = StringBuilder()
+    private var conversationHistory = JSONArray()
 
     // Web search related constants
     private val WEB_SEARCH_MODELS = listOf(
@@ -253,6 +253,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private var isTtsEnabled = false
     private val chatHistoryKey = "chat_history"
     private var isFollowUpEnabled = true
+
+    // Track ongoing API call so we can cancel when starting a new conversation
+    private var currentApiJob: Job? = null
 
     private lateinit var requestAudioPermissionLauncher: ActivityResultLauncher<String> // Assuming this is declared
 
@@ -319,6 +322,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         private const val DAILY_LIMIT_TTS = 30
         private const val DAILY_LIMIT_GEMINI = 40
         private const val DAILY_LIMIT_DEEPSEEK = 40
+        private const val DAILY_LIMIT_CLAUDE_SONNET4 = 40
+        private const val DAILY_LIMIT_CLAUDE_OPUS4 = 25
         //private const val REQUEST_RECORD_AUDIO_PERMISSION = 300
         private const val REQUEST_STORAGE_PERMISSION = 301
     }
@@ -364,8 +369,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         return binding.root
     }
 
-
-
     override fun onResume() {
         super.onResume()
         (requireActivity() as? AppCompatActivity)?.supportActionBar?.apply {
@@ -378,7 +381,23 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
 
-
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.menu_new_conversation -> {
+                startNewConversation()
+                true
+            }
+            R.id.menu_help -> {
+                showHelpDialog()
+                true
+            }
+            R.id.menu_report -> {
+                showReportDialog()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
 
 
 
@@ -388,7 +407,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         super.onViewCreated(view, savedInstanceState)
         Log.d("ChatFragment", "onViewCreated called")
 
-        selectedVoice = loadSelectedVoice()
+        loadSharedPrefs()
         binding.voiceSelectionButton.text = "Voice: ${selectedVoice.replaceFirstChar { it.uppercase() }}"
 
         // Initialize the views
@@ -422,35 +441,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
 
         binding.voiceSelectionButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
-        // Initialize the chatAdapter with the lifecycleScope
-        // Initialize the chatAdapter
-        chatAdapter = com.playstudio.aiteacher.ChatAdapter(
-            onCitationClicked = { citation ->
-                showCitationDialog(citation)
-            },
-            onFollowUpQuestionClicked = { question ->
-                binding.messageEditText.setText(question)
-                binding.messageEditText.setSelection(question.length)
-                // Optionally, you might want to also send the message or hide keyboard
-            },
-            onLoadMoreRequested = {
-                // Check if already loading to prevent multiple requests
-                if (!isLoadingMoreMessages) {
-                    Log.d("ChatFragment", "onLoadMoreRequested triggered")
-                    loadOlderMessages()
-                }
-            }
-        )
-
-        binding.recyclerView.apply {
-            layoutManager = LinearLayoutManager(requireContext()).apply {
-                stackFromEnd = true
-            }
-            adapter = chatAdapter
-            setHasFixedSize(true)
-            itemAnimator = null // Or DefaultItemAnimator()
-            setItemViewCacheSize(20)
-        }
+        setupChatRecyclerView()
 
         binding.voiceSelectionButton.setOnClickListener {
             showVoiceSelectionDialog()
@@ -464,16 +455,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
 
 
-        // Set up the RecyclerView
-        binding.recyclerView.apply {
-            layoutManager = LinearLayoutManager(requireContext()).apply {
-                stackFromEnd = true // Ensure new messages appear at the bottom
-            }
-            adapter = chatAdapter
-            setHasFixedSize(true) // Optimize for fixed-size RecyclerView
-            itemAnimator = null // Disable item animations for better performance
-            setItemViewCacheSize(20) // Increase cache size for smoother scrolling
-        }
         // Load the isGreetingSent flag from SharedPreferences
         val sharedPreferences = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         isGreetingSent = sharedPreferences.getBoolean(GREETING_SENT_KEY, false)
@@ -534,7 +515,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         // Initialize with the selected model
         arguments?.getString("selected_model")?.let {
             currentModel = it
-            updateUIForCurrentModel()
+            switchUiForModel(currentModel)
         }
         captureImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -740,8 +721,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         initializeActivityLaunchers()
         setupUIListeners()
         observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
-        setupUIListeners()
-        observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
         binding.shareButton.setOnClickListener { shareLastResponse() }
 
         binding.shareButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.fading_background)
@@ -942,11 +921,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
                 lifecycleScope.launch {
                     val sessionSummary = computerUseManager.startComputerUseSession(prompt)
-                    // Typing indicator will be removed by the first message from onUpdate,
-                    // or you can explicitly remove it here if no messages were sent via onUpdate.
-                    // If ComputerUseManager sends messages via onUpdate, they will call addMessageToChat,
-                    // which should ideally handle removing the typing indicator.
-                    // removeTypingIndicator() // Might be redundant if onUpdate calls addMessageToChat
+                    // Ensure any remaining typing indicator is cleared after session completes
+                    removeTypingIndicator()
                     Log.d("ChatFragment", "ComputerUseManager final session summary: $sessionSummary")
                     // Optionally, display the finalSummary if it contains info not sent via onUpdate
                     // addMessageToChat("Session summary: $sessionSummary", false, containsRichContent = false)
@@ -970,26 +946,32 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
     }
 
-
-
-
     private fun setupChatRecyclerView() {
         chatAdapter = com.playstudio.aiteacher.ChatAdapter(
             onCitationClicked = { showCitationDialog(it) },
             onFollowUpQuestionClicked = { question ->
                 binding.messageEditText.setText(question)
-                // Optionally send message or just prefill
+                binding.messageEditText.setSelection(question.length)
             },
             onLoadMoreRequested = {
-                // Implement if you have pagination
+                if (!isLoadingMoreMessages) {
+                    loadOlderMessages()
+                }
             }
         )
+
         binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext()).apply { stackFromEnd = true }
             adapter = chatAdapter
-            // itemAnimator = null // Consider DefaultItemAnimator for better UX if no issues
+            setHasFixedSize(true)
+            itemAnimator = null
+            setItemViewCacheSize(20)
         }
     }
+
+
+
+
 
     private fun setupUIListeners() {
         binding.sendButton.setOnClickListener {
@@ -1093,16 +1075,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             updateSubscriptionStatus(subscriptionViewModel.isAdFree.value ?: false, expirationTime)
         }
     }
-    private fun loadSharedPrefs() {
-        val appPrefs = requireContext().getSharedPreferences(PREFS_NAME_APP, Context.MODE_PRIVATE)
-        selectedVoice = appPrefs.getString(SELECTED_VOICE_KEY, "alloy") ?: "alloy"
-        binding.voiceSelectionButton.text = "Voice: ${selectedVoice.replaceFirstChar { it.uppercase() }}"
-        // Load conversationId for the last session or default to a new one
-        conversationId = appPrefs.getString("last_conversation_id", null) ?: generateConversationId().also {
-            appPrefs.edit().putString("last_conversation_id", it).apply()
-        }
-        isFollowUpEnabled = appPrefs.getBoolean("follow_up_enabled", true)
-    }
     private fun isGreetingSentForCurrentConversation(): Boolean {
         val chatPrefs = requireContext().getSharedPreferences(PREFS_NAME_CHAT, Context.MODE_PRIVATE)
         return chatPrefs.getBoolean(KEY_GREETING_SENT + conversationId, false)
@@ -1113,11 +1085,18 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         chatPrefs.edit().putBoolean(KEY_GREETING_SENT + conversationId, true).apply()
     }
 
+    private fun loadSharedPrefs() {
+        val appPrefs = requireContext().getSharedPreferences(PREFS_NAME_APP, Context.MODE_PRIVATE)
+        selectedVoice = appPrefs.getString(SELECTED_VOICE_KEY, "alloy") ?: "alloy"
+        conversationId = appPrefs.getString("last_conversation_id", null) ?: generateConversationId().also {
+            appPrefs.edit().putString("last_conversation_id", it).apply()
+        }
+        isFollowUpEnabled = appPrefs.getBoolean("follow_up_enabled", true)
+    }
 
 
-    // Updated ChatFragment methods for computer use
 
-    private var conversationHistory = JSONArray()
+
 
 
 
@@ -1137,6 +1116,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
     private fun switchUiForModel(model: String) {
         Log.d("ChatFragment", "Switching UI for model: $model")
+        if (model != "computer-use-preview") {
+            computerUseManager.cleanup()
+        }
         // Default to text chat UI
         binding.messageInputLayout.visibility = View.VISIBLE
         binding.scanTextButton.visibility = View.VISIBLE
@@ -1147,6 +1129,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         binding.generatedImageView.visibility = View.GONE
         binding.downloadButton.visibility = View.GONE
         binding.generatingText.visibility = View.GONE
+
+        binding.startComputerUseButton.visibility = View.GONE
 
         binding.openaiLiveAudioControls.visibility = View.GONE
         binding.openAIStatusTextView.visibility = View.GONE
@@ -1172,12 +1156,13 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             }
             "computer-use-preview" -> {
                 binding.messageInputLayout.visibility = View.VISIBLE
-                binding.sendButton.visibility = View.VISIBLE
+                binding.sendButton.visibility = View.GONE
                 binding.scanTextButton.visibility = View.GONE
                 binding.voiceInputButton.visibility = View.GONE
                 binding.ttsToggleButton.visibility = View.GONE
                 binding.followUpQuestionsContainer.visibility = View.GONE
                 binding.computerUseControls.visibility = View.VISIBLE
+                binding.startComputerUseButton.visibility = View.VISIBLE
                 binding.openaiLiveAudioControls.visibility = View.GONE
                 binding.openAIStatusTextView.visibility = View.GONE
                 binding.openAIAiResponseTextView.visibility = View.GONE
@@ -1186,6 +1171,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             else -> {
                 // Standard text model
                 binding.messageEditText.hint = "Type your message..."
+                computerUseManager.cleanup()
             }
         }
     }
@@ -1243,6 +1229,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private val computerUseManager by lazy {
         ComputerUseManager(requireActivity()) { messageFromManager ->
             // This is the onUpdate callback
+            removeTypingIndicator() // ensure typing indicator disappears on first update
             addMessageToChat(
                 messageContent = messageFromManager,
                 isUser = false,
@@ -1255,6 +1242,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         userMessageContent: String,
         currentConversationHistoryForToolCall: MutableList<JSONObject> = mutableListOf() // For multi-turn tool use
     ) {
+        // Cancel any previous request so outdated responses don't appear
+        currentApiJob?.cancel()
+        val requestConversationId = conversationId
         val messagesToSend = JSONArray()
 
         if (currentConversationHistoryForToolCall.isEmpty()) {
@@ -1294,14 +1284,16 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
 
         val requestBodyJson = JSONObject().apply {
-            put("model", currentModel) // Ensure this is a model that supports tools (e.g., gpt-4o, gpt-3.5-turbo-0125+)
+            put("model", currentModel)
             put("messages", messagesToSend)
-            // Only include tools if the model supports it and you have tools defined
+
             if (modelSupportsTools(currentModel)) {
-                put("tools", getAvailableTools()) // Your function to get tool schemas
-                // put("tool_choice", "auto") // "auto" is default
+                put("tools", getAvailableTools())
             }
-            // Add other params like temperature, web_search_options if applicable for this model
+
+            if (WEB_SEARCH_MODELS.contains(currentModel)) {
+                put("web_search_options", JSONObject())
+            }
         }
 
         val body = requestBodyJson.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
@@ -1317,10 +1309,15 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             showTypingIndicator() // Show typing only for the initial user query of a turn
         }
 
-        lifecycleScope.launch {
+        currentApiJob = lifecycleScope.launch {
             try {
                 val response = withContext(Dispatchers.IO) { okHttpClient.newCall(request).execute() }
                 val responseBodyString = response.body?.string()
+
+                if (requestConversationId != conversationId) {
+                    withContext(Dispatchers.Main) { removeTypingIndicator() }
+                    return@launch
+                }
 
                 if (!response.isSuccessful) {
                     Log.e("ChatFragment", "ChatCompletion API Error ${response.code}: $responseBodyString")
@@ -1419,8 +1416,19 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     }
 
     private fun modelSupportsTools(modelName: String): Boolean {
+        // Exclude preview models that do not allow tool usage
+        if (modelName.contains("search-preview") ||
+            modelName.contains("realtime-preview") ||
+            modelName.contains("audio-preview") ||
+            modelName.contains("computer-use-preview")
+        ) {
+            return false
+        }
+
         // List models known to support function calling/tools
-        return modelName.startsWith("gpt-4") || modelName.contains("gpt-3.5-turbo-0125") || modelName.contains("gpt-3.5-turbo-1106")
+        return modelName.startsWith("gpt-4") ||
+                modelName.contains("gpt-3.5-turbo-0125") ||
+                modelName.contains("gpt-3.5-turbo-1106")
         // Add other models as OpenAI updates them.
     }
 
@@ -1776,16 +1784,13 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
     }
 
-    // This would be called by a UI button or potentially another AI tool ("stop_meeting_recording")
-// For now, let's assume a UI button calls a public method in the fragment, which then calls this.
-// This function is NOT directly called by the AI in the initial tool flow.
     suspend fun processAndSummarizeMeeting(): String? = withContext(Dispatchers.IO) {
         if (!isMeetingRecording && currentMeetingAudioFile == null) {
             Log.w("ChatFragmentTool", "No active recording or file to summarize.")
-            return@withContext null // Or an error string
+            return@withContext null
         }
 
-        if (isMeetingRecording) { // Stop it first if still running
+        if (isMeetingRecording) {
             try {
                 mediaRecorder?.stop()
                 mediaRecorder?.release()
@@ -1797,7 +1802,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
 
         val fileToSummarize = currentMeetingAudioFile
-        currentMeetingAudioFile = null // Reset for next recording
+        currentMeetingAudioFile = null
 
         if (fileToSummarize == null || !fileToSummarize.exists() || fileToSummarize.length() == 0L) {
             Log.e("ChatFragmentTool", "Meeting audio file is invalid or empty for summarization.")
@@ -1805,28 +1810,26 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
 
         Log.i("ChatFragmentTool", "Processing meeting recording for summarization: ${fileToSummarize.absolutePath}")
-        showCustomToast("Processing meeting summary...") // Show on UI thread
+        showCustomToast("Processing meeting summary...")
 
-        // Step 1: Transcribe (using OpenAI Audio API - 'whisper-1' or similar)
         val transcript: String? = try {
             val requestFile = fileToSummarize.asRequestBody("audio/m4a".toMediaTypeOrNull())
             val requestBody = MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("file", fileToSummarize.name, requestFile)
-                .addFormDataPart("model", "whisper-1") // Or your preferred transcription model
-                // .addFormDataPart("response_format", "json") // 'json' gives structured output with text
+                .addFormDataPart("model", "whisper-1")
                 .build()
 
             val request = Request.Builder()
                 .url("https://api.openai.com/v1/audio/transcriptions")
-                .header("Authorization", "Bearer ${BuildConfig.API_KEY}") // Ensure BuildConfig.API_KEY is OpenAI key
+                .header("Authorization", "Bearer ${BuildConfig.API_KEY}")
                 .post(requestBody)
                 .build()
 
             val response = okHttpClient.newCall(request).execute()
             if (response.isSuccessful) {
-                val responseBody = response.body?.string()
-                responseBody?.let { JSONObject(it).getString("text") }
+                val body = response.body?.string()
+                body?.let { JSONObject(it).getString("text") }
             } else {
                 Log.e("ChatFragmentTool", "Transcription API error: ${response.code} - ${response.message}")
                 null
@@ -1837,25 +1840,22 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
 
         if (transcript.isNullOrBlank()) {
-            Log.e("ChatFragmentTool", "Transcription failed or produced empty text.")
-            fileToSummarize.delete() // Clean up
+            fileToSummarize.delete()
             return@withContext JSONObject().apply { put("error", "Failed to transcribe the meeting audio.") }.toString()
         }
 
-        Log.i("ChatFragmentTool", "Transcription successful. Length: ${transcript.length}")
-        fileToSummarize.delete() // Clean up original audio file after successful transcription
+        fileToSummarize.delete()
 
-        // Step 2: Summarize (using OpenAI Chat Completions API)
         val summaryPrompt = "Please provide a concise summary of the following meeting transcript:\n\nTranscript:\n\"\"\"\n$transcript\n\"\"\"\n\nSummary:"
         val messagesArray = JSONArray().put(JSONObject().apply {
             put("role", "user")
             put("content", summaryPrompt)
         })
         val summaryRequestBodyJson = JSONObject().apply {
-            put("model", "gpt-3.5-turbo") // Or gpt-4o for better summaries
+            put("model", "gpt-3.5-turbo")
             put("messages", messagesArray)
             put("temperature", 0.5)
-            put("max_tokens", 300) // Adjust as needed
+            put("max_tokens", 300)
         }
         val summaryBody = summaryRequestBodyJson.toString().toRequestBody("application/json".toMediaTypeOrNull())
         val summaryRequest = Request.Builder()
@@ -1871,9 +1871,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 val summaryResponseBody = summaryResponse.body?.string()
                 summaryResponseBody?.let {
                     val summaryText = JSONObject(it).getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content").trim()
-                    Log.i("ChatFragmentTool", "Summarization successful.")
-                    // Return the summary text itself. The calling UI logic will add it to chat.
-                    return@withContext summaryText // Just the summary string
+                    return@withContext summaryText
                 }
             } else {
                 Log.e("ChatFragmentTool", "Summarization API error: ${summaryResponse.code} - ${summaryResponse.message}")
@@ -1881,8 +1879,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         } catch (e: Exception) {
             Log.e("ChatFragmentTool", "Exception during summarization: ${e.message}", e)
         }
-        return@withContext JSONObject().apply { put("error", "Failed to summarize the meeting.") }.toString() // Fallback error
+        JSONObject().apply { put("error", "Failed to summarize the meeting.") }.toString()
     }
+
 
 
 
@@ -2221,9 +2220,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             if (scrollToBottom && currentList.isNotEmpty()) {
                 binding.recyclerView.smoothScrollToPosition(currentList.size - 1)
             }
-            if (!chatMessage.isTyping) {
-                saveChatHistory(currentList)
-            }
+        }
+        if (!chatMessage.isTyping) {
+            saveChatHistory()
         }
     }
     private fun addOlderMessagesToList(olderMessages: List<ChatMessage>) {
@@ -2240,7 +2239,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             // binding.recyclerView.scrollToPosition(olderMessages.size -1) // might be too abrupt
             isLoadingMoreMessages = false // Reset loading flag
         }
-        saveChatHistory(currentList) // Save history including older messages
+        saveChatHistory() // Save history including older messages
     }
 
     // In ChatFragment.kt
@@ -2601,9 +2600,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     return@launch
                 }
 
-                responseBody?.let {
+                responseBody?.let { responseBodyString ->
                     try {
-                        val jsonResponse = JSONObject(it)
+                        val jsonResponse = JSONObject(responseBodyString)
                         if (jsonResponse.has("choices")) {
                             val choices = jsonResponse.getJSONArray("choices")
                             if (choices.length() > 0) {
@@ -2611,27 +2610,43 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                                     .getString("content").trim()
 
                                 withContext(Dispatchers.Main) {
+                                    // Add the AI response to chat
+                                    addMessageToChat(reply, false) // Assuming false means it's from AI
                                     removeTypingIndicator()
-                                    addMessageToChat( // Your refactored method
-                                        messageContent = reply,
-                                        isUser = false,
-                                        containsRichContent = determineIfRichContent(reply)
-                                        // Parse and pass citations/followUps if this model provides them
-                                    )
-                                    // //generateFollowUpQuestions(reply) // If needed
+
+                                    // Parse and pass citations/followUps if this model provides them
+                                    // generateFollowUpQuestions(reply) // If needed
+
                                     if (isTtsEnabled) {
                                         handleTextToSpeech(reply)
                                     }
                                     incrementInteractionCount()
                                 }
-                            } else { /* ... no choices handling ... */ }
-                        } else { /* ... no 'choices' field handling ... */ }
-                    } catch (e: JSONException) { /* ... JSON parsing error handling ... */ }
-                } ?: withContext(Dispatchers.Main) { /* ... null response body handling ... */ }
-            } catch (e: IOException) { /* ... IO error handling ... */ }
+                            }
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                showCustomToast("No response choices received")
+                                removeTypingIndicator()
+                            }
+                        }
+                    } catch (e: JSONException) {
+                        withContext(Dispatchers.Main) {
+                            showCustomToast("Error parsing response: ${e.message}")
+                            removeTypingIndicator()
+                        }
+                    }
+                } ?: withContext(Dispatchers.Main) {
+                    showCustomToast("Empty response received")
+                    removeTypingIndicator()
+                }
+            } catch (e: IOException) {
+                withContext(Dispatchers.Main) {
+                    showCustomToast("Network error: ${e.message}")
+                    removeTypingIndicator()
+                }
+            }
         }
     }
-
     // In ChatFragment.kt
 
     private fun handleErrorResponse(response: Response) {
@@ -2700,11 +2715,20 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         return allMessages.subList(startIndex, indexOfAnchor).reversed() // Get 'limit' messages before the anchor
     }
     private fun startNewConversation() {
-        chatAdapter.submitList(emptyList()) // Clear the adapter
+        // Cancel any pending API call and clear typing indicator
+        currentApiJob?.cancel()
+        removeTypingIndicator()
+        computerUseManager.cleanup()
+        chatAdapter.submitList(emptyList()) {
+            chatAdapter.notifyDataSetChanged()
+            binding.recyclerView.scrollToPosition(0)
+        }
+        // Recreate the adapter to ensure the RecyclerView is fully reset
+        setupChatRecyclerView()
+        conversationHistory = JSONArray()
         conversationId = generateConversationId()
-        val appPrefs = requireContext().getSharedPreferences(PREFS_NAME_APP, Context.MODE_PRIVATE)
-        appPrefs.edit().putString("last_conversation_id", conversationId).apply()
         isGreetingSent = false // Allow greeting for the new conversation
+        isWebSearchEnabled = false
         sendGreetingMessage()
         showCustomToast("New conversation started")
     }
@@ -2839,27 +2863,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
         return builder.toString()
     }
-    private fun addMessageToChat(
-        messageContent: String,
-        isUser: Boolean,
-        citations: List<com.playstudio.aiteacher.ChatFragment.Citation> = emptyList(),
-        followUpQuestions: List<String> = emptyList(),
-        containsRichContent: Boolean = false // Pass this flag
-    ) {
-        val newChatMessage = ChatMessage(
-            id = System.currentTimeMillis().toString(),
-            content = messageContent,
-            isUser = isUser,
-            citations = citations,
-            followUpQuestions = followUpQuestions,
-            containsRichContent = containsRichContent
-        )
-        addMessageToList(newChatMessage)
-
-        if (!isUser && isTtsEnabled) {
-            speakOut(messageContent)
-        }
-    }
 
 
     private fun generateDynamicFollowUpQuestions(reply: String, callback: (List<String>) -> Unit) {
@@ -2932,18 +2935,18 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             }
         }
     }
+    private fun playAudioFromFile(file: File) {
+        MediaPlayer().apply {
+            setDataSource(file.absolutePath)
+            prepare()
+            start()
+        }
+    }
+
     private fun handleNetworkError(e: IOException) {
         lifecycleScope.launch(Dispatchers.Main) {
             showCustomToast("Network error: ${e.message}")
             removeTypingIndicator()
-        }
-    }
-
-    private fun playAudioFromFile(file: File) {
-        val mediaPlayer = MediaPlayer().apply {
-            setDataSource(file.absolutePath)
-            prepare()
-            start()
         }
     }
 
@@ -2983,13 +2986,10 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     Log.d("ChatFragment", "Retrying image generation... Attempts left: $retryCount")
                     handleImageGeneration(prompt, retryCount - 1)
                 } else {
-                    Log.e("ChatFragment", "Failed to get image generation response", e)
+                    handleNetworkError(e)
                     requireActivity().runOnUiThread {
-                        showCustomToast("Failed to generate image. Please check your internet connection.")
                         binding.generatingText.visibility = View.GONE
                         binding.downloadButton.visibility = View.GONE
-
-                        // Stop the "Generating..." animation on failure
                         stopGeneratingAnimation()
                     }
                 }
@@ -3138,6 +3138,24 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         dialog.show()
     }
 
+    private fun showSubscriptionRequiredDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Subscription Required")
+            .setMessage("This feature requires an active subscription")
+            .setPositiveButton("Subscribe") { _, _ ->
+                subscriptionClickListener?.onSubscriptionClick()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun handleDalle3Request(message: String) {
+        addMessageToChat(message, true)
+        handleImageGeneration(message)
+        binding.messageEditText.text.clear()
+        incrementModelUsage("dall-e-3")
+    }
+
     private fun startGeneratingAnimation() {
         val blinkAnimation = AnimationUtils.loadAnimation(requireContext(), R.anim.blink)
         binding.generatingText.startAnimation(blinkAnimation)
@@ -3228,10 +3246,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         when (currentModel) {
             "dall-e-3" -> {
                 if (checkDailyLimit("dall-e-3", DAILY_LIMIT_DALLE)) {
-                    addMessageToChat(message, true)
-                    handleImageGeneration(message)
-                    binding.messageEditText.text.clear()
-                    incrementModelUsage("dall-e-3")
+                    handleDalle3Request(message)
                 } else {
                     showCustomToast("Daily limit for DALL-E 3 reached.")
                 }
@@ -3254,6 +3269,26 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     incrementModelUsage("deepseek")
                 } else {
                     showCustomToast("Daily limit for DeepSeek reached.")
+                }
+            }
+            "claude-sonnet-4" -> {
+                if (checkDailyLimit("claude-sonnet-4", DAILY_LIMIT_CLAUDE_SONNET4)) {
+                    addMessageToChat(message, true)
+                    handleClaudeCompletion(message, "claude-sonnet-4-20250514")
+                    binding.messageEditText.text.clear()
+                    incrementModelUsage("claude-sonnet-4")
+                } else {
+                    showCustomToast("Daily limit for Claude Sonnet 4 reached.")
+                }
+            }
+            "claude-opus-4" -> {
+                if (checkDailyLimit("claude-opus-4", DAILY_LIMIT_CLAUDE_OPUS4)) {
+                    addMessageToChat(message, true)
+                    handleClaudeCompletion(message, "claude-opus-4-20250514")
+                    binding.messageEditText.text.clear()
+                    incrementModelUsage("claude-opus-4")
+                } else {
+                    showCustomToast("Daily limit for Claude Opus 4 reached.")
                 }
             }
             "o3-mini" -> {
@@ -3287,24 +3322,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
     }
 
-    private fun handleDalle3Request(message: String) {
-        addMessageToChat(message, true)
-        handleImageGeneration(message)
-        binding.messageEditText.text.clear()
-        incrementModelUsage("dall-e-3")
-    }
-
-    private fun showSubscriptionRequiredDialog() {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Subscription Required")
-            .setMessage("This feature requires an active subscription")
-            .setPositiveButton("Subscribe") { _, _ ->
-                subscriptionClickListener?.onSubscriptionClick()
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
     // In ChatFragment.kt - THIS IS THE VERSION TO KEEP AND USE
     private fun addMessageToChat(
         messageContent: String,
@@ -3325,6 +3342,11 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             // timestamp will be set by default in ChatMessage constructor
         )
         addMessageToList(newChatMessage) // Your helper that calls submitList
+
+        conversationHistory.put(JSONObject().apply {
+            put("role", if (isUser) "user" else "assistant")
+            put("content", messageContent)
+        })
 
         if (!isUser && isTtsEnabled) {
             speakOut(messageContent)
@@ -3583,17 +3605,45 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     // In ChatFragment.kt
 
     private fun loadChatHistoryById(chatId: String) {
-        val conversation = ChatHistoryUtils.getConversation(requireContext(), chatId)
-        if (conversation == null) {
-            showCustomToast("Chat not found.")
-            return
+        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        val savedChatsJson = sharedPreferences.getString(chatHistoryKey, "[]")
+        val messagesToLoad = mutableListOf<ChatMessage>() // Local temporary list
+
+        try {
+            val savedChatsArray = JSONArray(savedChatsJson)
+            var foundConversation = false
+            for (i in 0 until savedChatsArray.length()) {
+                val chatObject = savedChatsArray.getJSONObject(i)
+                if (chatObject.getString("id") == chatId) {
+                    this.conversationId = chatId // Update current conversation ID
+                    val messagesArray = chatObject.getJSONArray("messages")
+                    for (j in 0 until messagesArray.length()) {
+                        // Use your parseChatMessageFromJson helper
+                        messagesToLoad.add(parseChatMessageFromJson(messagesArray.getJSONObject(j)))
+                    }
+                    foundConversation = true
+                    break
+                }
+            }
+            if (!foundConversation) {
+                showCustomToast("Chat not found.") // Or handle appropriately
+            }
+        } catch (e: JSONException) {
+            Log.e("ChatFragment", "Error loading chat by ID", e)
+            showCustomToast("Error loading chat.")
+            // Optionally clear the adapter if loading fails critically
+            // chatAdapter.submitList(emptyList())
+            return // Exit if parsing fails
         }
-        this.conversationId = chatId
-        chatAdapter.submitList(conversation.messages) {
-            if (conversation.messages.isNotEmpty()) {
-                binding.recyclerView.smoothScrollToPosition(conversation.messages.size - 1)
+
+        // Submit the new list to the adapter
+        chatAdapter.submitList(messagesToLoad.toList()) {
+            if (messagesToLoad.isNotEmpty()) {
+                binding.recyclerView.smoothScrollToPosition(messagesToLoad.size - 1)
             }
         }
+        // Note: saveChatHistory() might be called if this implies the chat is now "active"
+        // and further messages will be added to this loaded history.
     }
     private fun showChatOptionsDialog(chatId: String, chatTitle: String) {
         val options = arrayOf("View Chat", "Delete Chat")
@@ -3632,12 +3682,24 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     }
 
     private fun deleteChatHistoryById(chatId: String) {
-        ChatHistoryUtils.deleteConversation(requireContext(), chatId)
+        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        val savedChatsArray = JSONArray(sharedPreferences.getString(chatHistoryKey, "[]"))
+        val updatedChatsArray = JSONArray()
+
+        for (i in 0 until savedChatsArray.length()) {
+            val chatObject = savedChatsArray.getJSONObject(i)
+            if (chatObject.getString("id") != chatId) {
+                updatedChatsArray.put(chatObject)
+            }
+        }
+
+        sharedPreferences.edit().putString(chatHistoryKey, updatedChatsArray.toString()).apply()
         showCustomToast("Chat deleted successfully")
     }
 
     private fun deleteAllChatHistory() {
-        ChatHistoryUtils.deleteAllConversations(requireContext())
+        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        sharedPreferences.edit().putString(chatHistoryKey, "[]").apply()
         showCustomToast("All chat history deleted successfully")
     }
 
@@ -3669,6 +3731,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             "GPT-4.1 Mini 🖼️ - Image analysis and understanding\nExample: Analyze images, extract information, or generate descriptions.",
             "Gemini Voice Chat 🎙️ - Google real-time voice\nExample: Engage in spoken dialogue with Gemini.", // ADDED Gemini Voice Chat
             "OpenAI Realtime Voice 🔊 - OpenAI low-latency voice\nExample: Conversational AI with OpenAI.",
+            "Claude Sonnet 4 🤖 - Balanced speed and intelligence\nExample: Detailed explanations with moderate latency.",
+            "Claude Opus 4 🧠 - Highest reasoning ability\nExample: Complex problem solving and analysis.",
             "Computer Use 🖥️ - Automate tasks via browser screenshots"
 
         )
@@ -3699,95 +3763,27 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     15 -> "gpt-4.1-mini"
                     16 -> "gemini-voice-chat"     // Identifier for Gemini Voice Chat
                     17 -> "openai-realtime-voice"// Identifier for OpenAI Realtime Voice
-                    18 -> "computer-use-preview"
+                    18 -> "claude-sonnet-4"
+                    19 -> "claude-opus-4"
+                    20 -> "computer-use-preview"
                     else -> "gpt-3.5-turbo"       // Default fallback
                 }
 
-                currentModel = selectedModelIdentifier // Update the fragment's currentModel
+                isWebSearchEnabled = selectedModelIdentifier in listOf(
+                    "gpt-4o-search-preview",
+                    "gpt-4o-mini-search-preview"
+                )
+                currentModel = selectedModelIdentifier
 
-                // --- UI Toggling Logic ---
-                when (currentModel) {
-                    "gemini-voice-chat" -> {
+                switchUiForModel(currentModel)
+                val displayName = if (position < options.size) options[position].substringBefore(" -") else "Chat"
+                updateActiveModelButton(displayName)
+                showCustomToast("Switched to $displayName")
 
-                        binding.openaiLiveAudioControls.visibility = View.GONE // Hide OpenAI controls
-
-                        // Hide standard text chat UI
-                        binding.messageInputLayout.visibility = View.GONE
-                        binding.scanTextButton.visibility = View.GONE
-                        binding.voiceInputButton.visibility = View.GONE // Standard STT
-                        binding.sendButton.visibility = View.GONE
-                        binding.ttsToggleButton.visibility = View.GONE // Standard TTS toggle
-                        binding.followUpQuestionsContainer.visibility = View.GONE
-                        binding.generatedImageView.visibility = View.GONE
-                        binding.downloadButton.visibility = View.GONE
-                        binding.generatingText.visibility = View.GONE
-
-
-                        updateActiveModelButton("Gemini Voice")
-                        showCustomToast("Switched to Gemini Voice Chat")
-                    }
-                    "openai-realtime-voice" -> {
-                        binding.openaiLiveAudioControls.visibility = View.VISIBLE
-
-
-
-                        // Hide standard text chat UI
-                        binding.messageInputLayout.visibility = View.GONE
-                        binding.scanTextButton.visibility = View.GONE
-                        binding.voiceInputButton.visibility = View.GONE
-                        binding.sendButton.visibility = View.GONE
-                        binding.ttsToggleButton.visibility = View.GONE
-                        binding.followUpQuestionsContainer.visibility = View.GONE
-                        binding.generatedImageView.visibility = View.GONE
-                        binding.downloadButton.visibility = View.GONE
-                        binding.generatingText.visibility = View.GONE
-
-                        openAILiveAudioViewModel.stopSession() // Ensure OpenAI session is stopped (will be started by user action)
-                        updateActiveModelButton("OpenAI Voice")
-                        showCustomToast("Switched to OpenAI Realtime Voice")
-                    }
-                    "computer-use-preview" -> {
-                        binding.computerUseControls.visibility = View.VISIBLE
-                        binding.messageInputLayout.visibility = View.VISIBLE
-                        binding.sendButton.visibility = View.VISIBLE
-                        binding.scanTextButton.visibility = View.GONE
-                        binding.voiceInputButton.visibility = View.GONE
-                        binding.ttsToggleButton.visibility = View.GONE
-                        binding.followUpQuestionsContainer.visibility = View.GONE
-                        binding.generatedImageView.visibility = View.GONE
-                        binding.downloadButton.visibility = View.GONE
-                        binding.generatingText.visibility = View.GONE
-                        updateActiveModelButton("Computer Use")
-                        showCustomToast("Switched to Computer Use")
-                    }
-                    else -> {
-                        // Standard Text-Based Chat UI (for all other models)
-
-                        binding.openaiLiveAudioControls.visibility = View.GONE
-
-                        // Show standard text chat UI elements
-                        binding.messageInputLayout.visibility = View.VISIBLE
-                        binding.scanTextButton.visibility = View.VISIBLE
-                        binding.voiceInputButton.visibility = View.VISIBLE
-                        binding.sendButton.visibility = View.VISIBLE
-                        binding.ttsToggleButton.visibility = View.VISIBLE
-
-                        // Update active model button text from the options list
-                        val displayName = if (position < options.size) options[position].substringBefore(" -") else "Chat"
-                        updateActiveModelButton(displayName)
-                        showCustomToast("Switched to $displayName")
-
-                        // Call your existing function to set up UI for specific models (like DALL-E)
-                        updateUIForCurrentModel() // This handles DALL-E image view etc.
-                    }
-                }
-                // --- End UI Toggling Logic ---
-
-                // Common for all successful switches if not handled inside when cases
-                // binding.webSearchToggle.isEnabled = WEB_SEARCH_MODELS.contains(currentModel) // If you have this
+                // binding.webSearchToggle.isEnabled = WEB_SEARCH_MODELS.contains(currentModel)
 
             } else {
-                showSubscriptionDialog()
+                showSubscriptionRequiredDialog()
             }
             dialog.dismiss()
         }
@@ -3894,21 +3890,21 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                                     .getString("text")
                                     .trim()
 
-                                withContext(Dispatchers.Main) { // Switch to Main for UI updates
+                                withContext(Dispatchers.Main) {
                                     removeTypingIndicator()
-                                    addMessageToChat(
-                                        messageContent = reply,
-                                        isUser = false,
-                                        containsRichContent = determineIfRichContent(reply)
-                                    )
-                                    // If generateFollowUpQuestions is a suspend function, it needs to be called
-                                    // from a coroutine scope or be launched in its own.
-                                    // For now, assuming it's not a suspend function or handles its own scope.
-                                    generateFollowUpQuestions(reply)
-                                    if (isTtsEnabled) {
-                                        handleTextToSpeech(reply)
+                                    generateDynamicFollowUpQuestions(reply) { questions ->
+                                        addMessageToChat(
+                                            messageContent = reply,
+                                            isUser = false,
+                                            followUpQuestions = questions,
+                                            containsRichContent = determineIfRichContent(reply)
+                                        )
+                                        addFollowUpQuestionsToChat(questions)
+                                        if (isTtsEnabled) {
+                                            handleTextToSpeech(reply)
+                                        }
+                                        incrementInteractionCount()
                                     }
-                                    incrementInteractionCount()
                                 }
                             } else {
                                 withContext(Dispatchers.Main) {
@@ -4021,23 +4017,19 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
                                 withContext(Dispatchers.Main) {
                                     removeTypingIndicator()
-                                    addMessageToChat( // Your refactored method
-                                        messageContent = reply,
-                                        isUser = false,
-                                        containsRichContent = determineIfRichContent(reply)
-                                        // Citations and followUpQuestions can be added here if DeepSeek provides them
-                                    )
-                                    // The scrolling is now handled inside addMessageToChat (via addMessageToList)
-
-                                    // This call might add follow-up questions to a separate UI element at the bottom
-                                    // or it might be intended to add more ChatMessage items.
-                                    // If it adds more ChatMessage items, it should also use addMessageToChat.
-                                    generateFollowUpQuestions(reply)
-
-                                    if (isTtsEnabled) {
-                                        handleTextToSpeech(reply)
+                                    generateDynamicFollowUpQuestions(reply) { questions ->
+                                        addMessageToChat(
+                                            messageContent = reply,
+                                            isUser = false,
+                                            followUpQuestions = questions,
+                                            containsRichContent = determineIfRichContent(reply)
+                                        )
+                                        addFollowUpQuestionsToChat(questions)
+                                        if (isTtsEnabled) {
+                                            handleTextToSpeech(reply)
+                                        }
+                                        incrementInteractionCount()
                                     }
-                                    incrementInteractionCount()
                                 }
                             } else {
                                 withContext(Dispatchers.Main) {
@@ -4073,6 +4065,121 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
     }
 
+    private fun handleClaudeCompletion(message: String, model: String) {
+        val claudeApiKey = "YOUR_CLAUDE_API_KEY" // Replace with your key
+        val claudeUrl = "https://api.anthropic.com/v1/messages"
+
+        val messagesArray = JSONArray().apply {
+            chatAdapter.currentList.filterNot { it.isTyping }.forEach { chatMsg ->
+                put(JSONObject().apply {
+                    put("role", if (chatMsg.isUser) "user" else "assistant")
+                    put("content", chatMsg.content)
+                })
+            }
+            put(JSONObject().apply {
+                put("role", "user")
+                put("content", message)
+            })
+        }
+
+        val json = JSONObject().apply {
+            put("model", model)
+            put("messages", messagesArray)
+            put("max_tokens", 1024)
+        }
+
+        val body = json.toString().toRequestBody("application/json".toMediaTypeOrNull())
+        val request = Request.Builder()
+            .url(claudeUrl)
+            .post(body)
+            .addHeader("x-api-key", claudeApiKey)
+            .addHeader("anthropic-version", "2023-06-01")
+            .addHeader("Content-Type", "application/json")
+            .build()
+
+        Log.d("ChatFragment", "Sending request to Claude: $json")
+        showTypingIndicator()
+
+        lifecycleScope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
+                val responseBody = response.body?.string()
+                Log.d("ChatFragment", "Claude response: $responseBody")
+
+                if (!response.isSuccessful) {
+                    withContext(Dispatchers.Main) {
+                        val errMsg = responseBody ?: ""
+                        Log.e("ChatFragment", "Claude API error: ${'$'}{response.code} - $errMsg")
+                        showCustomToast("Claude API error: ${'$'}{response.code}")
+                        removeTypingIndicator()
+                    }
+                    return@launch
+                }
+
+                responseBody?.let {
+                    try {
+                        val jsonResponse = JSONObject(it)
+                        val stopReason = jsonResponse.optString("stop_reason")
+
+                        // Claude API may return `content` as an array of text blocks
+                        // or directly as a string. Handle both formats gracefully.
+                        val contentArray = jsonResponse.optJSONArray("content")
+                        var reply = if (contentArray != null && contentArray.length() > 0) {
+                            buildString {
+                                for (i in 0 until contentArray.length()) {
+                                    val block = contentArray.optJSONObject(i)
+                                    if (block != null && block.optString("type") == "text") {
+                                        append(block.optString("text"))
+                                    }
+                                }
+                            }.trim()
+                        } else {
+                            jsonResponse.optString("content", "").trim()
+                        }
+
+                        if (stopReason == "refusal") {
+                            reply = "Claude refused to answer this request."
+                        }
+
+                        withContext(Dispatchers.Main) {
+                            removeTypingIndicator()
+                            generateDynamicFollowUpQuestions(reply) { questions ->
+                                addMessageToChat(
+                                    messageContent = reply,
+                                    isUser = false,
+                                    followUpQuestions = questions,
+                                    containsRichContent = determineIfRichContent(reply)
+                                )
+                                addFollowUpQuestionsToChat(questions)
+                                if (isTtsEnabled) {
+                                    handleTextToSpeech(reply)
+                                }
+                                incrementInteractionCount()
+                            }
+                        }
+                    } catch (e: JSONException) {
+                        Log.e("ChatFragment", "Error parsing Claude response", e)
+                        withContext(Dispatchers.Main) {
+                            removeTypingIndicator()
+                            showCustomToast("Failed to parse Claude response")
+                        }
+                    }
+                } ?: withContext(Dispatchers.Main) {
+                    removeTypingIndicator()
+                    showCustomToast("Empty response from Claude")
+                }
+            } catch (e: IOException) {
+                Log.e("ChatFragment", "Claude request failed", e)
+                withContext(Dispatchers.Main) {
+                    removeTypingIndicator()
+                    showCustomToast("Network error with Claude: ${'$'}{e.message}")
+                }
+            } finally {
+                withContext(Dispatchers.Main) { removeTypingIndicator() }
+            }
+        }
+    }
+
     private fun showOverlay() {
         Log.d("ChatFragment", "Showing overlay")
         binding.subscriptionOverlay.visibility = View.VISIBLE
@@ -4083,9 +4190,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         binding.subscriptionOverlay.visibility = View.GONE
     }
 
-private fun updateActiveModelButton(modelName: String) {
-    binding.activeModelButton.text = modelName
-}
+    private fun updateActiveModelButton(modelName: String) {
+        binding.activeModelButton.text = modelName
+    }
 
 
     // --------------------------
@@ -4636,6 +4743,14 @@ private fun updateActiveModelButton(modelName: String) {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        if (isMeetingRecording || currentMeetingAudioFile != null) {
+            lifecycleScope.launch {
+                processAndSummarizeMeeting()?.let { summary ->
+                    addMessageToChat(summary, false)
+                }
+            }
+        }
+        computerUseManager.cleanup()
         _binding = null
         tts?.stop()
         tts?.shutdown()
@@ -5030,24 +5145,91 @@ private fun updateActiveModelButton(modelName: String) {
     }
 
     private fun loadChatHistory() {
-        val currentConversationId = conversationId ?: return
-        val conversation = ChatHistoryUtils.getConversation(requireContext(), currentConversationId)
-        val messages = conversation?.messages ?: emptyList()
-        chatAdapter.submitList(messages) {
-            if (messages.isNotEmpty()) {
-                binding.recyclerView.smoothScrollToPosition(messages.size - 1)
+        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        val savedChatsJson = sharedPreferences.getString(chatHistoryKey, "[]")
+        val loadedMessages = mutableListOf<ChatMessage>()
+
+        val currentConversationId = conversationId ?: return // Don't load if no ID
+
+        try {
+            val savedChatsArray = JSONArray(savedChatsJson)
+            for (i in 0 until savedChatsArray.length()) {
+                val chatObject = savedChatsArray.getJSONObject(i)
+                if (chatObject.optString("id") == currentConversationId) {
+                    val messagesArray = chatObject.getJSONArray("messages")
+                    for (j in 0 until messagesArray.length()) {
+                        loadedMessages.add(parseChatMessageFromJson(messagesArray.getJSONObject(j)))
+                    }
+                    break
+                }
+            }
+        } catch (e: JSONException) {
+            Log.e("ChatFragment", "Error loading chat history", e)
+        }
+
+        chatAdapter.submitList(loadedMessages.toList()) {
+            if (loadedMessages.isNotEmpty()) {
+                binding.recyclerView.smoothScrollToPosition(loadedMessages.size - 1)
             }
         }
     }
 
-    private fun saveChatHistory(messagesOverride: List<ChatMessage>? = null) {
-        val currentMessages = (messagesOverride ?: chatAdapter.currentList).filterNot { it.isTyping }
-        if (currentMessages.isEmpty() && conversationId == null) return
+    private fun saveChatHistory() {
+        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+
+        val currentMessagesToSave = chatAdapter.currentList.filterNot { it.isTyping }
+        if (currentMessagesToSave.isEmpty() && conversationId == null) return // Don't save empty new chats
+
+        val messagesJsonArray = JSONArray()
+        currentMessagesToSave.forEach { chatMsg ->
+            messagesJsonArray.put(JSONObject().apply {
+                put("id", chatMsg.id)
+                put("content", chatMsg.content)
+                put("isUser", chatMsg.isUser)
+                put("isTyping", chatMsg.isTyping)
+                put("followUpQuestions", JSONArray(chatMsg.followUpQuestions))
+                val citationsArray = JSONArray()
+                chatMsg.citations.forEach { c ->
+                    citationsArray.put(JSONObject().apply {
+                        put("url", c.url); put("title", c.title);
+                        put("startIndex", c.startIndex); put("endIndex", c.endIndex)
+                    })
+                }
+                put("citations", citationsArray)
+                put("timestamp", chatMsg.timestamp)
+                put("containsRichContent", chatMsg.containsRichContent)
+            })
+        }
 
         val currentConvId = conversationId ?: generateConversationId().also { conversationId = it }
         val chatTitle = "Chat on ${SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())}"
-        val conversation = ChatHistoryUtils.Conversation(currentConvId, chatTitle, currentMessages)
-        ChatHistoryUtils.saveConversation(requireContext(), conversation)
+
+        val chatObjectToSave = JSONObject().apply {
+            put("id", currentConvId)
+            put("title", chatTitle)
+            put("messages", messagesJsonArray)
+        }
+
+        val allChatsJson = sharedPreferences.getString(chatHistoryKey, "[]")
+        val allChatsArray = try { JSONArray(allChatsJson) } catch (e: JSONException) { JSONArray() }
+        val updatedChatsArray = JSONArray()
+        var foundAndReplaced = false
+        for (i in 0 until allChatsArray.length()) {
+            val existingChat = allChatsArray.getJSONObject(i)
+            if (existingChat.optString("id") == currentConvId) {
+                updatedChatsArray.put(chatObjectToSave) // Replace
+                foundAndReplaced = true
+            } else {
+                updatedChatsArray.put(existingChat)
+            }
+        }
+        if (!foundAndReplaced) {
+            updatedChatsArray.put(chatObjectToSave) // Add new
+        }
+
+        editor.putString(chatHistoryKey, updatedChatsArray.toString())
+        editor.apply()
     }
 
 
@@ -5084,9 +5266,17 @@ private fun updateActiveModelButton(modelName: String) {
     }
 
     private fun showChatHistoryDialog() {
-        val conversations = ChatHistoryUtils.getAllConversations(requireContext())
-        val chatTitles = conversations.map { it.title }
-        val chatIds = conversations.map { it.id }
+        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        val savedChatsArray = JSONArray(sharedPreferences.getString(chatHistoryKey, "[]"))
+
+        val chatTitles = mutableListOf<String>()
+        val chatIds = mutableListOf<String>()
+
+        for (i in 0 until savedChatsArray.length()) {
+            val chatObject = savedChatsArray.getJSONObject(i)
+            chatTitles.add(chatObject.getString("title"))
+            chatIds.add(chatObject.getString("id"))
+        }
 
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("Chat History")
@@ -5150,30 +5340,6 @@ private fun updateActiveModelButton(modelName: String) {
 
 
             // Add other permission request codes here as needed
-        }
-    }
-    private fun checkAndRequestPermissions(permissions: Array<String>, requestCode: Int) {
-        val permissionsToRequest = permissions.filter {
-            ContextCompat.checkSelfPermission(requireContext(), it) != PackageManager.PERMISSION_GRANTED
-        }.toTypedArray()
-
-        if (permissionsToRequest.isNotEmpty()) {
-            requestPermissions(permissionsToRequest, requestCode)
-        } else {
-            onPermissionsGranted(requestCode)
-        }
-    }
-
-    private fun onPermissionsGranted(requestCode: Int) {
-        when (requestCode) {
-            CAMERA_REQUEST_CODE -> dispatchTakePictureIntent()
-            WRITE_EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE -> {
-                val imageUrl = binding.imageContainer.getTag(R.id.image_url) as? String
-                if (imageUrl != null) {
-                    downloadImage(imageUrl)
-                }
-            }
-            PICK_DOCUMENT_REQUEST_CODE -> openDocumentPicker()
         }
     }
 
