@@ -169,14 +169,14 @@ class RichMessageWebView @JvmOverloads constructor(
 
     private fun processContent(content: String): String {
         // Process LaTeX math expressions
-        var processed = content.replace("\\$(.*?)\\$".toRegex()) { match ->
+        var processed = content.replace("\\$([^$]*?)\\$".toRegex()) { match ->
             "\\\\(${match.groupValues[1]}\\\\)"
-        }.replace("\\$\\$(.*?)\\$\\$".toRegex()) { match ->
+        }.replace("\\$\\$([\\s\\S]*?)\\$\\$".toRegex()) { match ->
             "\\\\[${match.groupValues[1]}\\\\]"
         }
 
         // Process code blocks
-        processed = processed.replace("```(\\w*)\n([\\s\\S]*?)\n```".toRegex()) { match ->
+        processed = processed.replace("```(\\w*)\\n([\\s\\S]*?)\\n```".toRegex()) { match ->
             val language = match.groupValues[1].takeIf { it.isNotBlank() } ?: "text"
             val code = match.groupValues[2]
             """
@@ -196,14 +196,14 @@ class RichMessageWebView @JvmOverloads constructor(
         }
 
         // Process markdown links [text](url)
-        processed = processed.replace("\\[([^\\]]+)\\]\((https?://[^)]+)\)".toRegex()) { match ->
+        processed = processed.replace("\\[([^\\]]+)\\]\\((https?://[^)]+)\\)".toRegex()) { match ->
             val text = match.groupValues[1]
             val url = match.groupValues[2]
             "<a href=\"$url\">${text.htmlEscape()}</a>"
         }
 
         // Convert plain URLs into clickable links
-        processed = processed.replace("(?<!\")((https?://|www\.)[\w\-._~:/?#@!$&'()*+,;=%]+)".toRegex()) { match ->
+        processed = processed.replace("(?<!\")((https?://|www\\.)[-\\w._~:/?#@!$&'()*+,;=%]+)".toRegex()) { match ->
             val url = if (match.value.startsWith("http")) match.value else "http://${match.value}"
             "<a href=\"$url\">${match.value}</a>"
         }
