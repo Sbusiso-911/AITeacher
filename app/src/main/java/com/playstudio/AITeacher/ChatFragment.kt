@@ -113,6 +113,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.net.URLEncoder
 import com.playstudio.aiteacher.ComputerUseManager
+import com.playstudio.aiteacher.utils.ChatHistoryUtils
 
 import android.provider.CalendarContract
 import android.provider.Settings
@@ -2722,6 +2723,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private fun startNewConversation() {
         chatAdapter.submitList(emptyList()) // Clear the adapter
         conversationId = generateConversationId()
+        val appPrefs = requireContext().getSharedPreferences(PREFS_NAME_APP, Context.MODE_PRIVATE)
+        appPrefs.edit().putString("last_conversation_id", conversationId).apply()
         isGreetingSent = false // Allow greeting for the new conversation
         sendGreetingMessage()
         showCustomToast("New conversation started")
@@ -3601,45 +3604,17 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     // In ChatFragment.kt
 
     private fun loadChatHistoryById(chatId: String) {
-        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
-        val savedChatsJson = sharedPreferences.getString(chatHistoryKey, "[]")
-        val messagesToLoad = mutableListOf<ChatMessage>() // Local temporary list
-
-        try {
-            val savedChatsArray = JSONArray(savedChatsJson)
-            var foundConversation = false
-            for (i in 0 until savedChatsArray.length()) {
-                val chatObject = savedChatsArray.getJSONObject(i)
-                if (chatObject.getString("id") == chatId) {
-                    this.conversationId = chatId // Update current conversation ID
-                    val messagesArray = chatObject.getJSONArray("messages")
-                    for (j in 0 until messagesArray.length()) {
-                        // Use your parseChatMessageFromJson helper
-                        messagesToLoad.add(parseChatMessageFromJson(messagesArray.getJSONObject(j)))
-                    }
-                    foundConversation = true
-                    break
-                }
-            }
-            if (!foundConversation) {
-                showCustomToast("Chat not found.") // Or handle appropriately
-            }
-        } catch (e: JSONException) {
-            Log.e("ChatFragment", "Error loading chat by ID", e)
-            showCustomToast("Error loading chat.")
-            // Optionally clear the adapter if loading fails critically
-            // chatAdapter.submitList(emptyList())
-            return // Exit if parsing fails
+        val conversation = ChatHistoryUtils.getConversation(requireContext(), chatId)
+        if (conversation == null) {
+            showCustomToast("Chat not found.")
+            return
         }
-
-        // Submit the new list to the adapter
-        chatAdapter.submitList(messagesToLoad.toList()) {
-            if (messagesToLoad.isNotEmpty()) {
-                binding.recyclerView.smoothScrollToPosition(messagesToLoad.size - 1)
+        this.conversationId = chatId
+        chatAdapter.submitList(conversation.messages) {
+            if (conversation.messages.isNotEmpty()) {
+                binding.recyclerView.smoothScrollToPosition(conversation.messages.size - 1)
             }
         }
-        // Note: saveChatHistory() might be called if this implies the chat is now "active"
-        // and further messages will be added to this loaded history.
     }
     private fun showChatOptionsDialog(chatId: String, chatTitle: String) {
         val options = arrayOf("View Chat", "Delete Chat")
@@ -3678,24 +3653,12 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     }
 
     private fun deleteChatHistoryById(chatId: String) {
-        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
-        val savedChatsArray = JSONArray(sharedPreferences.getString(chatHistoryKey, "[]"))
-        val updatedChatsArray = JSONArray()
-
-        for (i in 0 until savedChatsArray.length()) {
-            val chatObject = savedChatsArray.getJSONObject(i)
-            if (chatObject.getString("id") != chatId) {
-                updatedChatsArray.put(chatObject)
-            }
-        }
-
-        sharedPreferences.edit().putString(chatHistoryKey, updatedChatsArray.toString()).apply()
+        ChatHistoryUtils.deleteConversation(requireContext(), chatId)
         showCustomToast("Chat deleted successfully")
     }
 
     private fun deleteAllChatHistory() {
-        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
-        sharedPreferences.edit().putString(chatHistoryKey, "[]").apply()
+        ChatHistoryUtils.deleteAllConversations(requireContext())
         showCustomToast("All chat history deleted successfully")
     }
 
@@ -5088,91 +5051,24 @@ private fun updateActiveModelButton(modelName: String) {
     }
 
     private fun loadChatHistory() {
-        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
-        val savedChatsJson = sharedPreferences.getString(chatHistoryKey, "[]")
-        val loadedMessages = mutableListOf<ChatMessage>()
-
-        val currentConversationId = conversationId ?: return // Don't load if no ID
-
-        try {
-            val savedChatsArray = JSONArray(savedChatsJson)
-            for (i in 0 until savedChatsArray.length()) {
-                val chatObject = savedChatsArray.getJSONObject(i)
-                if (chatObject.optString("id") == currentConversationId) {
-                    val messagesArray = chatObject.getJSONArray("messages")
-                    for (j in 0 until messagesArray.length()) {
-                        loadedMessages.add(parseChatMessageFromJson(messagesArray.getJSONObject(j)))
-                    }
-                    break
-                }
-            }
-        } catch (e: JSONException) {
-            Log.e("ChatFragment", "Error loading chat history", e)
-        }
-
-        chatAdapter.submitList(loadedMessages.toList()) {
-            if (loadedMessages.isNotEmpty()) {
-                binding.recyclerView.smoothScrollToPosition(loadedMessages.size - 1)
+        val currentConversationId = conversationId ?: return
+        val conversation = ChatHistoryUtils.getConversation(requireContext(), currentConversationId)
+        val messages = conversation?.messages ?: emptyList()
+        chatAdapter.submitList(messages) {
+            if (messages.isNotEmpty()) {
+                binding.recyclerView.smoothScrollToPosition(messages.size - 1)
             }
         }
     }
 
     private fun saveChatHistory() {
-        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
-        val editor = sharedPreferences.edit()
-
-        val currentMessagesToSave = chatAdapter.currentList.filterNot { it.isTyping }
-        if (currentMessagesToSave.isEmpty() && conversationId == null) return // Don't save empty new chats
-
-        val messagesJsonArray = JSONArray()
-        currentMessagesToSave.forEach { chatMsg ->
-            messagesJsonArray.put(JSONObject().apply {
-                put("id", chatMsg.id)
-                put("content", chatMsg.content)
-                put("isUser", chatMsg.isUser)
-                put("isTyping", chatMsg.isTyping)
-                put("followUpQuestions", JSONArray(chatMsg.followUpQuestions))
-                val citationsArray = JSONArray()
-                chatMsg.citations.forEach { c ->
-                    citationsArray.put(JSONObject().apply {
-                        put("url", c.url); put("title", c.title);
-                        put("startIndex", c.startIndex); put("endIndex", c.endIndex)
-                    })
-                }
-                put("citations", citationsArray)
-                put("timestamp", chatMsg.timestamp)
-                put("containsRichContent", chatMsg.containsRichContent)
-            })
-        }
+        val currentMessages = chatAdapter.currentList.filterNot { it.isTyping }
+        if (currentMessages.isEmpty() && conversationId == null) return
 
         val currentConvId = conversationId ?: generateConversationId().also { conversationId = it }
         val chatTitle = "Chat on ${SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())}"
-
-        val chatObjectToSave = JSONObject().apply {
-            put("id", currentConvId)
-            put("title", chatTitle)
-            put("messages", messagesJsonArray)
-        }
-
-        val allChatsJson = sharedPreferences.getString(chatHistoryKey, "[]")
-        val allChatsArray = try { JSONArray(allChatsJson) } catch (e: JSONException) { JSONArray() }
-        val updatedChatsArray = JSONArray()
-        var foundAndReplaced = false
-        for (i in 0 until allChatsArray.length()) {
-            val existingChat = allChatsArray.getJSONObject(i)
-            if (existingChat.optString("id") == currentConvId) {
-                updatedChatsArray.put(chatObjectToSave) // Replace
-                foundAndReplaced = true
-            } else {
-                updatedChatsArray.put(existingChat)
-            }
-        }
-        if (!foundAndReplaced) {
-            updatedChatsArray.put(chatObjectToSave) // Add new
-        }
-
-        editor.putString(chatHistoryKey, updatedChatsArray.toString())
-        editor.apply()
+        val conversation = ChatHistoryUtils.Conversation(currentConvId, chatTitle, currentMessages)
+        ChatHistoryUtils.saveConversation(requireContext(), conversation)
     }
 
 
@@ -5209,17 +5105,9 @@ private fun updateActiveModelButton(modelName: String) {
     }
 
     private fun showChatHistoryDialog() {
-        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
-        val savedChatsArray = JSONArray(sharedPreferences.getString(chatHistoryKey, "[]"))
-
-        val chatTitles = mutableListOf<String>()
-        val chatIds = mutableListOf<String>()
-
-        for (i in 0 until savedChatsArray.length()) {
-            val chatObject = savedChatsArray.getJSONObject(i)
-            chatTitles.add(chatObject.getString("title"))
-            chatIds.add(chatObject.getString("id"))
-        }
+        val conversations = ChatHistoryUtils.getAllConversations(requireContext())
+        val chatTitles = conversations.map { it.title }
+        val chatIds = conversations.map { it.id }
 
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("Chat History")
