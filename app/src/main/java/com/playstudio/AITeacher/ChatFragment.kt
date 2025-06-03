@@ -59,7 +59,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.menu.MenuPopupHelper
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -249,6 +251,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private var conversationId: String? = null
     private var tts: TextToSpeech? = null
     private var isTtsEnabled = false
+    private val chatHistoryKey = "chat_history"
     private var isFollowUpEnabled = true
 
     // Track ongoing API call so we can cancel when starting a new conversation
@@ -1090,6 +1093,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
         isFollowUpEnabled = appPrefs.getBoolean("follow_up_enabled", true)
     }
+
 
 
 
@@ -2627,16 +2631,39 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                         }
                     } catch (e: JSONException) {
                         withContext(Dispatchers.Main) {
-    // Retrieve older messages using ChatHistoryUtils
-        val convId = conversationId ?: return emptyList()
-        val conversation = ChatHistoryUtils.getConversation(requireContext(), convId)
-            ?: return emptyList()
-        val messages = conversation.messages
-        if (beforeMessageId == null) {
-            return messages.takeLast(limit)
-        val indexOfAnchor = messages.indexOfFirst { it.id == beforeMessageId }
-        if (indexOfAnchor <= 0) return emptyList()
-        return messages.subList(startIndex, indexOfAnchor)
+                            showCustomToast("Error parsing response: ${e.message}")
+                            removeTypingIndicator()
+                        }
+                    }
+                } ?: withContext(Dispatchers.Main) {
+                    showCustomToast("Empty response received")
+                    removeTypingIndicator()
+                }
+            } catch (e: IOException) {
+                withContext(Dispatchers.Main) {
+                    showCustomToast("Network error: ${e.message}")
+                    removeTypingIndicator()
+                }
+            }
+        }
+    }
+    // In ChatFragment.kt
+
+    private fun handleErrorResponse(response: Response) {
+        lifecycleScope.launch(Dispatchers.Main) {
+            val errorMessage = when (response.code) {
+                400 -> {
+                    if (currentModel.startsWith("o")) {
+                        "Insufficient context window for reasoning tokens"
+                    } else {
+                        "Bad request: Check parameters"
+                    }
+                }
+                401 -> "Unauthorized: Check API key"
+                403 -> "Forbidden: Access denied"
+                429 -> "Rate limit exceeded"
+                500 -> "Server error"
+                503 -> "Service unavailable"
                 else -> "Unexpected error: ${response.code}"
             }
             showCustomToast(errorMessage)
@@ -5291,7 +5318,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
                     dispatchTakePictureIntent()
                 } else {
-)
+                    showCustomToast("Camera permission required")
                 }
             }
 
