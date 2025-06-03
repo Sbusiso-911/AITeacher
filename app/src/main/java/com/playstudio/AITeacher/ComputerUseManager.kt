@@ -536,7 +536,9 @@ class ComputerUseManager(
     fun cleanup() {
         overlayView?.let {
             try {
-                if (it.isAttachedToWindow) windowManager.removeView(it) else TODO()
+                if (it.isAttachedToWindow) {
+                    windowManager.removeView(it)
+                }
             } catch (e: Exception) {
                 Log.e("ComputerUseManager", "Error removing overlay during cleanup: ${e.message}")
             }
