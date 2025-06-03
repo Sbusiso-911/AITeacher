@@ -514,16 +514,6 @@
             android:layout_marginBottom="8dp"
             android:contentDescription="@string/computer_use_controls">
 
-            <Button
-                android:id="@+id/computerUseStartButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/start_computer_use"
-                android:contentDescription="@string/start_computer_use_desc"
-                style="@style/AppButton"/>
-
-
-
             <TextView
                 android:id="@+id/computerUseResponseTextView"
                 android:layout_width="match_parent"
