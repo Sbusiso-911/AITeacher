@@ -11,6 +11,8 @@ import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.text.style.ForegroundColorSpan
 import android.text.style.UnderlineSpan
+import android.text.util.Linkify
+import androidx.core.text.util.LinkifyCompat
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -110,7 +112,8 @@ class ChatAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(chatMessage: ChatMessage) {
-            binding.messageTextView.text = Html.fromHtml(chatMessage.content, Html.FROM_HTML_MODE_COMPACT) // Or LEGACY if needed
+            binding.messageTextView.text = Html.fromHtml(chatMessage.content, Html.FROM_HTML_MODE_COMPACT)
+            LinkifyCompat.addLinks(binding.messageTextView, Linkify.WEB_URLS)
             binding.messageTextView.movementMethod = LinkMovementMethod.getInstance()
             // binding.messageTextView.textAlignment = View.TEXT_ALIGNMENT_TEXT_END // Already set in XML likely
 
@@ -176,6 +179,7 @@ class ChatAdapter(
                 if (binding.messageTextView.parent == null) {
                     binding.messageContentContainer.addView(binding.messageTextView)
                 }
+                LinkifyCompat.addLinks(binding.messageTextView, Linkify.WEB_URLS)
             }
             binding.messageTextView.movementMethod = LinkMovementMethod.getInstance()
 
