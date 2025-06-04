@@ -239,6 +239,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private var conversationId: String? = null
     private var tts: TextToSpeech? = null
     private var isTtsEnabled = false
+    // Legacy key used by some utils when migrating off SharedPreferences
+    private val chatHistoryKey = "chat_history"
     private var isFollowUpEnabled = true
     private val historyRepository by lazy { HistoryRepository(DatabaseProvider.database) }
 
