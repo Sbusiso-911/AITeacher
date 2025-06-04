@@ -4,7 +4,6 @@ import androidx.room.withTransaction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.util.UUID
 
 class HistoryRepository(private val db: AppDatabase) {
     private val mutex = Mutex()
@@ -15,11 +14,11 @@ class HistoryRepository(private val db: AppDatabase) {
     fun getMessages(conversationId: String): Flow<List<MessageEntity>> =
         db.messageDao().getMessages(conversationId)
 
-    suspend fun addMessage(conversationId: String, isUser: Boolean, content: String) {
+    suspend fun addMessage(conversationId: String, messageId: String, isUser: Boolean, content: String) {
         mutex.withLock {
             val timestamp = System.currentTimeMillis()
             val message = MessageEntity(
-                id = UUID.randomUUID().toString(),
+                id = messageId,
                 conversationId = conversationId,
                 isUser = isUser,
                 content = content,

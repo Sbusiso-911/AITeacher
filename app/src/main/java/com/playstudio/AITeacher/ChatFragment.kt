@@ -2798,8 +2798,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         followUpQuestions: List<String> = emptyList(),
         containsRichContent: Boolean = false // Pass this flag
     ) {
+        val messageId = UUID.randomUUID().toString()
         val newChatMessage = ChatMessage(
-            id = System.currentTimeMillis().toString(),
+            id = messageId,
             content = messageContent,
             isUser = isUser,
             citations = citations,
@@ -2811,7 +2812,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         if (!newChatMessage.isTyping) {
             val id = conversationId ?: generateConversationId().also { conversationId = it }
             lifecycleScope.launch {
-                historyRepository.addMessage(id, isUser, messageContent)
+                historyRepository.addMessage(id, messageId, isUser, messageContent)
             }
         }
 
