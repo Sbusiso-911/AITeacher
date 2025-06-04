@@ -40,7 +40,6 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import com.playstudio.aiteacher.history.DatabaseProvider
 import com.playstudio.aiteacher.history.HistoryRepository
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
@@ -2254,12 +2253,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 binding.recyclerView.smoothScrollToPosition(currentList.size - 1)
             }
         }
-        if (!chatMessage.isTyping) {
-            val id = conversationId ?: generateConversationId().also { conversationId = it }
-            lifecycleScope.launch {
-                historyRepository.addMessage(id, chatMessage.isUser, chatMessage.content)
-            }
-        }
     }
     private fun addOlderMessagesToList(olderMessages: List<ChatMessage>) {
         if (olderMessages.isEmpty()) {
@@ -2856,6 +2849,13 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             containsRichContent = containsRichContent
         )
         addMessageToList(newChatMessage)
+
+        if (!newChatMessage.isTyping) {
+            val id = conversationId ?: generateConversationId().also { conversationId = it }
+            lifecycleScope.launch {
+                historyRepository.addMessage(id, isUser, messageContent)
+            }
+        }
 
         if (!isUser && isTtsEnabled) {
             speakOut(messageContent)
@@ -4976,18 +4976,17 @@ private fun updateActiveModelButton(modelName: String) {
     private fun loadChatHistory() {
         val id = conversationId ?: return
         viewLifecycleOwner.lifecycleScope.launch {
-            historyRepository.getMessages(id).collectLatest { messages ->
-                val chatMessages = messages.map {
-                    ChatMessage(
-                        id = it.id,
-                        content = it.content,
-                        isUser = it.isUser
-                    )
-                }
-                chatAdapter.submitList(chatMessages) {
-                    if (chatMessages.isNotEmpty()) {
-                        binding.recyclerView.smoothScrollToPosition(chatMessages.size - 1)
-                    }
+            val messages = historyRepository.getMessages(id).first()
+            val chatMessages = messages.map {
+                ChatMessage(
+                    id = it.id,
+                    content = it.content,
+                    isUser = it.isUser
+                )
+            }
+            chatAdapter.submitList(chatMessages) {
+                if (chatMessages.isNotEmpty()) {
+                    binding.recyclerView.smoothScrollToPosition(chatMessages.size - 1)
                 }
             }
         }
