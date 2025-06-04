@@ -14,9 +14,8 @@ class HistoryRepository(private val db: AppDatabase) {
     fun getMessages(conversationId: String): Flow<List<MessageEntity>> =
         db.messageDao().getMessages(conversationId)
 
-    suspend fun addMessage(conversationId: String, isUser: Boolean, content: String): Result<Unit> {
-        return try {
-            mutex.withLock {
+    suspend fun addMessage(conversationId: String, isUser: Boolean, content: String) {
+        mutex.withLock {
                 val timestamp = System.currentTimeMillis()
                 val message = MessageEntity(
                     id = java.util.UUID.randomUUID().toString(),
@@ -38,9 +37,5 @@ class HistoryRepository(private val db: AppDatabase) {
                     db.messageDao().insertMessage(message)
                 }
             }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
     }
 }

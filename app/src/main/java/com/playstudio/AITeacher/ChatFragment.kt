@@ -2746,8 +2746,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         if (!newChatMessage.isTyping) {
             val id = conversationId ?: generateConversationId().also { conversationId = it }
             lifecycleScope.launch {
-                val result = historyRepository.addMessage(id, isUser, messageContent)
-                result.onFailure { e ->
+                try {
+                    historyRepository.addMessage(id, isUser, messageContent)
+                } catch (e: Exception) {
                     Log.e("ChatFragment", "Failed to save message", e)
                 }
             }
