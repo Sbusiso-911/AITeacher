@@ -1150,7 +1150,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
     // Updated ChatFragment methods for computer use
 
-    private var conversationHistory = JSONArray()
 
 
 
@@ -2699,7 +2698,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         val id = conversationId ?: return emptyList()
         val all = historyRepository.getMessages(id).first()
         val index = beforeMessageId?.let { anchor ->
-            all.indexOfFirst { it.id == anchor }
+            val found = all.indexOfFirst { it.id == anchor }
+            if (found == -1) all.size else found
         } ?: all.size
         val start = (index - limit).coerceAtLeast(0)
         return all.subList(start, index).map {
