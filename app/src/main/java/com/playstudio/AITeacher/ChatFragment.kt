@@ -38,6 +38,9 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
+import com.playstudio.aiteacher.history.DatabaseProvider
+import com.playstudio.aiteacher.history.HistoryRepository
+import kotlinx.coroutines.flow.first
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.support.annotation.RequiresApi
@@ -217,7 +220,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private val SUBSCRIPTION_PROMPT_THRESHOLD = 3
     private val PREFS_NAME = "app_prefs"
     private val FIRST_LAUNCH_KEY = "first_launch"
-    private val GREETING_SENT_KEY = "greeting_sent"
     private val INTERACTION_COUNT_KEY = "interaction_count"
     private val RATING_REMINDER_COUNT_KEY = "rating_reminder_count"
     private var isLoading = false
@@ -225,19 +227,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private val binding get() = _binding!!
     // private lateinit var chatAdapter: ChatAdapter
     // private val chatMessages = mutableListOf<ChatMessage>()
-    private var isGreetingSent = false
-    private val greetings = listOf(
-        "Hello! How can I assist you today? 😊",
-        "Hi there! What can I do for you? 😄",
-        "Hey! Ready to help you out! 😃",
-        "Good to see you! How can I assist? 😁",
-        "Welcome back! What’s on your mind? 😊",
-        "Hi! Let’s get started—what do you need help with? 😄",
-        "Hello! How can I make your day better? 😊",
-        "Hey! What’s up? How can I assist you? 😃",
-        "Hi! Let’s tackle your questions together! 😁",
-        "Hello! Ready to help you with anything! 😊"
-    )
     private var rewardedAd: RewardedAd? = null
     private var canSendMessage = false
     private val client = OkHttpClient.Builder()
@@ -250,8 +239,10 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private var conversationId: String? = null
     private var tts: TextToSpeech? = null
     private var isTtsEnabled = false
+    // Legacy key used by some utils when migrating off SharedPreferences
     private val chatHistoryKey = "chat_history"
     private var isFollowUpEnabled = true
+    private val historyRepository by lazy { HistoryRepository(DatabaseProvider.database) }
 
     private lateinit var requestAudioPermissionLauncher: ActivityResultLauncher<String> // Assuming this is declared
 
@@ -263,6 +254,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private lateinit var requestMultiplePermissionsLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var pickImageLauncher: ActivityResultLauncher<String> // For "image/*"
     private lateinit var pickDocumentLauncher: ActivityResultLauncher<Array<String>> // For specific MIME types
+    private lateinit var historyLauncher: ActivityResultLauncher<Intent>
     // In ChatFragment class
     private val okHttpClient = OkHttpClient.Builder() /* ... */ .build()
 
@@ -282,7 +274,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         // SharedPreferences Keys
         private const val PREFS_NAME_APP = "app_prefs" // Main app prefs
         private const val PREFS_NAME_CHAT = "chat_prefs" // Specific to chat
-        private const val KEY_GREETING_SENT = "greeting_sent_for_conv_" // Append convId
         // ... other keys
 
         // Add these:
@@ -360,15 +351,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     ): View {
 
         _binding = FragmentChatBinding.inflate(inflater, container, false)
-        setHasOptionsMenu(true) // Ensure the fragment can handle menu options
         return binding.root
     }
 
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.harmburger_menu, menu)
-        super.onCreateOptionsMenu(menu, inflater)
-    }
 
     override fun onResume() {
         super.onResume()
@@ -493,17 +478,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             setHasFixedSize(true) // Optimize for fixed-size RecyclerView
             itemAnimator = null // Disable item animations for better performance
             setItemViewCacheSize(20) // Increase cache size for smoother scrolling
-        }
-        // Load the isGreetingSent flag from SharedPreferences
-        val sharedPreferences = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        isGreetingSent = sharedPreferences.getBoolean(GREETING_SENT_KEY, false)
-
-        // Now it's safe to send the greeting message
-        if (!isGreetingSent) {
-            sendGreetingMessage()
-            isGreetingSent = true
-            // Save the isGreetingSent flag to SharedPreferences
-            sharedPreferences.edit().putBoolean(GREETING_SENT_KEY, true).apply()
         }
 
         updateActiveModelButton("GPT-3.5 Turbo")
@@ -727,39 +701,11 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
 
-        binding.sendButton.setOnClickListener {
-            val userMessage = binding.messageEditText.text.toString()
-            Log.d("ChatFragment", "Send button clicked with message: $userMessage")
-            if (userMessage.isNotEmpty()) {
-                if (isUserSubscribed && subscriptionExpirationTime > System.currentTimeMillis() || canSendMessage) {
-                    Log.d("ChatFragment", "User is subscribed or can send message")
-                    handleMessage(userMessage)
-                } else {
-                    Log.d("ChatFragment", "User is not subscribed and cannot send message")
-                    showRewardedAd()
-                }
-            } else {
-                Log.d("ChatFragment", "User message is empty")
-            }
-        }
-
-        binding.scanTextButton.setOnClickListener { showImageOrDocumentPickerDialog() }
-
         // Initialize speech recognizer with listener
         initializeSpeechRecognizer()
 
-
-        binding.voiceInputButton.setOnClickListener {
-            if (checkAndRequestPermissions()) {
-                startVoiceRecognition()
-            }
-        }
-
-
         setupMenuProvider() // For new OptionsMenu handling
         initializeActivityLaunchers()
-        setupUIListeners()
-        observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
         setupUIListeners()
         observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
         binding.shareButton.setOnClickListener { shareLastResponse() }
@@ -839,46 +785,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             setQuestionText(question)
         }
 
-
-        binding.sendButton.setOnClickListener {
-            val userMessage = binding.messageEditText.text.toString()
-            if (userMessage.isNotEmpty()) {
-                hideKeyboard()
-                if (isUserSubscribed && subscriptionExpirationTime > System.currentTimeMillis() || canSendMessage) {
-                    handleMessage(userMessage)
-                } else if (checkDailyMessageLimit()) {
-                    incrementMessageCount()
-                    handleMessage(userMessage)
-                } else {
-                    showRewardedAd()
-                }
-            }
-        }
-
-        binding.messageEditText.customSelectionActionModeCallback = object : ActionMode.Callback {
-            override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
-                menu.clear()
-                mode.menuInflater.inflate(R.menu.custom_selection_menu, menu)
-                return true
-            }
-
-            override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
-                return false
-            }
-
-            override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
-                return when (item.itemId) {
-                    R.id.menu_copy -> {
-                        copyHighlightedText()
-                        mode.finish()
-                        true
-                    }
-                    else -> false
-                }
-            }
-
-            override fun onDestroyActionMode(mode: ActionMode) {}
-        }
 
         // Retrieve subscription status from arguments
         val isAdFree = arguments?.getBoolean("is_ad_free", false) ?: false
@@ -987,6 +893,14 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
         pickDocumentLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
             uri?.let { processSelectedFile(it) }
+        }
+        historyLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val id = result.data?.getStringExtra("conversation_id")
+                if (id != null) {
+                    loadChatHistoryById(id)
+                }
+            }
         }
     }
 
@@ -1123,21 +1037,12 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
         isFollowUpEnabled = appPrefs.getBoolean("follow_up_enabled", true)
     }
-    private fun isGreetingSentForCurrentConversation(): Boolean {
-        val chatPrefs = requireContext().getSharedPreferences(PREFS_NAME_CHAT, Context.MODE_PRIVATE)
-        return chatPrefs.getBoolean(KEY_GREETING_SENT + conversationId, false)
-    }
 
-    private fun markGreetingSentForCurrentConversation() {
-        val chatPrefs = requireContext().getSharedPreferences(PREFS_NAME_CHAT, Context.MODE_PRIVATE)
-        chatPrefs.edit().putBoolean(KEY_GREETING_SENT + conversationId, true).apply()
-    }
 
 
 
     // Updated ChatFragment methods for computer use
 
-    private var conversationHistory = JSONArray()
 
 
 
@@ -2242,9 +2147,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 binding.recyclerView.smoothScrollToPosition(currentList.size - 1)
             }
         }
-        if (!chatMessage.isTyping) {
-            saveChatHistory()
-        }
     }
     private fun addOlderMessagesToList(olderMessages: List<ChatMessage>) {
         if (olderMessages.isEmpty()) {
@@ -2676,54 +2578,24 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
     }
 
-    // You need to implement this based on how you store chat history.
-    // This is a placeholder.
-    private suspend fun fetchOlderMessagesFromStorage(
+    private suspend fun fetchOlderMessages(
         beforeMessageId: String?,
         limit: Int
     ): List<ChatMessage> {
-        Log.d("ChatFragment", "Fetching older messages before: $beforeMessageId, limit: $limit")
-        // This function should query your SharedPreferences (or database if you switch)
-        // for 'limit' messages that are older than 'beforeMessageId'.
-        // This is complex with SharedPreferences for pagination.
-        // A database (SQLite with Room) would be much better for this.
-
-        // --- Simplified SharedPreferences Example (Not truly paginated, loads all older than X) ---
-        // This example is NOT efficient for large histories and won't truly paginate.
-        // It's just to show the concept.
-        val allMessages = mutableListOf<ChatMessage>()
-        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
-        val savedChatsJson = sharedPreferences.getString(chatHistoryKey, "[]")
-        try {
-            val allChatsArray = JSONArray(savedChatsJson)
-            for (i in 0 until allChatsArray.length()) {
-                val chatObject = allChatsArray.getJSONObject(i)
-                if (chatObject.optString("id") == conversationId) {
-                    val messagesArray = chatObject.getJSONArray("messages")
-                    for (j in 0 until messagesArray.length()) {
-                        val msg = parseChatMessageFromJson(messagesArray.getJSONObject(j))
-                        allMessages.add(msg)
-                    }
-                    break
-                }
-            }
-        } catch (e: Exception) { Log.e("ChatFragment", "Error fetching for pagination", e)}
-
-        if (beforeMessageId == null) { // Initial load or no prior messages loaded
-            return allMessages.takeLast(limit).reversed() // Get the latest 'limit' messages
+        val id = conversationId ?: return emptyList()
+        val all = historyRepository.getMessages(id).first()
+        val index = beforeMessageId?.let { anchor ->
+            val found = all.indexOfFirst { it.id == anchor }
+            if (found == -1) all.size else found
+        } ?: all.size
+        val start = (index - limit).coerceAtLeast(0)
+        return all.subList(start, index).map {
+            ChatMessage(it.id, it.content, it.isUser)
         }
-
-        val indexOfAnchor = allMessages.indexOfFirst { it.id == beforeMessageId }
-        if (indexOfAnchor == -1 || indexOfAnchor == 0) return emptyList() // No messages before or anchor is the oldest
-
-        val startIndex = (indexOfAnchor - limit).coerceAtLeast(0)
-        return allMessages.subList(startIndex, indexOfAnchor).reversed() // Get 'limit' messages before the anchor
     }
     private fun startNewConversation() {
         chatAdapter.submitList(emptyList()) // Clear the adapter
         conversationId = generateConversationId()
-        isGreetingSent = false // Allow greeting for the new conversation
-        sendGreetingMessage()
         showCustomToast("New conversation started")
     }
 
@@ -2737,16 +2609,12 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
         lifecycleScope.launch {
             val olderMessages = withContext(Dispatchers.IO) {
-                fetchOlderMessagesFromStorage(currentTopMessageId, MESSAGES_PAGE_SIZE)
+                fetchOlderMessages(currentTopMessageId, MESSAGES_PAGE_SIZE)
             }
-            withContext(Dispatchers.Main) {
-                if (olderMessages.isNotEmpty()) {
-                    addOlderMessagesToList(olderMessages)
-                } else {
-                    // No more older messages or an error occurred
-                    isLoadingMoreMessages = false // Reset flag
-                    // showCustomToast("No more messages to load.") // Optional
-                }
+            if (olderMessages.isNotEmpty()) {
+                addOlderMessagesToList(olderMessages)
+            } else {
+                isLoadingMoreMessages = false
             }
         }
     }
@@ -2864,8 +2732,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         followUpQuestions: List<String> = emptyList(),
         containsRichContent: Boolean = false // Pass this flag
     ) {
+        val messageId = UUID.randomUUID().toString()
         val newChatMessage = ChatMessage(
-            id = System.currentTimeMillis().toString(),
+            id = messageId,
             content = messageContent,
             isUser = isUser,
             citations = citations,
@@ -2873,6 +2742,17 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             containsRichContent = containsRichContent
         )
         addMessageToList(newChatMessage)
+
+        if (!newChatMessage.isTyping) {
+            val id = conversationId ?: generateConversationId().also { conversationId = it }
+            lifecycleScope.launch {
+                try {
+                    historyRepository.addMessage(id, isUser, messageContent)
+                } catch (e: Exception) {
+                    Log.e("ChatFragment", "Failed to save message", e)
+                }
+            }
+        }
 
         if (!isUser && isTtsEnabled) {
             speakOut(messageContent)
@@ -3601,102 +3481,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     // In ChatFragment.kt
 
     private fun loadChatHistoryById(chatId: String) {
-        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
-        val savedChatsJson = sharedPreferences.getString(chatHistoryKey, "[]")
-        val messagesToLoad = mutableListOf<ChatMessage>() // Local temporary list
-
-        try {
-            val savedChatsArray = JSONArray(savedChatsJson)
-            var foundConversation = false
-            for (i in 0 until savedChatsArray.length()) {
-                val chatObject = savedChatsArray.getJSONObject(i)
-                if (chatObject.getString("id") == chatId) {
-                    this.conversationId = chatId // Update current conversation ID
-                    val messagesArray = chatObject.getJSONArray("messages")
-                    for (j in 0 until messagesArray.length()) {
-                        // Use your parseChatMessageFromJson helper
-                        messagesToLoad.add(parseChatMessageFromJson(messagesArray.getJSONObject(j)))
-                    }
-                    foundConversation = true
-                    break
-                }
-            }
-            if (!foundConversation) {
-                showCustomToast("Chat not found.") // Or handle appropriately
-            }
-        } catch (e: JSONException) {
-            Log.e("ChatFragment", "Error loading chat by ID", e)
-            showCustomToast("Error loading chat.")
-            // Optionally clear the adapter if loading fails critically
-            // chatAdapter.submitList(emptyList())
-            return // Exit if parsing fails
-        }
-
-        // Submit the new list to the adapter
-        chatAdapter.submitList(messagesToLoad.toList()) {
-            if (messagesToLoad.isNotEmpty()) {
-                binding.recyclerView.smoothScrollToPosition(messagesToLoad.size - 1)
-            }
-        }
-        // Note: saveChatHistory() might be called if this implies the chat is now "active"
-        // and further messages will be added to this loaded history.
-    }
-    private fun showChatOptionsDialog(chatId: String, chatTitle: String) {
-        val options = arrayOf("View Chat", "Delete Chat")
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle(chatTitle)
-        builder.setItems(options) { dialog, which ->
-            when (which) {
-                0 -> loadChatHistoryById(chatId)
-                1 -> showDeleteConfirmationDialog(chatId)
-            }
-        }
-        builder.setNegativeButton("Cancel", null)
-        builder.show()
-    }
-
-    private fun showDeleteConfirmationDialog(chatId: String) {
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("Delete Chat")
-        builder.setMessage("Are you sure you want to delete this chat?")
-        builder.setPositiveButton("Yes") { dialog, which ->
-            deleteChatHistoryById(chatId)
-        }
-        builder.setNegativeButton("No", null)
-        builder.show()
-    }
-
-    private fun showDeleteAllConfirmationDialog() {
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("Delete All Chats")
-        builder.setMessage("Are you sure you want to delete all chat history?")
-        builder.setPositiveButton("Yes") { dialog, which ->
-            deleteAllChatHistory()
-        }
-        builder.setNegativeButton("No", null)
-        builder.show()
-    }
-
-    private fun deleteChatHistoryById(chatId: String) {
-        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
-        val savedChatsArray = JSONArray(sharedPreferences.getString(chatHistoryKey, "[]"))
-        val updatedChatsArray = JSONArray()
-
-        for (i in 0 until savedChatsArray.length()) {
-            val chatObject = savedChatsArray.getJSONObject(i)
-            if (chatObject.getString("id") != chatId) {
-                updatedChatsArray.put(chatObject)
-            }
-        }
-
-        sharedPreferences.edit().putString(chatHistoryKey, updatedChatsArray.toString()).apply()
-        showCustomToast("Chat deleted successfully")
-    }
-
-    private fun deleteAllChatHistory() {
-        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
-        sharedPreferences.edit().putString(chatHistoryKey, "[]").apply()
-        showCustomToast("All chat history deleted successfully")
+        conversationId = chatId
+        loadChatHistory()
     }
 
     private fun showChatGptOptionsDialog() {
@@ -4624,12 +4410,6 @@ private fun updateActiveModelButton(modelName: String) {
         isFollowUpQuestionsExpanded = !isFollowUpQuestionsExpanded
     }
 
-    private fun sendGreetingMessage() {
-        val randomGreeting = greetings.random()
-        addMessageToChat(randomGreeting, false, containsRichContent = false) // Ensure rich content flag
-        // Update isGreetingSent for current conversation if needed,
-        // or manage it globally as before.
-    }
 
 
 
@@ -5073,10 +4853,7 @@ private fun updateActiveModelButton(modelName: String) {
         // If so, update conversationId and call saveChatHistory() if needed.
     }
     private fun generateConversationId(): String {
-        val timestamp = System.currentTimeMillis()
-        val date = Date(timestamp)
-        val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd_HH:mm:ss", Locale.getDefault())
-        return "conversation_${dateFormat.format(date)}"
+        return UUID.randomUUID().toString()
     }
     private fun jsonArrayToStringList(jsonArray: JSONArray?): List<String> {
         if (jsonArray == null) return emptyList()
@@ -5088,91 +4865,26 @@ private fun updateActiveModelButton(modelName: String) {
     }
 
     private fun loadChatHistory() {
-        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
-        val savedChatsJson = sharedPreferences.getString(chatHistoryKey, "[]")
-        val loadedMessages = mutableListOf<ChatMessage>()
-
-        val currentConversationId = conversationId ?: return // Don't load if no ID
-
-        try {
-            val savedChatsArray = JSONArray(savedChatsJson)
-            for (i in 0 until savedChatsArray.length()) {
-                val chatObject = savedChatsArray.getJSONObject(i)
-                if (chatObject.optString("id") == currentConversationId) {
-                    val messagesArray = chatObject.getJSONArray("messages")
-                    for (j in 0 until messagesArray.length()) {
-                        loadedMessages.add(parseChatMessageFromJson(messagesArray.getJSONObject(j)))
-                    }
-                    break
-                }
+        val id = conversationId ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            val messages = historyRepository.getMessages(id).first()
+            val chatMessages = messages.map {
+                ChatMessage(
+                    id = it.id,
+                    content = it.content,
+                    isUser = it.isUser
+                )
             }
-        } catch (e: JSONException) {
-            Log.e("ChatFragment", "Error loading chat history", e)
-        }
-
-        chatAdapter.submitList(loadedMessages.toList()) {
-            if (loadedMessages.isNotEmpty()) {
-                binding.recyclerView.smoothScrollToPosition(loadedMessages.size - 1)
+            chatAdapter.submitList(chatMessages) {
+                if (chatMessages.isNotEmpty()) {
+                    binding.recyclerView.smoothScrollToPosition(chatMessages.size - 1)
+                }
             }
         }
     }
 
     private fun saveChatHistory() {
-        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
-        val editor = sharedPreferences.edit()
-
-        val currentMessagesToSave = chatAdapter.currentList.filterNot { it.isTyping }
-        if (currentMessagesToSave.isEmpty() && conversationId == null) return // Don't save empty new chats
-
-        val messagesJsonArray = JSONArray()
-        currentMessagesToSave.forEach { chatMsg ->
-            messagesJsonArray.put(JSONObject().apply {
-                put("id", chatMsg.id)
-                put("content", chatMsg.content)
-                put("isUser", chatMsg.isUser)
-                put("isTyping", chatMsg.isTyping)
-                put("followUpQuestions", JSONArray(chatMsg.followUpQuestions))
-                val citationsArray = JSONArray()
-                chatMsg.citations.forEach { c ->
-                    citationsArray.put(JSONObject().apply {
-                        put("url", c.url); put("title", c.title);
-                        put("startIndex", c.startIndex); put("endIndex", c.endIndex)
-                    })
-                }
-                put("citations", citationsArray)
-                put("timestamp", chatMsg.timestamp)
-                put("containsRichContent", chatMsg.containsRichContent)
-            })
-        }
-
-        val currentConvId = conversationId ?: generateConversationId().also { conversationId = it }
-        val chatTitle = "Chat on ${SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())}"
-
-        val chatObjectToSave = JSONObject().apply {
-            put("id", currentConvId)
-            put("title", chatTitle)
-            put("messages", messagesJsonArray)
-        }
-
-        val allChatsJson = sharedPreferences.getString(chatHistoryKey, "[]")
-        val allChatsArray = try { JSONArray(allChatsJson) } catch (e: JSONException) { JSONArray() }
-        val updatedChatsArray = JSONArray()
-        var foundAndReplaced = false
-        for (i in 0 until allChatsArray.length()) {
-            val existingChat = allChatsArray.getJSONObject(i)
-            if (existingChat.optString("id") == currentConvId) {
-                updatedChatsArray.put(chatObjectToSave) // Replace
-                foundAndReplaced = true
-            } else {
-                updatedChatsArray.put(existingChat)
-            }
-        }
-        if (!foundAndReplaced) {
-            updatedChatsArray.put(chatObjectToSave) // Add new
-        }
-
-        editor.putString(chatHistoryKey, updatedChatsArray.toString())
-        editor.apply()
+        // handled by HistoryRepository in addMessageToList
     }
 
 
@@ -5209,28 +4921,7 @@ private fun updateActiveModelButton(modelName: String) {
     }
 
     private fun showChatHistoryDialog() {
-        val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
-        val savedChatsArray = JSONArray(sharedPreferences.getString(chatHistoryKey, "[]"))
-
-        val chatTitles = mutableListOf<String>()
-        val chatIds = mutableListOf<String>()
-
-        for (i in 0 until savedChatsArray.length()) {
-            val chatObject = savedChatsArray.getJSONObject(i)
-            chatTitles.add(chatObject.getString("title"))
-            chatIds.add(chatObject.getString("id"))
-        }
-
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("Chat History")
-        builder.setItems(chatTitles.toTypedArray()) { dialog, which ->
-            showChatOptionsDialog(chatIds[which], chatTitles[which])
-        }
-        builder.setNegativeButton("Cancel", null)
-        builder.setNeutralButton("Delete All") { dialog, which ->
-            showDeleteAllConfirmationDialog()
-        }
-        builder.show()
+        historyLauncher.launch(Intent(requireContext(), HistoryActivity::class.java))
     }
 
     private fun checkCameraPermission() {

@@ -1,59 +1,52 @@
-/*package com.playstudio.aiteacher
+package com.playstudio.aiteacher
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
-import android.view.MenuItem
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.playstudio.aiteacher.utils.ChatHistoryUtils
-import com.playstudio.aiteacher.R
-import com.playstudio.aiteacher.HistoryAdapter
+import com.playstudio.aiteacher.databinding.ActivityHistoryBinding
+import com.playstudio.aiteacher.history.DatabaseProvider
+import com.playstudio.aiteacher.history.HistoryRepository
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class HistoryActivity : AppCompatActivity() {
 
-    private lateinit var historyRecyclerView: RecyclerView
-    private lateinit var historyAdapter: HistoryAdapter
+    private lateinit var binding: ActivityHistoryBinding
+    private lateinit var adapter: HistoryAdapter
+    private val viewModel by viewModels<HistoryViewModel> {
+        HistoryViewModel.Factory(HistoryRepository(DatabaseProvider.database))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_history)
+        binding = ActivityHistoryBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        // Enable the back button in the action bar
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        // Initialize RecyclerView
-        historyRecyclerView = findViewById(R.id.history_recycler_view)
-        historyRecyclerView.layoutManager = LinearLayoutManager(this)
-
-        // Retrieve chat history
-        val conversations = ChatHistoryUtils.getChatHistory(this)
-
-        // Initialize adapter
-        historyAdapter = HistoryAdapter(conversations) { conversation ->
-            copyToClipboard(conversation)
-        }
-        historyRecyclerView.adapter = historyAdapter
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            android.R.id.home -> {
-                // Handle the back button press
-                finish()
-                true
+        adapter = HistoryAdapter { conversation ->
+            val intent = Intent().apply {
+                putExtra("conversation_id", conversation.id)
             }
-            else -> super.onOptionsItemSelected(item)
+            setResult(Activity.RESULT_OK, intent)
+            finish()
+        }
+        binding.historyRecyclerView.layoutManager = LinearLayoutManager(this)
+        binding.historyRecyclerView.adapter = adapter
+
+        lifecycleScope.launch {
+            viewModel.conversations.collectLatest { conversations ->
+                adapter.submitList(conversations)
+            }
         }
     }
 
-    private fun copyToClipboard(text: String) {
-        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = ClipData.newPlainText("Conversation", text)
-        clipboard.setPrimaryClip(clip)
-        Toast.makeText(this, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+    override fun onSupportNavigateUp(): Boolean {
+        finish()
+        return true
     }
-}*/
+}

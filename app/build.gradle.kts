@@ -148,6 +148,11 @@ dependencies {
 
     implementation("androidx.work:work-runtime-ktx:2.10.0")
 
+    // Room for conversation history
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    ksp("androidx.room:room-compiler:2.6.1")
+
     implementation("com.airbnb.android:lottie:5.0.3")
 
     implementation ("com.google.android.material:material:1.6.0") // or latest version
@@ -177,6 +182,7 @@ dependencies {
     //implementation("com.arthenica:mobile-ffmpeg-min:4.4.LTS")
 
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2") // For lifecycleScope
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6")
 
     //implementation ("com.arthenica:ffmpeg-kit-full:6.0-2")
 
