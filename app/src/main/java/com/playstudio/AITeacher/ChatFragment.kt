@@ -699,39 +699,11 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
 
-        binding.sendButton.setOnClickListener {
-            val userMessage = binding.messageEditText.text.toString()
-            Log.d("ChatFragment", "Send button clicked with message: $userMessage")
-            if (userMessage.isNotEmpty()) {
-                if (isUserSubscribed && subscriptionExpirationTime > System.currentTimeMillis() || canSendMessage) {
-                    Log.d("ChatFragment", "User is subscribed or can send message")
-                    handleMessage(userMessage)
-                } else {
-                    Log.d("ChatFragment", "User is not subscribed and cannot send message")
-                    showRewardedAd()
-                }
-            } else {
-                Log.d("ChatFragment", "User message is empty")
-            }
-        }
-
-        binding.scanTextButton.setOnClickListener { showImageOrDocumentPickerDialog() }
-
         // Initialize speech recognizer with listener
         initializeSpeechRecognizer()
 
-
-        binding.voiceInputButton.setOnClickListener {
-            if (checkAndRequestPermissions()) {
-                startVoiceRecognition()
-            }
-        }
-
-
         setupMenuProvider() // For new OptionsMenu handling
         initializeActivityLaunchers()
-        setupUIListeners()
-        observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
         setupUIListeners()
         observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
         binding.shareButton.setOnClickListener { shareLastResponse() }
@@ -811,46 +783,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             setQuestionText(question)
         }
 
-
-        binding.sendButton.setOnClickListener {
-            val userMessage = binding.messageEditText.text.toString()
-            if (userMessage.isNotEmpty()) {
-                hideKeyboard()
-                if (isUserSubscribed && subscriptionExpirationTime > System.currentTimeMillis() || canSendMessage) {
-                    handleMessage(userMessage)
-                } else if (checkDailyMessageLimit()) {
-                    incrementMessageCount()
-                    handleMessage(userMessage)
-                } else {
-                    showRewardedAd()
-                }
-            }
-        }
-
-        binding.messageEditText.customSelectionActionModeCallback = object : ActionMode.Callback {
-            override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
-                menu.clear()
-                mode.menuInflater.inflate(R.menu.custom_selection_menu, menu)
-                return true
-            }
-
-            override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
-                return false
-            }
-
-            override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
-                return when (item.itemId) {
-                    R.id.menu_copy -> {
-                        copyHighlightedText()
-                        mode.finish()
-                        true
-                    }
-                    else -> false
-                }
-            }
-
-            override fun onDestroyActionMode(mode: ActionMode) {}
-        }
 
         // Retrieve subscription status from arguments
         val isAdFree = arguments?.getBoolean("is_ad_free", false) ?: false
