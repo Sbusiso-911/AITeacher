@@ -14,11 +14,11 @@ class HistoryRepository(private val db: AppDatabase) {
     fun getMessages(conversationId: String): Flow<List<MessageEntity>> =
         db.messageDao().getMessages(conversationId)
 
-    suspend fun addMessage(conversationId: String, messageId: String, isUser: Boolean, content: String) {
+    suspend fun addMessage(conversationId: String, isUser: Boolean, content: String) {
         mutex.withLock {
             val timestamp = System.currentTimeMillis()
             val message = MessageEntity(
-                id = messageId,
+                id = java.util.UUID.randomUUID().toString(),
                 conversationId = conversationId,
                 isUser = isUser,
                 content = content,

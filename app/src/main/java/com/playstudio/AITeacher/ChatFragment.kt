@@ -2812,7 +2812,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         if (!newChatMessage.isTyping) {
             val id = conversationId ?: generateConversationId().also { conversationId = it }
             lifecycleScope.launch {
-                historyRepository.addMessage(id, messageId, isUser, messageContent)
+                historyRepository.addMessage(id, isUser, messageContent)
             }
         }
 
