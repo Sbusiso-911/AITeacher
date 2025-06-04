@@ -220,7 +220,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private val SUBSCRIPTION_PROMPT_THRESHOLD = 3
     private val PREFS_NAME = "app_prefs"
     private val FIRST_LAUNCH_KEY = "first_launch"
-    private val GREETING_SENT_KEY = "greeting_sent"
     private val INTERACTION_COUNT_KEY = "interaction_count"
     private val RATING_REMINDER_COUNT_KEY = "rating_reminder_count"
     private var isLoading = false
@@ -228,19 +227,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private val binding get() = _binding!!
     // private lateinit var chatAdapter: ChatAdapter
     // private val chatMessages = mutableListOf<ChatMessage>()
-    private var isGreetingSent = false
-    private val greetings = listOf(
-        "Hello! How can I assist you today? 😊",
-        "Hi there! What can I do for you? 😄",
-        "Hey! Ready to help you out! 😃",
-        "Good to see you! How can I assist? 😁",
-        "Welcome back! What’s on your mind? 😊",
-        "Hi! Let’s get started—what do you need help with? 😄",
-        "Hello! How can I make your day better? 😊",
-        "Hey! What’s up? How can I assist you? 😃",
-        "Hi! Let’s tackle your questions together! 😁",
-        "Hello! Ready to help you with anything! 😊"
-    )
     private var rewardedAd: RewardedAd? = null
     private var canSendMessage = false
     private val client = OkHttpClient.Builder()
@@ -286,7 +272,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         // SharedPreferences Keys
         private const val PREFS_NAME_APP = "app_prefs" // Main app prefs
         private const val PREFS_NAME_CHAT = "chat_prefs" // Specific to chat
-        private const val KEY_GREETING_SENT = "greeting_sent_for_conv_" // Append convId
         // ... other keys
 
         // Add these:
@@ -364,15 +349,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     ): View {
 
         _binding = FragmentChatBinding.inflate(inflater, container, false)
-        setHasOptionsMenu(true) // Ensure the fragment can handle menu options
         return binding.root
     }
 
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.harmburger_menu, menu)
-        super.onCreateOptionsMenu(menu, inflater)
-    }
 
     override fun onResume() {
         super.onResume()
@@ -497,17 +476,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             setHasFixedSize(true) // Optimize for fixed-size RecyclerView
             itemAnimator = null // Disable item animations for better performance
             setItemViewCacheSize(20) // Increase cache size for smoother scrolling
-        }
-        // Load the isGreetingSent flag from SharedPreferences
-        val sharedPreferences = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        isGreetingSent = sharedPreferences.getBoolean(GREETING_SENT_KEY, false)
-
-        // Now it's safe to send the greeting message
-        if (!isGreetingSent) {
-            sendGreetingMessage()
-            isGreetingSent = true
-            // Save the isGreetingSent flag to SharedPreferences
-            sharedPreferences.edit().putBoolean(GREETING_SENT_KEY, true).apply()
         }
 
         updateActiveModelButton("GPT-3.5 Turbo")
@@ -1135,15 +1103,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
         isFollowUpEnabled = appPrefs.getBoolean("follow_up_enabled", true)
     }
-    private fun isGreetingSentForCurrentConversation(): Boolean {
-        val chatPrefs = requireContext().getSharedPreferences(PREFS_NAME_CHAT, Context.MODE_PRIVATE)
-        return chatPrefs.getBoolean(KEY_GREETING_SENT + conversationId, false)
-    }
 
-    private fun markGreetingSentForCurrentConversation() {
-        val chatPrefs = requireContext().getSharedPreferences(PREFS_NAME_CHAT, Context.MODE_PRIVATE)
-        chatPrefs.edit().putBoolean(KEY_GREETING_SENT + conversationId, true).apply()
-    }
 
 
 
@@ -2702,8 +2662,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private fun startNewConversation() {
         chatAdapter.submitList(emptyList()) // Clear the adapter
         conversationId = generateConversationId()
-        isGreetingSent = false // Allow greeting for the new conversation
-        sendGreetingMessage()
         showCustomToast("New conversation started")
     }
 
@@ -4513,12 +4471,6 @@ private fun updateActiveModelButton(modelName: String) {
         isFollowUpQuestionsExpanded = !isFollowUpQuestionsExpanded
     }
 
-    private fun sendGreetingMessage() {
-        val randomGreeting = greetings.random()
-        addMessageToChat(randomGreeting, false, containsRichContent = false) // Ensure rich content flag
-        // Update isGreetingSent for current conversation if needed,
-        // or manage it globally as before.
-    }
 
 
 
