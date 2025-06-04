@@ -14,28 +14,33 @@ class HistoryRepository(private val db: AppDatabase) {
     fun getMessages(conversationId: String): Flow<List<MessageEntity>> =
         db.messageDao().getMessages(conversationId)
 
-    suspend fun addMessage(conversationId: String, isUser: Boolean, content: String) {
-        mutex.withLock {
-            val timestamp = System.currentTimeMillis()
-            val message = MessageEntity(
-                id = java.util.UUID.randomUUID().toString(),
-                conversationId = conversationId,
-                isUser = isUser,
-                content = content,
-                timestamp = timestamp
-            )
-
-            db.withTransaction {
-                val existing = db.conversationDao().getConversation(conversationId)
-                val title = existing?.title?.takeIf { it.isNotEmpty() } ?: if (isUser) content.take(50) else (existing?.title ?: "")
-                val conversation = ConversationEntity(
-                    id = conversationId,
-                    title = title,
-                    lastUpdated = timestamp
+    suspend fun addMessage(conversationId: String, isUser: Boolean, content: String): Result<Unit> {
+        return try {
+            mutex.withLock {
+                val timestamp = System.currentTimeMillis()
+                val message = MessageEntity(
+                    id = java.util.UUID.randomUUID().toString(),
+                    conversationId = conversationId,
+                    isUser = isUser,
+                    content = content,
+                    timestamp = timestamp
                 )
-                db.conversationDao().insertConversation(conversation)
-                db.messageDao().insertMessage(message)
+
+                db.withTransaction {
+                    val existing = db.conversationDao().getConversation(conversationId)
+                    val title = existing?.title?.takeIf { it.isNotEmpty() } ?: if (isUser) content.take(50) else (existing?.title ?: "")
+                    val conversation = ConversationEntity(
+                        id = conversationId,
+                        title = title,
+                        lastUpdated = timestamp
+                    )
+                    db.conversationDao().insertConversation(conversation)
+                    db.messageDao().insertMessage(message)
+                }
             }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }

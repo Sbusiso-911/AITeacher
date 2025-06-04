@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.playstudio.aiteacher.databinding.ActivityHistoryBinding
@@ -16,7 +17,9 @@ class HistoryActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHistoryBinding
     private lateinit var adapter: HistoryAdapter
-    private val repository by lazy { HistoryRepository(DatabaseProvider.database) }
+    private val viewModel by viewModels<HistoryViewModel> {
+        HistoryViewModel.Factory(HistoryRepository(DatabaseProvider.database))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,7 +28,7 @@ class HistoryActivity : AppCompatActivity() {
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        adapter = HistoryAdapter(emptyList()) { conversation ->
+        adapter = HistoryAdapter { conversation ->
             val intent = Intent().apply {
                 putExtra("conversation_id", conversation.id)
             }
@@ -36,7 +39,7 @@ class HistoryActivity : AppCompatActivity() {
         binding.historyRecyclerView.adapter = adapter
 
         lifecycleScope.launch {
-            repository.getConversations().collectLatest { conversations ->
+            viewModel.conversations.collectLatest { conversations ->
                 adapter.submitList(conversations)
             }
         }

@@ -182,6 +182,7 @@ dependencies {
     //implementation("com.arthenica:mobile-ffmpeg-min:4.4.LTS")
 
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2") // For lifecycleScope
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6")
 
     //implementation ("com.arthenica:ffmpeg-kit-full:6.0-2")
 
