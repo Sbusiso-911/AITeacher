@@ -9,12 +9,15 @@ import androidx.multidex.MultiDexApplication
 import androidx.work.Configuration as WorkManagerConfiguration
 import androidx.work.WorkManager
 import com.google.ar.core.Config
+import com.playstudio.aiteacher.history.DatabaseProvider
 import java.util.Locale
 
 class MyApplication : MultiDexApplication() {
 
     override fun onCreate() {
         super.onCreate()
+
+        DatabaseProvider.init(this)
 
 
 
