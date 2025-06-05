@@ -33,8 +33,13 @@ android {
             buildConfigField("String", "GOOGLE_VISION_API_KEY", "\"$googleVisionApiKey\"")
         } else {
             throw GradleException("GOOGLE_VISION_API_KEY not found in gradle.properties")
+        }
 
-
+        val anthropicApiKey: String? = project.findProperty("ANTHROPIC_API_KEY") as String?
+        if (anthropicApiKey != null) {
+            buildConfigField("String", "ANTHROPIC_API_KEY", "\"$anthropicApiKey\"")
+        } else {
+            throw GradleException("ANTHROPIC_API_KEY not found in gradle.properties")
         }
     }
 

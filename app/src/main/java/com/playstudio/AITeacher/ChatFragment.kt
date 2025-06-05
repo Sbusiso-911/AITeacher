@@ -111,12 +111,7 @@ import com.playstudio.aiteacher.viewmodel.OpenAILiveAudioViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.net.URLEncoder
-import com.playstudio.aiteacher.ComputerUseManager
-
 import android.provider.CalendarContract
-import android.provider.Settings
-import android.view.accessibility.AccessibilityManager
-import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.RequestBody.Companion.asRequestBody
 import kotlin.coroutines.resume
 
@@ -180,8 +175,6 @@ class ChatFragment : Fragment() {
     }
 
     // In your Activity or Fragment
-    private lateinit var startComputerUseButton: Button
-    private lateinit var computerUseResponseTextView: TextView
 
     private var speechRecognizer: SpeechRecognizer? = null
 
@@ -207,8 +200,6 @@ class ChatFragment : Fragment() {
     private val openAILiveAudioViewModel: OpenAILiveAudioViewModel by viewModels()
 
 
-    // Manager for OpenAI computer-use API
-    //private val computerUseManager by lazy { ComputerUseManager(requireActivity()) }
     private lateinit var chatTextView: TextView
     private var interstitialAd: InterstitialAd? = null
     private var isInterstitialAdLoaded = false
@@ -231,6 +222,8 @@ class ChatFragment : Fragment() {
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
     private val apiKey =  BuildConfig.API_KEY
+    // Anthropic API key for Claude models
+    private val anthropicApiKey = BuildConfig.ANTHROPIC_API_KEY
     private var currentModel = "gpt-3.5-turbo"
     private var conversationId: String? = null
     private var isTtsEnabled = false
@@ -359,7 +352,6 @@ class ChatFragment : Fragment() {
         (requireActivity() as? AppCompatActivity)?.supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
             setHomeAsUpIndicator(R.drawable.ic_arrow_back)
-            computerUseManager.accessibilityService = MyAccessibilityService.instance
         }
         //loadInterstitialAd() // Load the interstitial ad when the fragment resumes
     }
@@ -551,7 +543,6 @@ class ChatFragment : Fragment() {
             }
         }
 // In onViewCreated or onResume of ChatFragment
-        computerUseManager.accessibilityService = MyAccessibilityService.instance
         cropImageLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == Activity.RESULT_OK) {
@@ -889,29 +880,6 @@ class ChatFragment : Fragment() {
         }
 // Enhanced button click handler with permission checks
 
-        // Example button click in ChatFragment
-        binding.startComputerUseButton.setOnClickListener {
-            val prompt = binding.messageEditText.text.toString().trim()
-            if (prompt.isNotBlank()) {
-                addMessageToChat(prompt, true, containsRichContent = false) // Show user's prompt
-                binding.messageEditText.text.clear()
-                showTypingIndicator() // Show general "AI working"
-
-                lifecycleScope.launch {
-                    val sessionSummary = computerUseManager.startComputerUseSession(prompt)
-                    // Typing indicator will be removed by the first message from onUpdate,
-                    // or you can explicitly remove it here if no messages were sent via onUpdate.
-                    // If ComputerUseManager sends messages via onUpdate, they will call addMessageToChat,
-                    // which should ideally handle removing the typing indicator.
-                    // removeTypingIndicator() // Might be redundant if onUpdate calls addMessageToChat
-                    Log.d("ChatFragment", "ComputerUseManager final session summary: $sessionSummary")
-                    // Optionally, display the finalSummary if it contains info not sent via onUpdate
-                    // addMessageToChat("Session summary: $sessionSummary", false, containsRichContent = false)
-                }
-            } else {
-                showCustomToast("Please enter a prompt for computer use.")
-            }
-        }
 
 
         // Initialize captureImageLauncher, cropImageLauncher, pickImageLauncher, pickDocumentLauncher
@@ -1002,6 +970,27 @@ class ChatFragment : Fragment() {
 
 
 
+    // Convert OpenAI-style tool definitions to Anthropic's format
+    private fun convertToolsForClaude(openAiTools: JSONArray): JSONArray {
+        val claudeTools = JSONArray()
+        for (i in 0 until openAiTools.length()) {
+            val tool = openAiTools.getJSONObject(i)
+            val functionObj = tool.optJSONObject("function") ?: continue
+            val name = functionObj.optString("name")
+            val description = functionObj.optString("description")
+            val parameters = functionObj.optJSONObject("parameters")
+
+            val claudeTool = JSONObject().apply {
+                put("name", name)
+                put("description", description)
+                put("input_schema", parameters)
+                put("type", "custom")
+            }
+            claudeTools.put(claudeTool)
+        }
+        return claudeTools
+    }
+
     // In ChatFragment.kt
 
     private fun observeViewModels() {
@@ -1091,7 +1080,6 @@ class ChatFragment : Fragment() {
         binding.scanTextButton.visibility = View.VISIBLE
         binding.voiceInputButton.visibility = View.VISIBLE // Standard STT
         binding.sendButton.visibility = View.VISIBLE
-        binding.startComputerUseButton.visibility = View.GONE
         binding.ttsToggleButton.visibility = View.VISIBLE
         binding.followUpQuestionsContainer.visibility = if (isFollowUpEnabled) View.VISIBLE else View.GONE
         binding.generatedImageView.visibility = View.GONE
@@ -1101,7 +1089,6 @@ class ChatFragment : Fragment() {
         binding.openaiLiveAudioControls.visibility = View.GONE
         binding.openAIStatusTextView.visibility = View.GONE
         binding.openAIAiResponseTextView.visibility = View.GONE
-        binding.computerUseControls.visibility = View.GONE
 
 
 
@@ -1119,19 +1106,6 @@ class ChatFragment : Fragment() {
                 binding.generatedImageView.visibility = View.VISIBLE // Or visible after generation
                 // Standard text input is still used for DALL-E prompt
                 binding.followUpQuestionsContainer.visibility = View.GONE
-            }
-            "computer-use-preview" -> {
-                binding.messageInputLayout.visibility = View.VISIBLE
-                binding.sendButton.visibility = View.GONE
-                binding.scanTextButton.visibility = View.GONE
-                binding.voiceInputButton.visibility = View.GONE
-                binding.ttsToggleButton.visibility = View.GONE
-                binding.startComputerUseButton.visibility = View.VISIBLE
-                binding.followUpQuestionsContainer.visibility = View.GONE
-                binding.computerUseControls.visibility = View.VISIBLE
-                binding.openaiLiveAudioControls.visibility = View.GONE
-                binding.openAIStatusTextView.visibility = View.GONE
-                binding.openAIAiResponseTextView.visibility = View.GONE
             }
             // Add cases for other models if they have very specific UI needs
             else -> {
@@ -1192,16 +1166,6 @@ class ChatFragment : Fragment() {
 
 
 
-    private val computerUseManager by lazy {
-        ComputerUseManager(requireActivity()) { messageFromManager ->
-            // This is the onUpdate callback
-            addMessageToChat(
-                messageContent = messageFromManager,
-                isUser = false,
-                containsRichContent = false // Adjust as needed
-            )
-        }
-    }
     // MODIFIED handleChatCompletion with Tool Calling Logic
     private fun handleChatCompletion(
         userMessageContent: String
@@ -1249,7 +1213,11 @@ class ChatFragment : Fragment() {
             put("messages", messagesToSend)
             // Only include tools if the model supports them and this isn't a search-preview model
             if (modelSupportsTools(currentModel) && !WEB_SEARCH_MODELS.contains(currentModel)) {
-                val tools = getAvailableTools()
+                val tools = if (currentModel.startsWith("claude")) {
+                    convertToolsForClaude(getAvailableTools())
+                } else {
+                    getAvailableTools()
+                }
                 put("tools", tools)
                 // put("tool_choice", "auto") // "auto" is default
             }
@@ -1266,9 +1234,16 @@ class ChatFragment : Fragment() {
             .post(body)
             .addHeader("Content-Type", "application/json")
 
-        requestBuilder
-            .url("https://api.openai.com/v1/chat/completions")
-            .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
+        if (currentModel.startsWith("claude")) {
+            requestBuilder
+                .url("https://api.anthropic.com/v1/messages")
+                .addHeader("x-api-key", anthropicApiKey)
+                .addHeader("anthropic-version", "2023-06-01")
+        } else {
+            requestBuilder
+                .url("https://api.openai.com/v1/chat/completions")
+                .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
+        }
 
         val request = requestBuilder.build()
 
@@ -1391,6 +1366,7 @@ class ChatFragment : Fragment() {
         if (WEB_SEARCH_MODELS.contains(modelName)) return false
 
         return modelName.startsWith("gpt-4") ||
+                modelName.startsWith("claude") ||
                 modelName.contains("gpt-3.5-turbo-0125") ||
                 modelName.contains("gpt-3.5-turbo-1106")
     }
@@ -3594,6 +3570,8 @@ class ChatFragment : Fragment() {
             "GPT-4o Mini 🧩 - Lightweight version of GPT-4o\nExample: Quick summaries, simple Q&A, or lightweight tasks.",
             "GPT-4o Search 🔍 - Web-connected AI\nExample: Get latest news, real-time information, and cited sources.",
             "GPT-4o Mini Search 🔍 - Lightweight web-connected AI\nExample: Quick web searches with cited results.",
+            "Claude Sonnet 4 🤖 - Anthropic model\nExample: Advanced reasoning with new features.",
+            "Claude Opus 4 🤖 - Anthropic model\nExample: Most capable reasoning and analysis.",
             "O1 🛠️ - Optimized for specific tasks\nExample: Code debugging, data analysis, or technical documentation.",
             "O1 Mini 🧰 - Lightweight version of O1\nExample: Simple coding help, quick fixes, or small-scale tasks.",
             "O3 Mini 🧠 - Reasoning model for complex problem solving\nExample: Advanced coding, scientific reasoning, or multi-step planning.",
@@ -3607,7 +3585,6 @@ class ChatFragment : Fragment() {
             "GPT-4.1 Mini 🖼️ - Image analysis and understanding\nExample: Analyze images, extract information, or generate descriptions.",
             "Gemini Voice Chat 🎙️ - Google real-time voice\nExample: Engage in spoken dialogue with Gemini.", // ADDED Gemini Voice Chat
             "OpenAI Realtime Voice 🔊 - OpenAI low-latency voice\nExample: Conversational AI with OpenAI.",
-            "Computer Use 🖥️ - Automate tasks via browser screenshots"
 
         )
 
@@ -3624,20 +3601,21 @@ class ChatFragment : Fragment() {
                     2 -> "gpt-4o-mini"
                     3 -> "gpt-4o-search-preview"
                     4 -> "gpt-4o-mini-search-preview"
-                    5 -> "o1"
-                    6 -> "o1-mini"
-                    7 -> "o3-mini"
-                    8 -> "gpt-4o-realtime-preview"
-                    9 -> "gpt-4o-audio-preview" // This is likely an OpenAI model needing its own handling if different from general text
-                    10 -> "gpt-4-turbo"
-                    11 -> "dall-e-3"
-                    12 -> "tts-1" // This is for OpenAI TTS output, not a conversational model usually
-                    13 -> "gemini" // Text-based Gemini
-                    14 -> "deepseek"
-                    15 -> "gpt-4.1-mini"
-                    16 -> "gemini-voice-chat"     // Identifier for Gemini Voice Chat
-                    17 -> "openai-realtime-voice"// Identifier for OpenAI Realtime Voice
-                    18 -> "computer-use-preview"
+                    5 -> "claude-sonnet-4-20250514"
+                    6 -> "claude-opus-4-20250514"
+                    7 -> "o1"
+                    8 -> "o1-mini"
+                    9 -> "o3-mini"
+                    10 -> "gpt-4o-realtime-preview"
+                    11 -> "gpt-4o-audio-preview" // This is likely an OpenAI model needing its own handling if different from general text
+                    12 -> "gpt-4-turbo"
+                    13 -> "dall-e-3"
+                    14 -> "tts-1" // This is for OpenAI TTS output, not a conversational model usually
+                    15 -> "gemini" // Text-based Gemini
+                    16 -> "deepseek"
+                    17 -> "gpt-4.1-mini"
+                    18 -> "gemini-voice-chat"     // Identifier for Gemini Voice Chat
+                    19 -> "openai-realtime-voice"// Identifier for OpenAI Realtime Voice
                     else -> "gpt-3.5-turbo"       // Default fallback
                 }
 
@@ -3683,20 +3661,6 @@ class ChatFragment : Fragment() {
                         openAILiveAudioViewModel.stopSession() // Ensure OpenAI session is stopped (will be started by user action)
                         updateActiveModelButton("OpenAI Voice")
                         showCustomToast("Switched to OpenAI Realtime Voice")
-                    }
-                    "computer-use-preview" -> {
-                        binding.computerUseControls.visibility = View.VISIBLE
-                        binding.messageInputLayout.visibility = View.VISIBLE
-                        binding.sendButton.visibility = View.GONE
-                        binding.scanTextButton.visibility = View.GONE
-                        binding.voiceInputButton.visibility = View.GONE
-                        binding.ttsToggleButton.visibility = View.GONE
-                        binding.followUpQuestionsContainer.visibility = View.GONE
-                        binding.generatedImageView.visibility = View.GONE
-                        binding.downloadButton.visibility = View.GONE
-                        binding.generatingText.visibility = View.GONE
-                        updateActiveModelButton("Computer Use")
-                        showCustomToast("Switched to Computer Use")
                     }
                     else -> {
                         // Standard Text-Based Chat UI (for all other models)
@@ -4034,6 +3998,8 @@ private fun getDisplayNameForModel(modelId: String): String {
         "gpt-4o-search-preview" -> "GPT-4o Search"
         "gpt-4o-mini-search-preview" -> "GPT-4o Mini Search"
         "gpt-4-turbo" -> "GPT-4 Turbo"
+        "claude-sonnet-4-20250514" -> "Claude Sonnet 4"
+        "claude-opus-4-20250514" -> "Claude Opus 4"
         "dall-e-3" -> "DALL-E 3"
         "o1" -> "O1"
         "o1-mini" -> "O1 Mini"
