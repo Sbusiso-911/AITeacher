@@ -1,7 +1,5 @@
 package com.playstudio.aiteacher
 
-
-
 import android.provider.AlarmClock
 import TooltipDialog
 import WhisperHelper
@@ -121,8 +119,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.RequestBody.Companion.asRequestBody
 import kotlin.coroutines.resume
 
-
-
 class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     // Add this data class inside your ChatFragment class
     data class Citation(
@@ -224,7 +220,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private var _binding: FragmentChatBinding? = null
     private val binding get() = _binding!!
     // private lateinit var chatAdapter: ChatAdapter
-    // private val chatMessages = mutableListOf<ChatMessage>()
+    private val chatMessages = mutableListOf<ChatMessage>()
     private var isGreetingSent = false
     private val greetings = listOf(
         "Hello! How can I assist you today? 😊",
@@ -258,6 +254,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private lateinit var expandFollowUpQuestionsButton: Button
     private lateinit var followUpQuestionsScrollView: HorizontalScrollView
     private var isFollowUpQuestionsExpanded = false
+    private var lastFollowUpQuestions: List<String> = emptyList()
 
     private var subscriptionClickListener: OnSubscriptionClickListener? = null
     private lateinit var requestMultiplePermissionsLauncher: ActivityResultLauncher<Array<String>>
@@ -318,6 +315,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         private const val DAILY_LIMIT_TTS = 30
         private const val DAILY_LIMIT_GEMINI = 40
         private const val DAILY_LIMIT_DEEPSEEK = 40
+        private const val DAILY_LIMIT_CLAUDE = 40
         //private const val REQUEST_RECORD_AUDIO_PERMISSION = 300
         private const val REQUEST_STORAGE_PERMISSION = 301
     }
@@ -360,15 +358,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     ): View {
 
         _binding = FragmentChatBinding.inflate(inflater, container, false)
-        setHasOptionsMenu(true) // Ensure the fragment can handle menu options
         return binding.root
     }
 
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.harmburger_menu, menu)
-        super.onCreateOptionsMenu(menu, inflater)
-    }
 
     override fun onResume() {
         super.onResume()
@@ -379,31 +371,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
         //loadInterstitialAd() // Load the interstitial ad when the fragment resumes
     }
-
-
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.menu_new_conversation -> {
-                startNewConversation()
-                true
-            }
-            R.id.menu_help -> {
-                showHelpDialog()
-                true
-            }
-            R.id.menu_report -> {
-                showReportDialog()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
-
-
-
-
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Log.d("ChatFragment", "onViewCreated called")
@@ -554,7 +521,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         // Initialize with the selected model
         arguments?.getString("selected_model")?.let {
             currentModel = it
-            updateUIForCurrentModel()
+            switchUiForModel(currentModel)
+            updateActiveModelButton(getModelDisplayName(currentModel))
         }
         captureImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -727,39 +695,11 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
 
-        binding.sendButton.setOnClickListener {
-            val userMessage = binding.messageEditText.text.toString()
-            Log.d("ChatFragment", "Send button clicked with message: $userMessage")
-            if (userMessage.isNotEmpty()) {
-                if (isUserSubscribed && subscriptionExpirationTime > System.currentTimeMillis() || canSendMessage) {
-                    Log.d("ChatFragment", "User is subscribed or can send message")
-                    handleMessage(userMessage)
-                } else {
-                    Log.d("ChatFragment", "User is not subscribed and cannot send message")
-                    showRewardedAd()
-                }
-            } else {
-                Log.d("ChatFragment", "User message is empty")
-            }
-        }
-
-        binding.scanTextButton.setOnClickListener { showImageOrDocumentPickerDialog() }
-
         // Initialize speech recognizer with listener
         initializeSpeechRecognizer()
 
-
-        binding.voiceInputButton.setOnClickListener {
-            if (checkAndRequestPermissions()) {
-                startVoiceRecognition()
-            }
-        }
-
-
         setupMenuProvider() // For new OptionsMenu handling
         initializeActivityLaunchers()
-        setupUIListeners()
-        observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
         setupUIListeners()
         observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
         binding.shareButton.setOnClickListener { shareLastResponse() }
@@ -840,20 +780,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
 
 
-        binding.sendButton.setOnClickListener {
-            val userMessage = binding.messageEditText.text.toString()
-            if (userMessage.isNotEmpty()) {
-                hideKeyboard()
-                if (isUserSubscribed && subscriptionExpirationTime > System.currentTimeMillis() || canSendMessage) {
-                    handleMessage(userMessage)
-                } else if (checkDailyMessageLimit()) {
-                    incrementMessageCount()
-                    handleMessage(userMessage)
-                } else {
-                    showRewardedAd()
-                }
-            }
-        }
+
 
         binding.messageEditText.customSelectionActionModeCallback = object : ActionMode.Callback {
             override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
@@ -1242,6 +1169,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             "o3-mini" -> "o3-mini" to DAILY_LIMIT_O3_MINI
             "gpt-4o", "gpt-4-turbo" -> "gpt4_class" to DAILY_LIMIT_GPT4 // Group powerful GPTs
             "gpt-4.1-mini", "gpt-4o-mini" -> "gpt4mini_class" to DAILY_LIMIT_GPT4_MINI
+            "claude-3-opus", "claude-3-haiku" -> "claude" to DAILY_LIMIT_CLAUDE
             "gpt-3.5-turbo" -> "gpt35_class" to DAILY_LIMIT_GPT_DEFAULT
             // Add other specific model limits here
             else -> "general_chat" to DAILY_GENERAL_MESSAGE_LIMIT // Fallback general limit key
@@ -1290,7 +1218,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             // Add relevant chat history from adapter
             // Be mindful of token limits; you might only send the last N messages
             val historyLimit = 10 // Example: send last 10 messages
-            chatAdapter.currentList.filterNot { it.isTyping }
+            chatMessages.filterNot { it.isTyping }
                 .takeLast(historyLimit) // Take recent history
                 .forEach { chatMsg ->
                     // Skip adding the current user message if it's already in userMessageContent for this turn
@@ -2232,14 +2160,13 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
     private fun addMessageToList(chatMessage: ChatMessage, scrollToBottom: Boolean = true) {
-        val currentList = chatAdapter.currentList.toMutableList()
         if (chatMessage.isTyping) {
-            currentList.removeAll { it.isTyping } // Ensure only one typing indicator
+            chatMessages.removeAll { it.isTyping } // Ensure only one typing indicator
         }
-        currentList.add(chatMessage)
-        chatAdapter.submitList(currentList.toList()) {
-            if (scrollToBottom && currentList.isNotEmpty()) {
-                binding.recyclerView.smoothScrollToPosition(currentList.size - 1)
+        chatMessages.add(chatMessage)
+        chatAdapter.submitList(chatMessages.toList()) {
+            if (scrollToBottom && chatMessages.isNotEmpty()) {
+                binding.recyclerView.smoothScrollToPosition(chatMessages.size - 1)
             }
         }
         if (!chatMessage.isTyping) {
@@ -2251,13 +2178,11 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             isLoadingMoreMessages = false // Reset flag if no new messages
             return
         }
-        val currentList = chatAdapter.currentList.toMutableList()
-        currentList.addAll(0, olderMessages) // Add to the beginning of the list
-        chatAdapter.submitList(currentList.toList()) {
+        chatMessages.addAll(0, olderMessages)
+        chatAdapter.submitList(chatMessages.toList()) {
             // Optional: maintain scroll position or scroll to a specific item
             // For chat, usually you don't scroll after loading older messages,
             // unless you want to keep the visual position of the current top item.
-            // binding.recyclerView.scrollToPosition(olderMessages.size -1) // might be too abrupt
             isLoadingMoreMessages = false // Reset loading flag
         }
         saveChatHistory() // Save history including older messages
@@ -2435,7 +2360,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                             followUpQuestions = finalFollowUpsToShow,
                             containsRichContent = containsRich
                         )
-                        addFollowUpQuestionsToChat(finalFollowUpsToShow)
                     }
                 } else {
                     addMessageToChat(
@@ -2445,7 +2369,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                         followUpQuestions = finalFollowUpsToShow,
                         containsRichContent = containsRich
                     )
-                    addFollowUpQuestionsToChat(finalFollowUpsToShow)
                 }
 
                 if (isTtsEnabled) {
@@ -2476,6 +2399,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
     private fun addFollowUpQuestionsToChat(questions: List<String>) {
+        if (questions == lastFollowUpQuestions) return
+        lastFollowUpQuestions = questions
+
         binding.followUpQuestionsContainer.removeAllViews()
 
         if (!isFollowUpEnabled || questions.isEmpty()) {
@@ -2575,7 +2501,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private fun handleReasoningModelCompletion(message: String, model: String) {
         // For this specific API call, it seems you only send the current user message,
         // not the whole chat history. If you need to send history, use the pattern
-        // from handleDeepSeekCompletion: iterate chatAdapter.currentList.
+        // from handleDeepSeekCompletion: iterate chatMessages.
         val messagesArray = JSONArray().apply {
             put(JSONObject().apply {
                 put("role", "user")
@@ -2733,7 +2659,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         isLoadingMoreMessages = true
         showCustomToast("Loading older messages...") // Optional UI feedback
 
-        val currentTopMessageId = chatAdapter.currentList.firstOrNull { !it.isTyping }?.id
+        val currentTopMessageId = chatMessages.firstOrNull { !it.isTyping }?.id
 
         lifecycleScope.launch {
             val olderMessages = withContext(Dispatchers.IO) {
@@ -2857,29 +2783,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
         return builder.toString()
     }
-    private fun addMessageToChat(
-        messageContent: String,
-        isUser: Boolean,
-        citations: List<com.playstudio.aiteacher.ChatFragment.Citation> = emptyList(),
-        followUpQuestions: List<String> = emptyList(),
-        containsRichContent: Boolean = false // Pass this flag
-    ) {
-        val newChatMessage = ChatMessage(
-            id = System.currentTimeMillis().toString(),
-            content = messageContent,
-            isUser = isUser,
-            citations = citations,
-            followUpQuestions = followUpQuestions,
-            containsRichContent = containsRichContent
-        )
-        addMessageToList(newChatMessage)
-
-        if (!isUser && isTtsEnabled) {
-            speakOut(messageContent)
-        }
-    }
-
-
     private fun generateDynamicFollowUpQuestions(reply: String, callback: (List<String>) -> Unit) {
         val prompt = """
         Based on the following AI response, generate 3 relevant follow-up questions 
@@ -3725,6 +3628,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             "Gemini 🔷✨ - Google's AI model (Text)\nExample: Advanced research, creative writing, or coding assistance.",
             "DeepSeek 🐬 - Fast and efficient AI for chat\nExample: Quick answers, challenging math problems, debug complex code, or brainstorm innovative solutions.",
             "GPT-4.1 Mini 🖼️ - Image analysis and understanding\nExample: Analyze images, extract information, or generate descriptions.",
+            "Claude 3 Opus 🦉 - Anthropic's advanced model\nExample: Provide deep reasoning or creative writing.",
+            "Claude 3 Haiku 📝 - Lightweight Claude model\nExample: Quick summaries or drafting.",
             "Gemini Voice Chat 🎙️ - Google real-time voice\nExample: Engage in spoken dialogue with Gemini.", // ADDED Gemini Voice Chat
             "OpenAI Realtime Voice 🔊 - OpenAI low-latency voice\nExample: Conversational AI with OpenAI.",
             "Computer Use 🖥️ - Automate tasks via browser screenshots"
@@ -3755,13 +3660,16 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     13 -> "gemini" // Text-based Gemini
                     14 -> "deepseek"
                     15 -> "gpt-4.1-mini"
-                    16 -> "gemini-voice-chat"     // Identifier for Gemini Voice Chat
-                    17 -> "openai-realtime-voice"// Identifier for OpenAI Realtime Voice
-                    18 -> "computer-use-preview"
+                    16 -> "claude-3-opus"
+                    17 -> "claude-3-haiku"
+                    18 -> "gemini-voice-chat"     // Identifier for Gemini Voice Chat
+                    19 -> "openai-realtime-voice"// Identifier for OpenAI Realtime Voice
+                    20 -> "computer-use-preview"
                     else -> "gpt-3.5-turbo"       // Default fallback
                 }
 
                 currentModel = selectedModelIdentifier // Update the fragment's currentModel
+                switchUiForModel(currentModel)
 
                 // --- UI Toggling Logic ---
                 when (currentModel) {
@@ -3819,24 +3727,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                         showCustomToast("Switched to Computer Use")
                     }
                     else -> {
-                        // Standard Text-Based Chat UI (for all other models)
-
-                        binding.openaiLiveAudioControls.visibility = View.GONE
-
-                        // Show standard text chat UI elements
-                        binding.messageInputLayout.visibility = View.VISIBLE
-                        binding.scanTextButton.visibility = View.VISIBLE
-                        binding.voiceInputButton.visibility = View.VISIBLE
-                        binding.sendButton.visibility = View.VISIBLE
-                        binding.ttsToggleButton.visibility = View.VISIBLE
-
-                        // Update active model button text from the options list
-                        val displayName = if (position < options.size) options[position].substringBefore(" -") else "Chat"
+                        val displayName = getModelDisplayName(currentModel)
                         updateActiveModelButton(displayName)
                         showCustomToast("Switched to $displayName")
-
-                        // Call your existing function to set up UI for specific models (like DALL-E)
-                        updateUIForCurrentModel() // This handles DALL-E image view etc.
                     }
                 }
                 // --- End UI Toggling Logic ---
@@ -3869,7 +3762,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
         // 1. Define 'contentsArray' (for message history)
         val contentsArray = JSONArray().apply {
-            chatAdapter.currentList.filterNot { it.isTyping }.forEach { chatMsg ->
+            chatMessages.filterNot { it.isTyping }.forEach { chatMsg ->
                 put(JSONObject().apply {
                     put("role", if (chatMsg.isUser) "user" else "model")
                     put("parts", JSONArray().apply {
@@ -3959,10 +3852,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                                         isUser = false,
                                         containsRichContent = determineIfRichContent(reply)
                                     )
-                                    // If generateFollowUpQuestions is a suspend function, it needs to be called
-                                    // from a coroutine scope or be launched in its own.
-                                    // For now, assuming it's not a suspend function or handles its own scope.
-                                    generateFollowUpQuestions(reply)
                                     if (isTtsEnabled) {
                                         handleTextToSpeech(reply)
                                     }
@@ -4008,7 +3897,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         val deepSeekUrl = "https://api.deepseek.com/v1/chat/completions"
 
         val messagesArray = JSONArray().apply {
-            chatAdapter.currentList.filterNot { it.isTyping }.forEach { chatMsg ->
+            chatMessages.filterNot { it.isTyping }.forEach { chatMsg ->
                 put(JSONObject().apply {
                     put("role", if (chatMsg.isUser) "user" else "assistant")
                     put("content", chatMsg.content)
@@ -4085,12 +3974,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                                         containsRichContent = determineIfRichContent(reply)
                                         // Citations and followUpQuestions can be added here if DeepSeek provides them
                                     )
-                                    // The scrolling is now handled inside addMessageToChat (via addMessageToList)
-
-                                    // This call might add follow-up questions to a separate UI element at the bottom
-                                    // or it might be intended to add more ChatMessage items.
-                                    // If it adds more ChatMessage items, it should also use addMessageToChat.
-                                    generateFollowUpQuestions(reply)
 
                                     if (isTtsEnabled) {
                                         handleTextToSpeech(reply)
@@ -4143,6 +4026,33 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 private fun updateActiveModelButton(modelName: String) {
     binding.activeModelButton.text = modelName
+}
+
+private fun getModelDisplayName(modelId: String): String {
+    return when (modelId) {
+        "gpt-3.5-turbo" -> "GPT-3.5 Turbo"
+        "gpt-4o" -> "GPT-4o"
+        "gpt-4o-mini" -> "GPT-4o Mini"
+        "gpt-4o-search-preview" -> "GPT-4o Search"
+        "gpt-4o-mini-search-preview" -> "GPT-4o Mini Search"
+        "o1" -> "O1"
+        "o1-mini" -> "O1 Mini"
+        "o3-mini" -> "O3 Mini"
+        "gpt-4o-realtime-preview" -> "GPT-4o Realtime"
+        "gpt-4o-audio-preview" -> "GPT-4o Audio"
+        "gpt-4-turbo" -> "GPT-4 Turbo"
+        "dall-e-3" -> "DALL-E 3"
+        "tts-1" -> "TTS-1"
+        "gemini" -> "Gemini"
+        "deepseek" -> "DeepSeek"
+        "gpt-4.1-mini" -> "GPT-4.1 Mini"
+        "claude-3-opus" -> "Claude 3 Opus"
+        "claude-3-haiku" -> "Claude 3 Haiku"
+        "gemini-voice-chat" -> "Gemini Voice"
+        "openai-realtime-voice" -> "OpenAI Voice"
+        "computer-use-preview" -> "Computer Use"
+        else -> modelId
+    }
 }
 
 
@@ -5121,7 +5031,7 @@ private fun updateActiveModelButton(modelName: String) {
         val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
 
-        val currentMessagesToSave = chatAdapter.currentList.filterNot { it.isTyping }
+        val currentMessagesToSave = chatMessages.filterNot { it.isTyping }
         if (currentMessagesToSave.isEmpty() && conversationId == null) return // Don't save empty new chats
 
         val messagesJsonArray = JSONArray()
@@ -5370,10 +5280,9 @@ private fun updateActiveModelButton(modelName: String) {
     }
 
     private fun removeTypingIndicator() {
-        val currentList = chatAdapter.currentList.toMutableList()
-        val listChanged = currentList.removeAll { it.isTyping }
+        val listChanged = chatMessages.removeAll { it.isTyping }
         if (listChanged) {
-            chatAdapter.submitList(currentList.toList())
+            chatAdapter.submitList(chatMessages.toList())
         }
     }
 
@@ -5387,7 +5296,7 @@ private fun updateActiveModelButton(modelName: String) {
 
     private fun shareLastResponse() {
         // Get the current list from the adapter
-        val currentChatList = chatAdapter.currentList
+        val currentChatList = chatMessages
         if (currentChatList.isNotEmpty()) {
             // Find the last message that is NOT from the user and NOT a typing indicator
             val lastMessageToShare = currentChatList.lastOrNull { message -> !message.isUser && !message.isTyping }
