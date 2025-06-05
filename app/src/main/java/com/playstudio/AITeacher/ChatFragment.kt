@@ -1258,7 +1258,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private fun processUserMessageSend(userMessage: String) {
         // Central point for sending a message based on currentModel and limits
         hideKeyboard()
-        addMessageToChat(userMessage, true) // Show the user's message immediately
         binding.messageEditText.text.clear()
 
         if (isUserSubscribed || canSendMessage) {
@@ -3259,6 +3258,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     }
 
     private fun handleMessage(message: String) {
+        addMessageToChat(message, true)
         val response = generateResponse(message)
         when (currentModel) {
             "dall-e-3" -> {
