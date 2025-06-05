@@ -2251,7 +2251,10 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
         chatAdapter.submitList(currentList.toList()) {
             if (scrollToBottom && currentList.isNotEmpty()) {
-                binding.recyclerView.smoothScrollToPosition(currentList.size - 1)
+                // Post the scroll to ensure it occurs after RecyclerView layout
+                binding.recyclerView.post {
+                    binding.recyclerView.smoothScrollToPosition(currentList.size - 1)
+                }
             }
         }
         if (!chatMessage.isTyping) {
