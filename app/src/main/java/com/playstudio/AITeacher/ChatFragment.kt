@@ -246,6 +246,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
     private val apiKey =  BuildConfig.API_KEY
+    // Anthropic API key for Claude models
+    private val anthropicApiKey = BuildConfig.ANTHROPIC_API_KEY
     private var currentModel = "gpt-3.5-turbo"
     private var conversationId: String? = null
     private var tts: TextToSpeech? = null
@@ -1337,7 +1339,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         if (currentModel.startsWith("claude")) {
             requestBuilder
                 .url("https://api.anthropic.com/v1/messages")
-                .addHeader("x-api-key", BuildConfig.ANTHROPIC_API_KEY)
+                .addHeader("x-api-key", anthropicApiKey)
                 .addHeader("anthropic-version", "2023-06-01")
         } else {
             requestBuilder
