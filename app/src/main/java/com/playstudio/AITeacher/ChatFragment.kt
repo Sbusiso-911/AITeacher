@@ -2857,29 +2857,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
         return builder.toString()
     }
-    private fun addMessageToChat(
-        messageContent: String,
-        isUser: Boolean,
-        citations: List<com.playstudio.aiteacher.ChatFragment.Citation> = emptyList(),
-        followUpQuestions: List<String> = emptyList(),
-        containsRichContent: Boolean = false // Pass this flag
-    ) {
-        val newChatMessage = ChatMessage(
-            id = System.currentTimeMillis().toString(),
-            content = messageContent,
-            isUser = isUser,
-            citations = citations,
-            followUpQuestions = followUpQuestions,
-            containsRichContent = containsRichContent
-        )
-        addMessageToList(newChatMessage)
-
-        if (!isUser && isTtsEnabled) {
-            speakOut(messageContent)
-        }
-    }
-
-
     private fun generateDynamicFollowUpQuestions(reply: String, callback: (List<String>) -> Unit) {
         val prompt = """
         Based on the following AI response, generate 3 relevant follow-up questions 
