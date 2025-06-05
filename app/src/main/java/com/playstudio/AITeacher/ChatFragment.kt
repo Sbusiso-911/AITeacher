@@ -315,6 +315,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         private const val DAILY_LIMIT_TTS = 30
         private const val DAILY_LIMIT_GEMINI = 40
         private const val DAILY_LIMIT_DEEPSEEK = 40
+        private const val DAILY_LIMIT_CLAUDE = 40
         //private const val REQUEST_RECORD_AUDIO_PERMISSION = 300
         private const val REQUEST_STORAGE_PERMISSION = 301
     }
@@ -520,7 +521,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         // Initialize with the selected model
         arguments?.getString("selected_model")?.let {
             currentModel = it
-            updateUIForCurrentModel()
+            switchUiForModel(currentModel)
+            updateActiveModelButton(getModelDisplayName(currentModel))
         }
         captureImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -1167,6 +1169,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             "o3-mini" -> "o3-mini" to DAILY_LIMIT_O3_MINI
             "gpt-4o", "gpt-4-turbo" -> "gpt4_class" to DAILY_LIMIT_GPT4 // Group powerful GPTs
             "gpt-4.1-mini", "gpt-4o-mini" -> "gpt4mini_class" to DAILY_LIMIT_GPT4_MINI
+            "claude-3-opus", "claude-3-haiku" -> "claude" to DAILY_LIMIT_CLAUDE
             "gpt-3.5-turbo" -> "gpt35_class" to DAILY_LIMIT_GPT_DEFAULT
             // Add other specific model limits here
             else -> "general_chat" to DAILY_GENERAL_MESSAGE_LIMIT // Fallback general limit key
@@ -3625,6 +3628,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             "Gemini 🔷✨ - Google's AI model (Text)\nExample: Advanced research, creative writing, or coding assistance.",
             "DeepSeek 🐬 - Fast and efficient AI for chat\nExample: Quick answers, challenging math problems, debug complex code, or brainstorm innovative solutions.",
             "GPT-4.1 Mini 🖼️ - Image analysis and understanding\nExample: Analyze images, extract information, or generate descriptions.",
+            "Claude 3 Opus 🦉 - Anthropic's advanced model\nExample: Provide deep reasoning or creative writing.",
+            "Claude 3 Haiku 📝 - Lightweight Claude model\nExample: Quick summaries or drafting.",
             "Gemini Voice Chat 🎙️ - Google real-time voice\nExample: Engage in spoken dialogue with Gemini.", // ADDED Gemini Voice Chat
             "OpenAI Realtime Voice 🔊 - OpenAI low-latency voice\nExample: Conversational AI with OpenAI.",
             "Computer Use 🖥️ - Automate tasks via browser screenshots"
@@ -3655,13 +3660,16 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     13 -> "gemini" // Text-based Gemini
                     14 -> "deepseek"
                     15 -> "gpt-4.1-mini"
-                    16 -> "gemini-voice-chat"     // Identifier for Gemini Voice Chat
-                    17 -> "openai-realtime-voice"// Identifier for OpenAI Realtime Voice
-                    18 -> "computer-use-preview"
+                    16 -> "claude-3-opus"
+                    17 -> "claude-3-haiku"
+                    18 -> "gemini-voice-chat"     // Identifier for Gemini Voice Chat
+                    19 -> "openai-realtime-voice"// Identifier for OpenAI Realtime Voice
+                    20 -> "computer-use-preview"
                     else -> "gpt-3.5-turbo"       // Default fallback
                 }
 
                 currentModel = selectedModelIdentifier // Update the fragment's currentModel
+                switchUiForModel(currentModel)
 
                 // --- UI Toggling Logic ---
                 when (currentModel) {
@@ -3719,24 +3727,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                         showCustomToast("Switched to Computer Use")
                     }
                     else -> {
-                        // Standard Text-Based Chat UI (for all other models)
-
-                        binding.openaiLiveAudioControls.visibility = View.GONE
-
-                        // Show standard text chat UI elements
-                        binding.messageInputLayout.visibility = View.VISIBLE
-                        binding.scanTextButton.visibility = View.VISIBLE
-                        binding.voiceInputButton.visibility = View.VISIBLE
-                        binding.sendButton.visibility = View.VISIBLE
-                        binding.ttsToggleButton.visibility = View.VISIBLE
-
-                        // Update active model button text from the options list
-                        val displayName = if (position < options.size) options[position].substringBefore(" -") else "Chat"
+                        val displayName = getModelDisplayName(currentModel)
                         updateActiveModelButton(displayName)
                         showCustomToast("Switched to $displayName")
-
-                        // Call your existing function to set up UI for specific models (like DALL-E)
-                        updateUIForCurrentModel() // This handles DALL-E image view etc.
                     }
                 }
                 // --- End UI Toggling Logic ---
@@ -4033,6 +4026,33 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 private fun updateActiveModelButton(modelName: String) {
     binding.activeModelButton.text = modelName
+}
+
+private fun getModelDisplayName(modelId: String): String {
+    return when (modelId) {
+        "gpt-3.5-turbo" -> "GPT-3.5 Turbo"
+        "gpt-4o" -> "GPT-4o"
+        "gpt-4o-mini" -> "GPT-4o Mini"
+        "gpt-4o-search-preview" -> "GPT-4o Search"
+        "gpt-4o-mini-search-preview" -> "GPT-4o Mini Search"
+        "o1" -> "O1"
+        "o1-mini" -> "O1 Mini"
+        "o3-mini" -> "O3 Mini"
+        "gpt-4o-realtime-preview" -> "GPT-4o Realtime"
+        "gpt-4o-audio-preview" -> "GPT-4o Audio"
+        "gpt-4-turbo" -> "GPT-4 Turbo"
+        "dall-e-3" -> "DALL-E 3"
+        "tts-1" -> "TTS-1"
+        "gemini" -> "Gemini"
+        "deepseek" -> "DeepSeek"
+        "gpt-4.1-mini" -> "GPT-4.1 Mini"
+        "claude-3-opus" -> "Claude 3 Opus"
+        "claude-3-haiku" -> "Claude 3 Haiku"
+        "gemini-voice-chat" -> "Gemini Voice"
+        "openai-realtime-voice" -> "OpenAI Voice"
+        "computer-use-preview" -> "Computer Use"
+        else -> modelId
+    }
 }
 
 
