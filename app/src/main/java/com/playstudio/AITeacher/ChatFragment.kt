@@ -258,6 +258,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private lateinit var expandFollowUpQuestionsButton: Button
     private lateinit var followUpQuestionsScrollView: HorizontalScrollView
     private var isFollowUpQuestionsExpanded = false
+    private var lastFollowUpQuestions: List<String> = emptyList()
 
     private var subscriptionClickListener: OnSubscriptionClickListener? = null
     private lateinit var requestMultiplePermissionsLauncher: ActivityResultLauncher<Array<String>>
@@ -727,39 +728,11 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
 
-        binding.sendButton.setOnClickListener {
-            val userMessage = binding.messageEditText.text.toString()
-            Log.d("ChatFragment", "Send button clicked with message: $userMessage")
-            if (userMessage.isNotEmpty()) {
-                if (isUserSubscribed && subscriptionExpirationTime > System.currentTimeMillis() || canSendMessage) {
-                    Log.d("ChatFragment", "User is subscribed or can send message")
-                    handleMessage(userMessage)
-                } else {
-                    Log.d("ChatFragment", "User is not subscribed and cannot send message")
-                    showRewardedAd()
-                }
-            } else {
-                Log.d("ChatFragment", "User message is empty")
-            }
-        }
-
-        binding.scanTextButton.setOnClickListener { showImageOrDocumentPickerDialog() }
-
         // Initialize speech recognizer with listener
         initializeSpeechRecognizer()
 
-
-        binding.voiceInputButton.setOnClickListener {
-            if (checkAndRequestPermissions()) {
-                startVoiceRecognition()
-            }
-        }
-
-
         setupMenuProvider() // For new OptionsMenu handling
         initializeActivityLaunchers()
-        setupUIListeners()
-        observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
         setupUIListeners()
         observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
         binding.shareButton.setOnClickListener { shareLastResponse() }
@@ -840,20 +813,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
 
 
-        binding.sendButton.setOnClickListener {
-            val userMessage = binding.messageEditText.text.toString()
-            if (userMessage.isNotEmpty()) {
-                hideKeyboard()
-                if (isUserSubscribed && subscriptionExpirationTime > System.currentTimeMillis() || canSendMessage) {
-                    handleMessage(userMessage)
-                } else if (checkDailyMessageLimit()) {
-                    incrementMessageCount()
-                    handleMessage(userMessage)
-                } else {
-                    showRewardedAd()
-                }
-            }
-        }
+
 
         binding.messageEditText.customSelectionActionModeCallback = object : ActionMode.Callback {
             override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
@@ -2435,7 +2395,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                             followUpQuestions = finalFollowUpsToShow,
                             containsRichContent = containsRich
                         )
-                        addFollowUpQuestionsToChat(finalFollowUpsToShow)
                     }
                 } else {
                     addMessageToChat(
@@ -2445,7 +2404,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                         followUpQuestions = finalFollowUpsToShow,
                         containsRichContent = containsRich
                     )
-                    addFollowUpQuestionsToChat(finalFollowUpsToShow)
                 }
 
                 if (isTtsEnabled) {
@@ -2476,6 +2434,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
     private fun addFollowUpQuestionsToChat(questions: List<String>) {
+        if (questions == lastFollowUpQuestions) return
+        lastFollowUpQuestions = questions
+
         binding.followUpQuestionsContainer.removeAllViews()
 
         if (!isFollowUpEnabled || questions.isEmpty()) {
@@ -3936,10 +3897,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                                         isUser = false,
                                         containsRichContent = determineIfRichContent(reply)
                                     )
-                                    // If generateFollowUpQuestions is a suspend function, it needs to be called
-                                    // from a coroutine scope or be launched in its own.
-                                    // For now, assuming it's not a suspend function or handles its own scope.
-                                    generateFollowUpQuestions(reply)
                                     if (isTtsEnabled) {
                                         handleTextToSpeech(reply)
                                     }
@@ -4062,12 +4019,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                                         containsRichContent = determineIfRichContent(reply)
                                         // Citations and followUpQuestions can be added here if DeepSeek provides them
                                     )
-                                    // The scrolling is now handled inside addMessageToChat (via addMessageToList)
-
-                                    // This call might add follow-up questions to a separate UI element at the bottom
-                                    // or it might be intended to add more ChatMessage items.
-                                    // If it adds more ChatMessage items, it should also use addMessageToChat.
-                                    generateFollowUpQuestions(reply)
 
                                     if (isTtsEnabled) {
                                         handleTextToSpeech(reply)
