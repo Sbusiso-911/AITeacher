@@ -245,9 +245,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
     private lateinit var requestAudioPermissionLauncher: ActivityResultLauncher<String> // Assuming this is declared
 
-    private lateinit var expandFollowUpQuestionsButton: Button
-    private lateinit var followUpQuestionsScrollView: HorizontalScrollView
-    private var isFollowUpQuestionsExpanded = false
 
     private var subscriptionClickListener: OnSubscriptionClickListener? = null
     private lateinit var requestMultiplePermissionsLauncher: ActivityResultLauncher<Array<String>>
@@ -427,13 +424,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         binding.voiceSelectionButton.text = "Voice: ${selectedVoice.replaceFirstChar { it.uppercase() }}"
 
         // Initialize the views
-        expandFollowUpQuestionsButton = view.findViewById(R.id.expandFollowUpQuestionsButton)
-        followUpQuestionsScrollView = view.findViewById(R.id.followUpQuestionsScrollView)
-
-        // Set the click listener for the expand/collapse button
-        expandFollowUpQuestionsButton.setOnClickListener {
-            toggleFollowUpQuestions()
-        }
         arguments?.getString("recognized_text")?.let { text ->
             binding.messageEditText.setText(text)
             binding.messageEditText.setSelection(text.length)
@@ -2256,6 +2246,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     binding.recyclerView.smoothScrollToPosition(currentList.size - 1)
                 }
             }
+            // Force redraw in case DiffUtil misses updates
+            chatAdapter.notifyDataSetChanged()
         }
         if (!chatMessage.isTyping) {
             saveChatHistory()
@@ -4582,16 +4574,6 @@ private fun getDisplayNameForModel(modelId: String): String {
         }
     }
 
-    private fun toggleFollowUpQuestions() {
-        if (isFollowUpQuestionsExpanded) {
-            followUpQuestionsScrollView.visibility = View.GONE
-            expandFollowUpQuestionsButton.text = "▼"
-        } else {
-            followUpQuestionsScrollView.visibility = View.VISIBLE
-            expandFollowUpQuestionsButton.text = "▲"
-        }
-        isFollowUpQuestionsExpanded = !isFollowUpQuestionsExpanded
-    }
 
 
 
