@@ -1258,6 +1258,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private fun processUserMessageSend(userMessage: String) {
         // Central point for sending a message based on currentModel and limits
         hideKeyboard()
+        addMessageToChat(userMessage, true) // Show the user's message immediately
         binding.messageEditText.text.clear()
 
         if (isUserSubscribed || canSendMessage) {
@@ -3262,7 +3263,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         when (currentModel) {
             "dall-e-3" -> {
                 if (checkDailyLimit("dall-e-3", DAILY_LIMIT_DALLE)) {
-                    addMessageToChat(message, true)
                     handleImageGeneration(message)
                     binding.messageEditText.text.clear()
                     incrementModelUsage("dall-e-3")
@@ -3272,7 +3272,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             }
             "gemini" -> {
                 if (checkDailyLimit("gemini", DAILY_LIMIT_GEMINI)) {
-                    addMessageToChat(message, true)
                     handleGeminiCompletion(message)
                     binding.messageEditText.text.clear()
                     incrementModelUsage("gemini")
@@ -3282,7 +3281,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             }
             "deepseek" -> {
                 if (checkDailyLimit("deepseek", DAILY_LIMIT_DEEPSEEK)) {
-                    addMessageToChat(message, true)
                     handleDeepSeekCompletion(message)
                     binding.messageEditText.text.clear()
                     incrementModelUsage("deepseek")
@@ -3292,7 +3290,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             }
             "o3-mini" -> {
                 if (checkDailyLimit("o3-mini", DAILY_LIMIT_GPT4)) {
-                    addMessageToChat(message, true)
                     handleReasoningModelCompletion(message, "o3-mini")
                     binding.messageEditText.text.clear()
                     incrementModelUsage("o3-mini")
@@ -3301,7 +3298,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 }
             }
             else -> {
-                addMessageToChat(message, true)
                 if (isUserSubscribed && subscriptionExpirationTime > System.currentTimeMillis() || canSendMessage) {
                     sendMessageToAPI(response)
                     binding.messageEditText.text.clear()
@@ -3322,7 +3318,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     }
 
     private fun handleDalle3Request(message: String) {
-        addMessageToChat(message, true)
         handleImageGeneration(message)
         binding.messageEditText.text.clear()
         incrementModelUsage("dall-e-3")
