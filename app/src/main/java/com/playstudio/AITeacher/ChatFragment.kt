@@ -224,7 +224,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private var _binding: FragmentChatBinding? = null
     private val binding get() = _binding!!
     // private lateinit var chatAdapter: ChatAdapter
-    // private val chatMessages = mutableListOf<ChatMessage>()
+    private val chatMessages = mutableListOf<ChatMessage>()
     private var isGreetingSent = false
     private val greetings = listOf(
         "Hello! How can I assist you today? 😊",
@@ -1250,7 +1250,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             // Add relevant chat history from adapter
             // Be mindful of token limits; you might only send the last N messages
             val historyLimit = 10 // Example: send last 10 messages
-            chatAdapter.currentList.filterNot { it.isTyping }
+            chatMessages.filterNot { it.isTyping }
                 .takeLast(historyLimit) // Take recent history
                 .forEach { chatMsg ->
                     // Skip adding the current user message if it's already in userMessageContent for this turn
@@ -2192,14 +2192,13 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
     private fun addMessageToList(chatMessage: ChatMessage, scrollToBottom: Boolean = true) {
-        val currentList = chatAdapter.currentList.toMutableList()
         if (chatMessage.isTyping) {
-            currentList.removeAll { it.isTyping } // Ensure only one typing indicator
+            chatMessages.removeAll { it.isTyping } // Ensure only one typing indicator
         }
-        currentList.add(chatMessage)
-        chatAdapter.submitList(currentList.toList()) {
-            if (scrollToBottom && currentList.isNotEmpty()) {
-                binding.recyclerView.smoothScrollToPosition(currentList.size - 1)
+        chatMessages.add(chatMessage)
+        chatAdapter.submitList(chatMessages.toList()) {
+            if (scrollToBottom && chatMessages.isNotEmpty()) {
+                binding.recyclerView.smoothScrollToPosition(chatMessages.size - 1)
             }
         }
         if (!chatMessage.isTyping) {
@@ -2211,13 +2210,11 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             isLoadingMoreMessages = false // Reset flag if no new messages
             return
         }
-        val currentList = chatAdapter.currentList.toMutableList()
-        currentList.addAll(0, olderMessages) // Add to the beginning of the list
-        chatAdapter.submitList(currentList.toList()) {
+        chatMessages.addAll(0, olderMessages)
+        chatAdapter.submitList(chatMessages.toList()) {
             // Optional: maintain scroll position or scroll to a specific item
             // For chat, usually you don't scroll after loading older messages,
             // unless you want to keep the visual position of the current top item.
-            // binding.recyclerView.scrollToPosition(olderMessages.size -1) // might be too abrupt
             isLoadingMoreMessages = false // Reset loading flag
         }
         saveChatHistory() // Save history including older messages
@@ -2536,7 +2533,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private fun handleReasoningModelCompletion(message: String, model: String) {
         // For this specific API call, it seems you only send the current user message,
         // not the whole chat history. If you need to send history, use the pattern
-        // from handleDeepSeekCompletion: iterate chatAdapter.currentList.
+        // from handleDeepSeekCompletion: iterate chatMessages.
         val messagesArray = JSONArray().apply {
             put(JSONObject().apply {
                 put("role", "user")
@@ -2694,7 +2691,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         isLoadingMoreMessages = true
         showCustomToast("Loading older messages...") // Optional UI feedback
 
-        val currentTopMessageId = chatAdapter.currentList.firstOrNull { !it.isTyping }?.id
+        val currentTopMessageId = chatMessages.firstOrNull { !it.isTyping }?.id
 
         lifecycleScope.launch {
             val olderMessages = withContext(Dispatchers.IO) {
@@ -3807,7 +3804,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
         // 1. Define 'contentsArray' (for message history)
         val contentsArray = JSONArray().apply {
-            chatAdapter.currentList.filterNot { it.isTyping }.forEach { chatMsg ->
+            chatMessages.filterNot { it.isTyping }.forEach { chatMsg ->
                 put(JSONObject().apply {
                     put("role", if (chatMsg.isUser) "user" else "model")
                     put("parts", JSONArray().apply {
@@ -3942,7 +3939,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         val deepSeekUrl = "https://api.deepseek.com/v1/chat/completions"
 
         val messagesArray = JSONArray().apply {
-            chatAdapter.currentList.filterNot { it.isTyping }.forEach { chatMsg ->
+            chatMessages.filterNot { it.isTyping }.forEach { chatMsg ->
                 put(JSONObject().apply {
                     put("role", if (chatMsg.isUser) "user" else "assistant")
                     put("content", chatMsg.content)
@@ -5049,7 +5046,7 @@ private fun updateActiveModelButton(modelName: String) {
         val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
 
-        val currentMessagesToSave = chatAdapter.currentList.filterNot { it.isTyping }
+        val currentMessagesToSave = chatMessages.filterNot { it.isTyping }
         if (currentMessagesToSave.isEmpty() && conversationId == null) return // Don't save empty new chats
 
         val messagesJsonArray = JSONArray()
@@ -5298,10 +5295,9 @@ private fun updateActiveModelButton(modelName: String) {
     }
 
     private fun removeTypingIndicator() {
-        val currentList = chatAdapter.currentList.toMutableList()
-        val listChanged = currentList.removeAll { it.isTyping }
+        val listChanged = chatMessages.removeAll { it.isTyping }
         if (listChanged) {
-            chatAdapter.submitList(currentList.toList())
+            chatAdapter.submitList(chatMessages.toList())
         }
     }
 
@@ -5315,7 +5311,7 @@ private fun updateActiveModelButton(modelName: String) {
 
     private fun shareLastResponse() {
         // Get the current list from the adapter
-        val currentChatList = chatAdapter.currentList
+        val currentChatList = chatMessages
         if (currentChatList.isNotEmpty()) {
             // Find the last message that is NOT from the user and NOT a typing indicator
             val lastMessageToShare = currentChatList.lastOrNull { message -> !message.isUser && !message.isTyping }
