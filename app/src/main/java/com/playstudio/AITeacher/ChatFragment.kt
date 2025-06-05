@@ -39,7 +39,6 @@ import android.provider.MediaStore
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
-import android.speech.tts.TextToSpeech
 import android.support.annotation.RequiresApi
 import android.text.Html
 import android.text.Spannable
@@ -123,7 +122,7 @@ import kotlin.coroutines.resume
 
 
 
-class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
+class ChatFragment : Fragment() {
     // Add this data class inside your ChatFragment class
     data class Citation(
         val url: String,
@@ -236,7 +235,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private val anthropicApiKey = BuildConfig.ANTHROPIC_API_KEY
     private var currentModel = "gpt-3.5-turbo"
     private var conversationId: String? = null
-    private var tts: TextToSpeech? = null
     private var isTtsEnabled = false
     // Holds conversation history across tool calls in a single turn
     private val currentConversationHistoryForToolCall = mutableListOf<JSONObject>()
@@ -716,7 +714,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
         (requireActivity() as? AppCompatActivity)?.supportActionBar?.title = "Chat with AITeacher"
 
-        tts = TextToSpeech(requireContext(), this)
 
 
 
@@ -2821,10 +2818,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             containsRichContent = containsRichContent
         )
         addMessageToList(newChatMessage)
-
-        if (!isUser && isTtsEnabled) {
-            speakOut(messageContent)
-        }
     }
 
 
@@ -3285,10 +3278,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             // timestamp will be set by default in ChatMessage constructor
         )
         addMessageToList(newChatMessage) // Your helper that calls submitList
-
-        if (!isUser && isTtsEnabled) {
-            speakOut(messageContent)
-        }
     }
     private fun generateResponse(userQuery: String): String {
         val baseResponse = "Here is the explanation for your query: $userQuery"
@@ -4231,11 +4220,6 @@ private fun getDisplayNameForModel(modelId: String): String {
         }
     }
 
-    private fun speakOut(text: String) {
-        if (isTtsEnabled) {
-            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
-        }
-    }
 
     private fun updateSelectedVoice(voice: String) {
         selectedVoice = voice
@@ -4281,20 +4265,6 @@ private fun getDisplayNameForModel(modelId: String): String {
         return sharedPreferences.getString(SELECTED_VOICE_KEY, "alloy") ?: "alloy"
     }
 
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            val result = tts?.setLanguage(Locale.US)
-            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                Log.e("ChatFragment", "Language not supported")
-                showCustomToast("TTS language not supported")
-            } else {
-                Log.d("ChatFragment", "TTS initialized successfully")
-            }
-        } else {
-            Log.e("ChatFragment", "TTS initialization failed")
-            showCustomToast("TTS initialization failed")
-        }
-    }
 
 
 
@@ -4645,8 +4615,6 @@ private fun getDisplayNameForModel(modelId: String): String {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-        tts?.stop()
-        tts?.shutdown()
     }
 
     private fun initializeChat(model: String?, conversationId: String?) {
