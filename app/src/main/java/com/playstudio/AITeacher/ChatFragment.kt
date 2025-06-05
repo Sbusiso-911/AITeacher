@@ -1434,17 +1434,13 @@ class ChatFragment : Fragment() {
     }
 
     private fun modelSupportsTools(modelName: String): Boolean {
-        // List models known to support function calling/tools
-        if (WEB_SEARCH_MODELS.contains(modelName)) {
-            // Search preview models do not currently support tool calling
-            return false
-        }
+        // Web-search preview models don't support tool calling
+        if (WEB_SEARCH_MODELS.contains(modelName)) return false
 
         return modelName.startsWith("gpt-4") ||
                 modelName.startsWith("claude") ||
                 modelName.contains("gpt-3.5-turbo-0125") ||
                 modelName.contains("gpt-3.5-turbo-1106")
-        // Add other models as OpenAI updates them.
     }
 
     // In ChatFragment.kt
