@@ -39,7 +39,6 @@ import android.provider.MediaStore
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
-import android.speech.tts.TextToSpeech
 import android.support.annotation.RequiresApi
 import android.text.Html
 import android.text.Spannable
@@ -112,18 +111,13 @@ import com.playstudio.aiteacher.viewmodel.OpenAILiveAudioViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.net.URLEncoder
-import com.playstudio.aiteacher.ComputerUseManager
-
 import android.provider.CalendarContract
-import android.provider.Settings
-import android.view.accessibility.AccessibilityManager
-import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.RequestBody.Companion.asRequestBody
 import kotlin.coroutines.resume
 
 
 
-class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
+class ChatFragment : Fragment() {
     // Add this data class inside your ChatFragment class
     data class Citation(
         val url: String,
@@ -181,8 +175,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     }
 
     // In your Activity or Fragment
-    private lateinit var startComputerUseButton: Button
-    private lateinit var computerUseResponseTextView: TextView
 
     private var speechRecognizer: SpeechRecognizer? = null
 
@@ -208,8 +200,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private val openAILiveAudioViewModel: OpenAILiveAudioViewModel by viewModels()
 
 
-    // Manager for OpenAI computer-use API
-    //private val computerUseManager by lazy { ComputerUseManager(requireActivity()) }
     private lateinit var chatTextView: TextView
     private var interstitialAd: InterstitialAd? = null
     private var isInterstitialAdLoaded = false
@@ -217,27 +207,13 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private val SUBSCRIPTION_PROMPT_THRESHOLD = 3
     private val PREFS_NAME = "app_prefs"
     private val FIRST_LAUNCH_KEY = "first_launch"
-    private val GREETING_SENT_KEY = "greeting_sent"
     private val INTERACTION_COUNT_KEY = "interaction_count"
     private val RATING_REMINDER_COUNT_KEY = "rating_reminder_count"
     private var isLoading = false
     private var _binding: FragmentChatBinding? = null
     private val binding get() = _binding!!
     // private lateinit var chatAdapter: ChatAdapter
-    // private val chatMessages = mutableListOf<ChatMessage>()
-    private var isGreetingSent = false
-    private val greetings = listOf(
-        "Hello! How can I assist you today? 😊",
-        "Hi there! What can I do for you? 😄",
-        "Hey! Ready to help you out! 😃",
-        "Good to see you! How can I assist? 😁",
-        "Welcome back! What’s on your mind? 😊",
-        "Hi! Let’s get started—what do you need help with? 😄",
-        "Hello! How can I make your day better? 😊",
-        "Hey! What’s up? How can I assist you? 😃",
-        "Hi! Let’s tackle your questions together! 😁",
-        "Hello! Ready to help you with anything! 😊"
-    )
+    private val chatMessages = mutableListOf<ChatMessage>()
     private var rewardedAd: RewardedAd? = null
     private var canSendMessage = false
     private val client = OkHttpClient.Builder()
@@ -246,18 +222,18 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
     private val apiKey =  BuildConfig.API_KEY
+    // Anthropic API key for Claude models
+    private val anthropicApiKey = BuildConfig.ANTHROPIC_API_KEY
     private var currentModel = "gpt-3.5-turbo"
     private var conversationId: String? = null
-    private var tts: TextToSpeech? = null
     private var isTtsEnabled = false
+    // Holds conversation history across tool calls in a single turn
+    private val currentConversationHistoryForToolCall = mutableListOf<JSONObject>()
     private val chatHistoryKey = "chat_history"
     private var isFollowUpEnabled = true
 
     private lateinit var requestAudioPermissionLauncher: ActivityResultLauncher<String> // Assuming this is declared
 
-    private lateinit var expandFollowUpQuestionsButton: Button
-    private lateinit var followUpQuestionsScrollView: HorizontalScrollView
-    private var isFollowUpQuestionsExpanded = false
 
     private var subscriptionClickListener: OnSubscriptionClickListener? = null
     private lateinit var requestMultiplePermissionsLauncher: ActivityResultLauncher<Array<String>>
@@ -282,7 +258,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         // SharedPreferences Keys
         private const val PREFS_NAME_APP = "app_prefs" // Main app prefs
         private const val PREFS_NAME_CHAT = "chat_prefs" // Specific to chat
-        private const val KEY_GREETING_SENT = "greeting_sent_for_conv_" // Append convId
         // ... other keys
 
         // Add these:
@@ -348,6 +323,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
     }
 
+
     override fun onDetach() {
         super.onDetach()
         subscriptionClickListener = null
@@ -366,6 +342,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        menu.clear()
         inflater.inflate(R.menu.harmburger_menu, menu)
         super.onCreateOptionsMenu(menu, inflater)
     }
@@ -375,7 +352,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         (requireActivity() as? AppCompatActivity)?.supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
             setHomeAsUpIndicator(R.drawable.ic_arrow_back)
-            computerUseManager.accessibilityService = MyAccessibilityService.instance
         }
         //loadInterstitialAd() // Load the interstitial ad when the fragment resumes
     }
@@ -408,17 +384,14 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         super.onViewCreated(view, savedInstanceState)
         Log.d("ChatFragment", "onViewCreated called")
 
+        // Load persisted preferences early so conversation ID and other
+        // settings are initialized before any messages are processed
+        loadSharedPrefs()
+
         selectedVoice = loadSelectedVoice()
         binding.voiceSelectionButton.text = "Voice: ${selectedVoice.replaceFirstChar { it.uppercase() }}"
 
         // Initialize the views
-        expandFollowUpQuestionsButton = view.findViewById(R.id.expandFollowUpQuestionsButton)
-        followUpQuestionsScrollView = view.findViewById(R.id.followUpQuestionsScrollView)
-
-        // Set the click listener for the expand/collapse button
-        expandFollowUpQuestionsButton.setOnClickListener {
-            toggleFollowUpQuestions()
-        }
         arguments?.getString("recognized_text")?.let { text ->
             binding.messageEditText.setText(text)
             binding.messageEditText.setSelection(text.length)
@@ -494,19 +467,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             itemAnimator = null // Disable item animations for better performance
             setItemViewCacheSize(20) // Increase cache size for smoother scrolling
         }
-        // Load the isGreetingSent flag from SharedPreferences
-        val sharedPreferences = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        isGreetingSent = sharedPreferences.getBoolean(GREETING_SENT_KEY, false)
 
-        // Now it's safe to send the greeting message
-        if (!isGreetingSent) {
-            sendGreetingMessage()
-            isGreetingSent = true
-            // Save the isGreetingSent flag to SharedPreferences
-            sharedPreferences.edit().putBoolean(GREETING_SENT_KEY, true).apply()
-        }
-
-        updateActiveModelButton("GPT-3.5 Turbo")
+        updateActiveModelButton(getDisplayNameForModel(currentModel))
+        switchUiForModel(currentModel)
 
         // Initialize TTS button state
         updateTtsButtonState()
@@ -555,6 +518,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         arguments?.getString("selected_model")?.let {
             currentModel = it
             updateUIForCurrentModel()
+            switchUiForModel(currentModel)
         }
         captureImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -579,7 +543,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             }
         }
 // In onViewCreated or onResume of ChatFragment
-        computerUseManager.accessibilityService = MyAccessibilityService.instance
         cropImageLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == Activity.RESULT_OK) {
@@ -720,28 +683,11 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
         (requireActivity() as? AppCompatActivity)?.supportActionBar?.title = "Chat with AITeacher"
 
-        tts = TextToSpeech(requireContext(), this)
 
 
 
 
 
-
-        binding.sendButton.setOnClickListener {
-            val userMessage = binding.messageEditText.text.toString()
-            Log.d("ChatFragment", "Send button clicked with message: $userMessage")
-            if (userMessage.isNotEmpty()) {
-                if (isUserSubscribed && subscriptionExpirationTime > System.currentTimeMillis() || canSendMessage) {
-                    Log.d("ChatFragment", "User is subscribed or can send message")
-                    handleMessage(userMessage)
-                } else {
-                    Log.d("ChatFragment", "User is not subscribed and cannot send message")
-                    showRewardedAd()
-                }
-            } else {
-                Log.d("ChatFragment", "User message is empty")
-            }
-        }
 
         binding.scanTextButton.setOnClickListener { showImageOrDocumentPickerDialog() }
 
@@ -756,10 +702,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
 
 
-        setupMenuProvider() // For new OptionsMenu handling
+        // setupMenuProvider() // Menu handled by onCreateOptionsMenu
         initializeActivityLaunchers()
-        setupUIListeners()
-        observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
         setupUIListeners()
         observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
         binding.shareButton.setOnClickListener { shareLastResponse() }
@@ -837,22 +781,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
         arguments?.getString("prefilled_question")?.let { question ->
             setQuestionText(question)
-        }
-
-
-        binding.sendButton.setOnClickListener {
-            val userMessage = binding.messageEditText.text.toString()
-            if (userMessage.isNotEmpty()) {
-                hideKeyboard()
-                if (isUserSubscribed && subscriptionExpirationTime > System.currentTimeMillis() || canSendMessage) {
-                    handleMessage(userMessage)
-                } else if (checkDailyMessageLimit()) {
-                    incrementMessageCount()
-                    handleMessage(userMessage)
-                } else {
-                    showRewardedAd()
-                }
-            }
         }
 
         binding.messageEditText.customSelectionActionModeCallback = object : ActionMode.Callback {
@@ -952,29 +880,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
 // Enhanced button click handler with permission checks
 
-        // Example button click in ChatFragment
-        binding.startComputerUseButton.setOnClickListener {
-            val prompt = binding.messageEditText.text.toString().trim()
-            if (prompt.isNotBlank()) {
-                addMessageToChat(prompt, true, containsRichContent = false) // Show user's prompt
-                binding.messageEditText.text.clear()
-                showTypingIndicator() // Show general "AI working"
-
-                lifecycleScope.launch {
-                    val sessionSummary = computerUseManager.startComputerUseSession(prompt)
-                    // Typing indicator will be removed by the first message from onUpdate,
-                    // or you can explicitly remove it here if no messages were sent via onUpdate.
-                    // If ComputerUseManager sends messages via onUpdate, they will call addMessageToChat,
-                    // which should ideally handle removing the typing indicator.
-                    // removeTypingIndicator() // Might be redundant if onUpdate calls addMessageToChat
-                    Log.d("ChatFragment", "ComputerUseManager final session summary: $sessionSummary")
-                    // Optionally, display the finalSummary if it contains info not sent via onUpdate
-                    // addMessageToChat("Session summary: $sessionSummary", false, containsRichContent = false)
-                }
-            } else {
-                showCustomToast("Please enter a prompt for computer use.")
-            }
-        }
 
 
         // Initialize captureImageLauncher, cropImageLauncher, pickImageLauncher, pickDocumentLauncher
@@ -1065,6 +970,27 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
 
+    // Convert OpenAI-style tool definitions to Anthropic's format
+    private fun convertToolsForClaude(openAiTools: JSONArray): JSONArray {
+        val claudeTools = JSONArray()
+        for (i in 0 until openAiTools.length()) {
+            val tool = openAiTools.getJSONObject(i)
+            val functionObj = tool.optJSONObject("function") ?: continue
+            val name = functionObj.optString("name")
+            val description = functionObj.optString("description")
+            val parameters = functionObj.optJSONObject("parameters")
+
+            val claudeTool = JSONObject().apply {
+                put("name", name)
+                put("description", description)
+                put("input_schema", parameters)
+                put("type", "custom")
+            }
+            claudeTools.put(claudeTool)
+        }
+        return claudeTools
+    }
+
     // In ChatFragment.kt
 
     private fun observeViewModels() {
@@ -1123,15 +1049,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
         isFollowUpEnabled = appPrefs.getBoolean("follow_up_enabled", true)
     }
-    private fun isGreetingSentForCurrentConversation(): Boolean {
-        val chatPrefs = requireContext().getSharedPreferences(PREFS_NAME_CHAT, Context.MODE_PRIVATE)
-        return chatPrefs.getBoolean(KEY_GREETING_SENT + conversationId, false)
-    }
 
-    private fun markGreetingSentForCurrentConversation() {
-        val chatPrefs = requireContext().getSharedPreferences(PREFS_NAME_CHAT, Context.MODE_PRIVATE)
-        chatPrefs.edit().putBoolean(KEY_GREETING_SENT + conversationId, true).apply()
-    }
 
 
 
@@ -1171,7 +1089,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         binding.openaiLiveAudioControls.visibility = View.GONE
         binding.openAIStatusTextView.visibility = View.GONE
         binding.openAIAiResponseTextView.visibility = View.GONE
-        binding.computerUseControls.visibility = View.GONE
 
 
 
@@ -1189,18 +1106,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 binding.generatedImageView.visibility = View.VISIBLE // Or visible after generation
                 // Standard text input is still used for DALL-E prompt
                 binding.followUpQuestionsContainer.visibility = View.GONE
-            }
-            "computer-use-preview" -> {
-                binding.messageInputLayout.visibility = View.VISIBLE
-                binding.sendButton.visibility = View.GONE
-                binding.scanTextButton.visibility = View.GONE
-                binding.voiceInputButton.visibility = View.GONE
-                binding.ttsToggleButton.visibility = View.GONE
-                binding.followUpQuestionsContainer.visibility = View.GONE
-                binding.computerUseControls.visibility = View.VISIBLE
-                binding.openaiLiveAudioControls.visibility = View.GONE
-                binding.openAIStatusTextView.visibility = View.GONE
-                binding.openAIAiResponseTextView.visibility = View.GONE
             }
             // Add cases for other models if they have very specific UI needs
             else -> {
@@ -1226,6 +1131,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private fun processUserMessageSend(userMessage: String) {
         // Central point for sending a message based on currentModel and limits
         hideKeyboard()
+        addMessageToChat(userMessage, true)
         binding.messageEditText.text.clear()
 
         if (isUserSubscribed || canSendMessage) {
@@ -1260,20 +1166,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
 
-    private val computerUseManager by lazy {
-        ComputerUseManager(requireActivity()) { messageFromManager ->
-            // This is the onUpdate callback
-            addMessageToChat(
-                messageContent = messageFromManager,
-                isUser = false,
-                containsRichContent = false // Adjust as needed
-            )
-        }
-    }
     // MODIFIED handleChatCompletion with Tool Calling Logic
     private fun handleChatCompletion(
-        userMessageContent: String,
-        currentConversationHistoryForToolCall: MutableList<JSONObject> = mutableListOf() // For multi-turn tool use
+        userMessageContent: String
     ) {
         val messagesToSend = JSONArray()
 
@@ -1290,7 +1185,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             // Add relevant chat history from adapter
             // Be mindful of token limits; you might only send the last N messages
             val historyLimit = 10 // Example: send last 10 messages
-            chatAdapter.currentList.filterNot { it.isTyping }
+            chatMessages.filterNot { it.isTyping }
                 .takeLast(historyLimit) // Take recent history
                 .forEach { chatMsg ->
                     // Skip adding the current user message if it's already in userMessageContent for this turn
@@ -1316,21 +1211,41 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         val requestBodyJson = JSONObject().apply {
             put("model", currentModel) // Ensure this is a model that supports tools (e.g., gpt-4o, gpt-3.5-turbo-0125+)
             put("messages", messagesToSend)
-            // Only include tools if the model supports it and you have tools defined
-            if (modelSupportsTools(currentModel)) {
-                put("tools", getAvailableTools()) // Your function to get tool schemas
+            // Only include tools if the model supports them and this isn't a search-preview model
+            if (modelSupportsTools(currentModel) && !WEB_SEARCH_MODELS.contains(currentModel)) {
+                val tools = if (currentModel.startsWith("claude")) {
+                    convertToolsForClaude(getAvailableTools())
+                } else {
+                    getAvailableTools()
+                }
+                put("tools", tools)
                 // put("tool_choice", "auto") // "auto" is default
             }
-            // Add other params like temperature, web_search_options if applicable for this model
+            put("max_tokens", 300)
+            if (WEB_SEARCH_MODELS.contains(currentModel)) {
+                put("web_search_options", JSONObject())
+            }
+            // Add other params like temperature if needed
         }
 
         val body = requestBodyJson.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
-        val request = Request.Builder()
-            .url("https://api.openai.com/v1/chat/completions")
+
+        val requestBuilder = Request.Builder()
             .post(body)
-            .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}") // Use OpenAI key
             .addHeader("Content-Type", "application/json")
-            .build()
+
+        if (currentModel.startsWith("claude")) {
+            requestBuilder
+                .url("https://api.anthropic.com/v1/messages")
+                .addHeader("x-api-key", anthropicApiKey)
+                .addHeader("anthropic-version", "2023-06-01")
+        } else {
+            requestBuilder
+                .url("https://api.openai.com/v1/chat/completions")
+                .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
+        }
+
+        val request = requestBuilder.build()
 
         Log.d("ChatFragment", "Sending ChatCompletion (Tools/Text): ${requestBodyJson.toString(2)}")
         if (currentConversationHistoryForToolCall.isEmpty()) {
@@ -1355,8 +1270,12 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     val jsonResponse = JSONObject(responseStr)
                     Log.d("ChatFragment", "Received ChatCompletion Response: ${jsonResponse.toString(2)}")
 
-                    val choice = jsonResponse.optJSONArray("choices")?.optJSONObject(0)
-                    val messageFromApi = choice?.optJSONObject("message")
+                    var messageFromApi: JSONObject? = null
+
+                    if (jsonResponse.has("choices")) {
+                        val choice = jsonResponse.optJSONArray("choices")?.optJSONObject(0)
+                        messageFromApi = choice?.optJSONObject("message")
+                    }
 
                     if (messageFromApi == null) {
                         withContext(Dispatchers.Main) {
@@ -1405,8 +1324,10 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                             })
                         }
                         ongoingHistoryForThisTurn.addAll(toolResultsMessages) // Add tool results to history
-                        // Call API again with results
-                        handleChatCompletion(userMessageContent, ongoingHistoryForThisTurn)
+                        // Save for next call and call API again with results
+                        currentConversationHistoryForToolCall.clear()
+                        currentConversationHistoryForToolCall.addAll(ongoingHistoryForThisTurn)
+                        handleChatCompletion(userMessageContent)
 
                     } else {
                         // No tool_calls, this is a direct text response from the AI
@@ -1416,11 +1337,13 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                         val minimalResponseForHandler = JSONObject().apply {
                             put("choices", JSONArray().put(JSONObject().apply {
                                 put("message", messageFromApi)
-                                // Add usage if your handleSuccessResponse expects it
                                 if (jsonResponse.has("usage")) {
                                     put("usage", jsonResponse.getJSONObject("usage"))
                                 }
                             }))
+                            if (jsonResponse.has("stop_reason")) {
+                                put("stop_reason", jsonResponse.getString("stop_reason"))
+                            }
                         }.toString()
                         handleSuccessResponse(minimalResponseForHandler)
                     }
@@ -1439,9 +1362,13 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     }
 
     private fun modelSupportsTools(modelName: String): Boolean {
-        // List models known to support function calling/tools
-        return modelName.startsWith("gpt-4") || modelName.contains("gpt-3.5-turbo-0125") || modelName.contains("gpt-3.5-turbo-1106")
-        // Add other models as OpenAI updates them.
+        // Web-search preview models don't support tool calling
+        if (WEB_SEARCH_MODELS.contains(modelName)) return false
+
+        return modelName.startsWith("gpt-4") ||
+                modelName.startsWith("claude") ||
+                modelName.contains("gpt-3.5-turbo-0125") ||
+                modelName.contains("gpt-3.5-turbo-1106")
     }
 
     // In ChatFragment.kt
@@ -2188,10 +2115,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 binding.messageEditText.hint = "Type your message here..."
                 binding.followUpQuestionsContainer.visibility = View.VISIBLE
                 binding.generatedImageView.visibility = View.GONE
-                updateActiveModelButton(when(currentModel) {
-                    "gpt-4" -> "GPT-4"
-                    else -> "GPT-3.5 Turbo"
-                })
+                updateActiveModelButton(getDisplayNameForModel(currentModel))
             }
         }
     }
@@ -2232,15 +2156,19 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
     private fun addMessageToList(chatMessage: ChatMessage, scrollToBottom: Boolean = true) {
-        val currentList = chatAdapter.currentList.toMutableList()
         if (chatMessage.isTyping) {
-            currentList.removeAll { it.isTyping } // Ensure only one typing indicator
+            chatMessages.removeAll { it.isTyping }
         }
-        currentList.add(chatMessage)
-        chatAdapter.submitList(currentList.toList()) {
-            if (scrollToBottom && currentList.isNotEmpty()) {
-                binding.recyclerView.smoothScrollToPosition(currentList.size - 1)
+        chatMessages.add(chatMessage)
+        chatAdapter.submitList(chatMessages.toList()) {
+            if (scrollToBottom && chatMessages.isNotEmpty()) {
+                // Post the scroll to ensure it occurs after RecyclerView layout
+                binding.recyclerView.post {
+                    binding.recyclerView.smoothScrollToPosition(chatMessages.size - 1)
+                }
             }
+            // Force redraw in case DiffUtil misses updates
+            chatAdapter.notifyDataSetChanged()
         }
         if (!chatMessage.isTyping) {
             saveChatHistory()
@@ -2251,9 +2179,10 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             isLoadingMoreMessages = false // Reset flag if no new messages
             return
         }
-        val currentList = chatAdapter.currentList.toMutableList()
-        currentList.addAll(0, olderMessages) // Add to the beginning of the list
-        chatAdapter.submitList(currentList.toList()) {
+        if (olderMessages.isNotEmpty()) {
+            chatMessages.addAll(0, olderMessages)
+        }
+        chatAdapter.submitList(chatMessages.toList()) {
             // Optional: maintain scroll position or scroll to a specific item
             // For chat, usually you don't scroll after loading older messages,
             // unless you want to keep the visual position of the current top item.
@@ -2283,6 +2212,11 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             removeTypingIndicator() // Call this early, outside the async block if response parsing is quick
 
             val jsonResponse = JSONObject(responseBody)
+            val stopReason = jsonResponse.optString("stop_reason")
+            if (stopReason == "refusal") {
+                showCustomToast("The model refused to answer the request.")
+            }
+
             val choices = jsonResponse.optJSONArray("choices")
             // val usage = jsonResponse.optJSONObject("usage") // Keep if needed
 
@@ -2428,6 +2362,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 if (finalFollowUpsToShow.isEmpty()) {
                     generateDynamicFollowUpQuestions(originalReplyContent) { generatedQuestions ->
                         finalFollowUpsToShow.addAll(generatedQuestions)
+                        finalFollowUpsToShow = finalFollowUpsToShow.distinct().take(3).toMutableList()
                         addMessageToChat(
                             messageContent = processedContent,
                             isUser = false,
@@ -2438,6 +2373,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                         addFollowUpQuestionsToChat(finalFollowUpsToShow)
                     }
                 } else {
+                    finalFollowUpsToShow = finalFollowUpsToShow.distinct().take(3).toMutableList()
                     addMessageToChat(
                         messageContent = processedContent,
                         isUser = false,
@@ -2452,6 +2388,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     handleTextToSpeech(originalReplyContent) // Speak original, un-prefixed/un-augmented content
                 }
                 incrementInteractionCount()
+                // Reset history after completing the tool-assisted turn
+                currentConversationHistoryForToolCall.clear()
             }
 
         } catch (e: JSONException) {
@@ -2477,86 +2415,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
     private fun addFollowUpQuestionsToChat(questions: List<String>) {
         binding.followUpQuestionsContainer.removeAllViews()
-
-        if (!isFollowUpEnabled || questions.isEmpty()) {
-            binding.followUpQuestionsContainer.visibility = View.GONE
-            return
-        }
-
-        // Create the toggle header button
-        val toggleButton = Button(requireContext()).apply {
-            //text = "Suggested Follow-ups ▼"
-            textSize = 14f
-            setTypeface(typeface, Typeface.BOLD)
-            setBackgroundColor(Color.TRANSPARENT)
-            setTextColor(ContextCompat.getColor(requireContext(), R.color.primary_color))
-
-            val params = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply {
-                setMargins(0, 0, 0, (8 * resources.displayMetrics.density).toInt())
-            }
-            layoutParams = params
-        }
-
-        // Create container for questions (initially hidden)
-        val questionsContainer = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-            visibility = View.GONE
-        }
-
-        // Add questions to the container
-        questions.forEach { question ->
-            Button(requireContext()).apply {
-                text = question
-                textSize = 12f
-                setTypeface(typeface, Typeface.NORMAL)
-                setBackgroundColor(Color.TRANSPARENT)
-                setTextColor(ContextCompat.getColor(requireContext(), R.color.primary_color))
-
-                val params = LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                ).apply {
-                    setMargins(0, 0, 0, (4 * resources.displayMetrics.density).toInt())
-                }
-                layoutParams = params
-
-                setOnClickListener {
-                    binding.messageEditText.setText(question)
-                    binding.messageEditText.setSelection(question.length)
-                }
-            }.also { questionsContainer.addView(it) }
-        }
-
-        // Toggle functionality
-        var isExpanded = false
-        toggleButton.setOnClickListener {
-            isExpanded = !isExpanded
-            if (isExpanded) {
-                questionsContainer.visibility = View.VISIBLE
-                toggleButton.text = "Suggested Follow-ups ▲"
-                questionsContainer.animate()
-                    .alpha(1f)
-                    .setDuration(200)
-                    .start()
-            } else {
-                questionsContainer.animate()
-                    .alpha(0f)
-                    .setDuration(200)
-                    .withEndAction {
-                        questionsContainer.visibility = View.GONE
-                    }
-                    .start()
-                toggleButton.text = "Suggested Follow-ups ▼"
-            }
-        }
-
-        // Add views to container
-        binding.followUpQuestionsContainer.addView(toggleButton)
-        binding.followUpQuestionsContainer.addView(questionsContainer)
-        binding.followUpQuestionsContainer.visibility = View.VISIBLE
+        binding.followUpQuestionsContainer.visibility = View.GONE
     }
 
 
@@ -2720,20 +2579,30 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         return allMessages.subList(startIndex, indexOfAnchor).reversed() // Get 'limit' messages before the anchor
     }
     private fun startNewConversation() {
-        chatAdapter.submitList(emptyList()) // Clear the adapter
-        conversationId = generateConversationId()
-        isGreetingSent = false // Allow greeting for the new conversation
-        sendGreetingMessage()
-        showCustomToast("New conversation started")
+        val newId = generateConversationId()
+        val appPrefs = requireContext().getSharedPreferences(PREFS_NAME_APP, Context.MODE_PRIVATE)
+        appPrefs.edit().putString("last_conversation_id", newId).apply()
+        conversationId = newId
+
+        chatMessages.clear()
+        chatAdapter.submitList(emptyList())
+
+        val currentIntent = requireActivity().intent
+        val intent = Intent(requireContext(), ChatActivity::class.java).apply {
+            putExtra("selected_model", currentModel)
+            putExtra("is_ad_free", currentIntent.getBooleanExtra("is_ad_free", false))
+            putExtra("expiration_time", currentIntent.getLongExtra("expiration_time", 0))
+        }
+        startActivity(intent)
+        activity?.finish()
     }
 
     // --- History and Pagination ---
     private fun loadOlderMessages() {
         if (isLoadingMoreMessages) return
         isLoadingMoreMessages = true
-        showCustomToast("Loading older messages...") // Optional UI feedback
 
-        val currentTopMessageId = chatAdapter.currentList.firstOrNull { !it.isTyping }?.id
+        val currentTopMessageId = chatMessages.firstOrNull { !it.isTyping }?.id
 
         lifecycleScope.launch {
             val olderMessages = withContext(Dispatchers.IO) {
@@ -2865,7 +2734,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         containsRichContent: Boolean = false // Pass this flag
     ) {
         val newChatMessage = ChatMessage(
-            id = System.currentTimeMillis().toString(),
+            id = UUID.randomUUID().toString(),
             content = messageContent,
             isUser = isUser,
             citations = citations,
@@ -2873,10 +2742,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             containsRichContent = containsRichContent
         )
         addMessageToList(newChatMessage)
-
-        if (!isUser && isTtsEnabled) {
-            speakOut(messageContent)
-        }
     }
 
 
@@ -3246,7 +3111,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         when (currentModel) {
             "dall-e-3" -> {
                 if (checkDailyLimit("dall-e-3", DAILY_LIMIT_DALLE)) {
-                    addMessageToChat(message, true)
                     handleImageGeneration(message)
                     binding.messageEditText.text.clear()
                     incrementModelUsage("dall-e-3")
@@ -3256,7 +3120,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             }
             "gemini" -> {
                 if (checkDailyLimit("gemini", DAILY_LIMIT_GEMINI)) {
-                    addMessageToChat(message, true)
                     handleGeminiCompletion(message)
                     binding.messageEditText.text.clear()
                     incrementModelUsage("gemini")
@@ -3266,7 +3129,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             }
             "deepseek" -> {
                 if (checkDailyLimit("deepseek", DAILY_LIMIT_DEEPSEEK)) {
-                    addMessageToChat(message, true)
                     handleDeepSeekCompletion(message)
                     binding.messageEditText.text.clear()
                     incrementModelUsage("deepseek")
@@ -3276,7 +3138,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             }
             "o3-mini" -> {
                 if (checkDailyLimit("o3-mini", DAILY_LIMIT_GPT4)) {
-                    addMessageToChat(message, true)
                     handleReasoningModelCompletion(message, "o3-mini")
                     binding.messageEditText.text.clear()
                     incrementModelUsage("o3-mini")
@@ -3285,7 +3146,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 }
             }
             else -> {
-                addMessageToChat(message, true)
                 if (isUserSubscribed && subscriptionExpirationTime > System.currentTimeMillis() || canSendMessage) {
                     sendMessageToAPI(response)
                     binding.messageEditText.text.clear()
@@ -3306,7 +3166,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     }
 
     private fun handleDalle3Request(message: String) {
-        addMessageToChat(message, true)
         handleImageGeneration(message)
         binding.messageEditText.text.clear()
         incrementModelUsage("dall-e-3")
@@ -3333,7 +3192,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         isWebSearchResult: Boolean = false // If you adopted this from my suggestion
     ) {
         val newChatMessage = ChatMessage(
-            id = System.currentTimeMillis().toString(),
+            id = UUID.randomUUID().toString(),
             content = messageContent,
             isUser = isUser,
             citations = citations,
@@ -3343,10 +3202,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             // timestamp will be set by default in ChatMessage constructor
         )
         addMessageToList(newChatMessage) // Your helper that calls submitList
-
-        if (!isUser && isTtsEnabled) {
-            speakOut(messageContent)
-        }
     }
     private fun generateResponse(userQuery: String): String {
         val baseResponse = "Here is the explanation for your query: $userQuery"
@@ -3632,10 +3487,11 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             return // Exit if parsing fails
         }
 
-        // Submit the new list to the adapter
-        chatAdapter.submitList(messagesToLoad.toList()) {
-            if (messagesToLoad.isNotEmpty()) {
-                binding.recyclerView.smoothScrollToPosition(messagesToLoad.size - 1)
+        chatMessages.clear()
+        chatMessages.addAll(messagesToLoad)
+        chatAdapter.submitList(chatMessages.toList()) {
+            if (chatMessages.isNotEmpty()) {
+                binding.recyclerView.smoothScrollToPosition(chatMessages.size - 1)
             }
         }
         // Note: saveChatHistory() might be called if this implies the chat is now "active"
@@ -3714,6 +3570,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             "GPT-4o Mini 🧩 - Lightweight version of GPT-4o\nExample: Quick summaries, simple Q&A, or lightweight tasks.",
             "GPT-4o Search 🔍 - Web-connected AI\nExample: Get latest news, real-time information, and cited sources.",
             "GPT-4o Mini Search 🔍 - Lightweight web-connected AI\nExample: Quick web searches with cited results.",
+            "Claude Sonnet 4 🤖 - Anthropic model\nExample: Advanced reasoning with new features.",
+            "Claude Opus 4 🤖 - Anthropic model\nExample: Most capable reasoning and analysis.",
             "O1 🛠️ - Optimized for specific tasks\nExample: Code debugging, data analysis, or technical documentation.",
             "O1 Mini 🧰 - Lightweight version of O1\nExample: Simple coding help, quick fixes, or small-scale tasks.",
             "O3 Mini 🧠 - Reasoning model for complex problem solving\nExample: Advanced coding, scientific reasoning, or multi-step planning.",
@@ -3727,7 +3585,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             "GPT-4.1 Mini 🖼️ - Image analysis and understanding\nExample: Analyze images, extract information, or generate descriptions.",
             "Gemini Voice Chat 🎙️ - Google real-time voice\nExample: Engage in spoken dialogue with Gemini.", // ADDED Gemini Voice Chat
             "OpenAI Realtime Voice 🔊 - OpenAI low-latency voice\nExample: Conversational AI with OpenAI.",
-            "Computer Use 🖥️ - Automate tasks via browser screenshots"
 
         )
 
@@ -3744,20 +3601,21 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     2 -> "gpt-4o-mini"
                     3 -> "gpt-4o-search-preview"
                     4 -> "gpt-4o-mini-search-preview"
-                    5 -> "o1"
-                    6 -> "o1-mini"
-                    7 -> "o3-mini"
-                    8 -> "gpt-4o-realtime-preview"
-                    9 -> "gpt-4o-audio-preview" // This is likely an OpenAI model needing its own handling if different from general text
-                    10 -> "gpt-4-turbo"
-                    11 -> "dall-e-3"
-                    12 -> "tts-1" // This is for OpenAI TTS output, not a conversational model usually
-                    13 -> "gemini" // Text-based Gemini
-                    14 -> "deepseek"
-                    15 -> "gpt-4.1-mini"
-                    16 -> "gemini-voice-chat"     // Identifier for Gemini Voice Chat
-                    17 -> "openai-realtime-voice"// Identifier for OpenAI Realtime Voice
-                    18 -> "computer-use-preview"
+                    5 -> "claude-sonnet-4-20250514"
+                    6 -> "claude-opus-4-20250514"
+                    7 -> "o1"
+                    8 -> "o1-mini"
+                    9 -> "o3-mini"
+                    10 -> "gpt-4o-realtime-preview"
+                    11 -> "gpt-4o-audio-preview" // This is likely an OpenAI model needing its own handling if different from general text
+                    12 -> "gpt-4-turbo"
+                    13 -> "dall-e-3"
+                    14 -> "tts-1" // This is for OpenAI TTS output, not a conversational model usually
+                    15 -> "gemini" // Text-based Gemini
+                    16 -> "deepseek"
+                    17 -> "gpt-4.1-mini"
+                    18 -> "gemini-voice-chat"     // Identifier for Gemini Voice Chat
+                    19 -> "openai-realtime-voice"// Identifier for OpenAI Realtime Voice
                     else -> "gpt-3.5-turbo"       // Default fallback
                 }
 
@@ -3804,20 +3662,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                         updateActiveModelButton("OpenAI Voice")
                         showCustomToast("Switched to OpenAI Realtime Voice")
                     }
-                    "computer-use-preview" -> {
-                        binding.computerUseControls.visibility = View.VISIBLE
-                        binding.messageInputLayout.visibility = View.VISIBLE
-                        binding.sendButton.visibility = View.GONE
-                        binding.scanTextButton.visibility = View.GONE
-                        binding.voiceInputButton.visibility = View.GONE
-                        binding.ttsToggleButton.visibility = View.GONE
-                        binding.followUpQuestionsContainer.visibility = View.GONE
-                        binding.generatedImageView.visibility = View.GONE
-                        binding.downloadButton.visibility = View.GONE
-                        binding.generatingText.visibility = View.GONE
-                        updateActiveModelButton("Computer Use")
-                        showCustomToast("Switched to Computer Use")
-                    }
                     else -> {
                         // Standard Text-Based Chat UI (for all other models)
 
@@ -3837,6 +3681,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
                         // Call your existing function to set up UI for specific models (like DALL-E)
                         updateUIForCurrentModel() // This handles DALL-E image view etc.
+                        switchUiForModel(currentModel)
                     }
                 }
                 // --- End UI Toggling Logic ---
@@ -3869,7 +3714,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
         // 1. Define 'contentsArray' (for message history)
         val contentsArray = JSONArray().apply {
-            chatAdapter.currentList.filterNot { it.isTyping }.forEach { chatMsg ->
+            chatMessages.filterNot { it.isTyping }.forEach { chatMsg ->
                 put(JSONObject().apply {
                     put("role", if (chatMsg.isUser) "user" else "model")
                     put("parts", JSONArray().apply {
@@ -4008,7 +3853,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         val deepSeekUrl = "https://api.deepseek.com/v1/chat/completions"
 
         val messagesArray = JSONArray().apply {
-            chatAdapter.currentList.filterNot { it.isTyping }.forEach { chatMsg ->
+            chatMessages.filterNot { it.isTyping }.forEach { chatMsg ->
                 put(JSONObject().apply {
                     put("role", if (chatMsg.isUser) "user" else "assistant")
                     put("content", chatMsg.content)
@@ -4145,6 +3990,24 @@ private fun updateActiveModelButton(modelName: String) {
     binding.activeModelButton.text = modelName
 }
 
+private fun getDisplayNameForModel(modelId: String): String {
+    return when (modelId) {
+        "gpt-3.5-turbo" -> "GPT-3.5 Turbo"
+        "gpt-4o" -> "GPT-4o"
+        "gpt-4o-mini" -> "GPT-4o Mini"
+        "gpt-4o-search-preview" -> "GPT-4o Search"
+        "gpt-4o-mini-search-preview" -> "GPT-4o Mini Search"
+        "gpt-4-turbo" -> "GPT-4 Turbo"
+        "claude-sonnet-4-20250514" -> "Claude Sonnet 4"
+        "claude-opus-4-20250514" -> "Claude Opus 4"
+        "dall-e-3" -> "DALL-E 3"
+        "o1" -> "O1"
+        "o1-mini" -> "O1 Mini"
+        "o3-mini" -> "O3 Mini"
+        else -> modelId
+    }
+}
+
 
     // --------------------------
     // Voice and Speech Functions
@@ -4265,11 +4128,6 @@ private fun updateActiveModelButton(modelName: String) {
         }
     }
 
-    private fun speakOut(text: String) {
-        if (isTtsEnabled) {
-            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
-        }
-    }
 
     private fun updateSelectedVoice(voice: String) {
         selectedVoice = voice
@@ -4315,20 +4173,6 @@ private fun updateActiveModelButton(modelName: String) {
         return sharedPreferences.getString(SELECTED_VOICE_KEY, "alloy") ?: "alloy"
     }
 
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            val result = tts?.setLanguage(Locale.US)
-            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                Log.e("ChatFragment", "Language not supported")
-                showCustomToast("TTS language not supported")
-            } else {
-                Log.d("ChatFragment", "TTS initialized successfully")
-            }
-        } else {
-            Log.e("ChatFragment", "TTS initialization failed")
-            showCustomToast("TTS initialization failed")
-        }
-    }
 
 
 
@@ -4613,23 +4457,7 @@ private fun updateActiveModelButton(modelName: String) {
         }
     }
 
-    private fun toggleFollowUpQuestions() {
-        if (isFollowUpQuestionsExpanded) {
-            followUpQuestionsScrollView.visibility = View.GONE
-            expandFollowUpQuestionsButton.text = "▼"
-        } else {
-            followUpQuestionsScrollView.visibility = View.VISIBLE
-            expandFollowUpQuestionsButton.text = "▲"
-        }
-        isFollowUpQuestionsExpanded = !isFollowUpQuestionsExpanded
-    }
 
-    private fun sendGreetingMessage() {
-        val randomGreeting = greetings.random()
-        addMessageToChat(randomGreeting, false, containsRichContent = false) // Ensure rich content flag
-        // Update isGreetingSent for current conversation if needed,
-        // or manage it globally as before.
-    }
 
 
 
@@ -4695,8 +4523,6 @@ private fun updateActiveModelButton(modelName: String) {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-        tts?.stop()
-        tts?.shutdown()
     }
 
     private fun initializeChat(model: String?, conversationId: String?) {
@@ -5062,10 +4888,11 @@ private fun updateActiveModelButton(modelName: String) {
             return // Exit if parsing fails
         }
 
-        // Submit the new list to the adapter
-        chatAdapter.submitList(messagesToLoad.toList()) {
-            if (messagesToLoad.isNotEmpty()) {
-                binding.recyclerView.smoothScrollToPosition(messagesToLoad.size - 1)
+        chatMessages.clear()
+        chatMessages.addAll(messagesToLoad)
+        chatAdapter.submitList(chatMessages.toList()) {
+            if (chatMessages.isNotEmpty()) {
+                binding.recyclerView.smoothScrollToPosition(chatMessages.size - 1)
             }
         }
         // Optionally, save this loaded conversation as the current one
@@ -5110,9 +4937,11 @@ private fun updateActiveModelButton(modelName: String) {
             Log.e("ChatFragment", "Error loading chat history", e)
         }
 
-        chatAdapter.submitList(loadedMessages.toList()) {
-            if (loadedMessages.isNotEmpty()) {
-                binding.recyclerView.smoothScrollToPosition(loadedMessages.size - 1)
+        chatMessages.clear()
+        chatMessages.addAll(loadedMessages)
+        chatAdapter.submitList(chatMessages.toList()) {
+            if (chatMessages.isNotEmpty()) {
+                binding.recyclerView.smoothScrollToPosition(chatMessages.size - 1)
             }
         }
     }
@@ -5121,7 +4950,7 @@ private fun updateActiveModelButton(modelName: String) {
         val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
 
-        val currentMessagesToSave = chatAdapter.currentList.filterNot { it.isTyping }
+        val currentMessagesToSave = chatMessages.filterNot { it.isTyping }
         if (currentMessagesToSave.isEmpty() && conversationId == null) return // Don't save empty new chats
 
         val messagesJsonArray = JSONArray()
@@ -5197,7 +5026,7 @@ private fun updateActiveModelButton(modelName: String) {
             }
         }
         return ChatMessage(
-            id = messageObject.optString("id", System.currentTimeMillis().toString()),
+            id = messageObject.optString("id", UUID.randomUUID().toString()),
             content = messageObject.getString("content"),
             isUser = messageObject.getBoolean("isUser"),
             isTyping = messageObject.optBoolean("isTyping", false),
@@ -5370,10 +5199,9 @@ private fun updateActiveModelButton(modelName: String) {
     }
 
     private fun removeTypingIndicator() {
-        val currentList = chatAdapter.currentList.toMutableList()
-        val listChanged = currentList.removeAll { it.isTyping }
+        val listChanged = chatMessages.removeAll { it.isTyping }
         if (listChanged) {
-            chatAdapter.submitList(currentList.toList())
+            chatAdapter.submitList(chatMessages.toList())
         }
     }
 
@@ -5387,7 +5215,7 @@ private fun updateActiveModelButton(modelName: String) {
 
     private fun shareLastResponse() {
         // Get the current list from the adapter
-        val currentChatList = chatAdapter.currentList
+        val currentChatList = chatMessages
         if (currentChatList.isNotEmpty()) {
             // Find the last message that is NOT from the user and NOT a typing indicator
             val lastMessageToShare = currentChatList.lastOrNull { message -> !message.isUser && !message.isTyping }
