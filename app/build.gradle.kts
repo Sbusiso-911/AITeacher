@@ -27,6 +27,13 @@ android {
         } else {
             throw GradleException("API_KEY not found in gradle.properties")
         }
+        // Read Anthropic API key for Claude models
+        val anthropicKey: String? = project.findProperty("ANTHROPIC_API_KEY") as String?
+        if (anthropicKey != null) {
+            buildConfigField("String", "ANTHROPIC_API_KEY", "\"$anthropicKey\"")
+        } else {
+            throw GradleException("ANTHROPIC_API_KEY not found in gradle.properties")
+        }
         // Read Google Vision API key from gradle.properties
         val googleVisionApiKey: String? = project.findProperty("GOOGLE_VISION_API_KEY") as String?
         if (googleVisionApiKey != null) {

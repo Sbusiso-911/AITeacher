@@ -1321,16 +1321,31 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 put("tools", getAvailableTools()) // Your function to get tool schemas
                 // put("tool_choice", "auto") // "auto" is default
             }
-            // Add other params like temperature, web_search_options if applicable for this model
+            put("max_tokens", 300)
+            if (WEB_SEARCH_MODELS.contains(currentModel)) {
+                put("web_search_options", JSONObject())
+            }
+            // Add other params like temperature if needed
         }
 
         val body = requestBodyJson.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
-        val request = Request.Builder()
-            .url("https://api.openai.com/v1/chat/completions")
+
+        val requestBuilder = Request.Builder()
             .post(body)
-            .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}") // Use OpenAI key
             .addHeader("Content-Type", "application/json")
-            .build()
+
+        if (currentModel.startsWith("claude")) {
+            requestBuilder
+                .url("https://api.anthropic.com/v1/messages")
+                .addHeader("x-api-key", BuildConfig.ANTHROPIC_API_KEY)
+                .addHeader("anthropic-version", "2023-06-01")
+        } else {
+            requestBuilder
+                .url("https://api.openai.com/v1/chat/completions")
+                .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
+        }
+
+        val request = requestBuilder.build()
 
         Log.d("ChatFragment", "Sending ChatCompletion (Tools/Text): ${requestBodyJson.toString(2)}")
         if (currentConversationHistoryForToolCall.isEmpty()) {
@@ -1440,7 +1455,10 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
     private fun modelSupportsTools(modelName: String): Boolean {
         // List models known to support function calling/tools
-        return modelName.startsWith("gpt-4") || modelName.contains("gpt-3.5-turbo-0125") || modelName.contains("gpt-3.5-turbo-1106")
+        return modelName.startsWith("gpt-4") ||
+                modelName.startsWith("claude") ||
+                modelName.contains("gpt-3.5-turbo-0125") ||
+                modelName.contains("gpt-3.5-turbo-1106")
         // Add other models as OpenAI updates them.
     }
 
@@ -3714,6 +3732,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             "GPT-4o Mini 🧩 - Lightweight version of GPT-4o\nExample: Quick summaries, simple Q&A, or lightweight tasks.",
             "GPT-4o Search 🔍 - Web-connected AI\nExample: Get latest news, real-time information, and cited sources.",
             "GPT-4o Mini Search 🔍 - Lightweight web-connected AI\nExample: Quick web searches with cited results.",
+            "Claude Sonnet 4 🤖 - Anthropic model\nExample: Advanced reasoning with new features.",
             "O1 🛠️ - Optimized for specific tasks\nExample: Code debugging, data analysis, or technical documentation.",
             "O1 Mini 🧰 - Lightweight version of O1\nExample: Simple coding help, quick fixes, or small-scale tasks.",
             "O3 Mini 🧠 - Reasoning model for complex problem solving\nExample: Advanced coding, scientific reasoning, or multi-step planning.",
@@ -3744,20 +3763,21 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     2 -> "gpt-4o-mini"
                     3 -> "gpt-4o-search-preview"
                     4 -> "gpt-4o-mini-search-preview"
-                    5 -> "o1"
-                    6 -> "o1-mini"
-                    7 -> "o3-mini"
-                    8 -> "gpt-4o-realtime-preview"
-                    9 -> "gpt-4o-audio-preview" // This is likely an OpenAI model needing its own handling if different from general text
-                    10 -> "gpt-4-turbo"
-                    11 -> "dall-e-3"
-                    12 -> "tts-1" // This is for OpenAI TTS output, not a conversational model usually
-                    13 -> "gemini" // Text-based Gemini
-                    14 -> "deepseek"
-                    15 -> "gpt-4.1-mini"
-                    16 -> "gemini-voice-chat"     // Identifier for Gemini Voice Chat
-                    17 -> "openai-realtime-voice"// Identifier for OpenAI Realtime Voice
-                    18 -> "computer-use-preview"
+                    5 -> "claude-sonnet-4-20250514"
+                    6 -> "o1"
+                    7 -> "o1-mini"
+                    8 -> "o3-mini"
+                    9 -> "gpt-4o-realtime-preview"
+                    10 -> "gpt-4o-audio-preview" // This is likely an OpenAI model needing its own handling if different from general text
+                    11 -> "gpt-4-turbo"
+                    12 -> "dall-e-3"
+                    13 -> "tts-1" // This is for OpenAI TTS output, not a conversational model usually
+                    14 -> "gemini" // Text-based Gemini
+                    15 -> "deepseek"
+                    16 -> "gpt-4.1-mini"
+                    17 -> "gemini-voice-chat"     // Identifier for Gemini Voice Chat
+                    18 -> "openai-realtime-voice"// Identifier for OpenAI Realtime Voice
+                    19 -> "computer-use-preview"
                     else -> "gpt-3.5-turbo"       // Default fallback
                 }
 
