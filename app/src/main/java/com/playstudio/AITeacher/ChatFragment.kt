@@ -1116,6 +1116,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         binding.scanTextButton.visibility = View.VISIBLE
         binding.voiceInputButton.visibility = View.VISIBLE // Standard STT
         binding.sendButton.visibility = View.VISIBLE
+        binding.startComputerUseButton.visibility = View.GONE
         binding.ttsToggleButton.visibility = View.VISIBLE
         binding.followUpQuestionsContainer.visibility = if (isFollowUpEnabled) View.VISIBLE else View.GONE
         binding.generatedImageView.visibility = View.GONE
@@ -1150,6 +1151,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 binding.scanTextButton.visibility = View.GONE
                 binding.voiceInputButton.visibility = View.GONE
                 binding.ttsToggleButton.visibility = View.GONE
+                binding.startComputerUseButton.visibility = View.VISIBLE
                 binding.followUpQuestionsContainer.visibility = View.GONE
                 binding.computerUseControls.visibility = View.VISIBLE
                 binding.openaiLiveAudioControls.visibility = View.GONE
