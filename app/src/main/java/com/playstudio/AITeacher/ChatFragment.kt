@@ -532,7 +532,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             sharedPreferences.edit().putBoolean(GREETING_SENT_KEY, true).apply()
         }
 
-        updateActiveModelButton("GPT-3.5 Turbo")
+        updateActiveModelButton(getDisplayNameForModel(currentModel))
         switchUiForModel(currentModel)
 
         // Initialize TTS button state
@@ -2265,10 +2265,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 binding.messageEditText.hint = "Type your message here..."
                 binding.followUpQuestionsContainer.visibility = View.VISIBLE
                 binding.generatedImageView.visibility = View.GONE
-                updateActiveModelButton(when(currentModel) {
-                    "gpt-4" -> "GPT-4"
-                    else -> "GPT-3.5 Turbo"
-                })
+                updateActiveModelButton(getDisplayNameForModel(currentModel))
             }
         }
     }
@@ -2562,7 +2559,9 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private fun addFollowUpQuestionsToChat(questions: List<String>) {
         binding.followUpQuestionsContainer.removeAllViews()
 
-        if (!isFollowUpEnabled || questions.isEmpty()) {
+        val uniqueQuestions = questions.distinct()
+
+        if (!isFollowUpEnabled || uniqueQuestions.isEmpty()) {
             binding.followUpQuestionsContainer.visibility = View.GONE
             return
         }
@@ -2591,7 +2590,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
 
         // Add questions to the container
-        questions.forEach { question ->
+        uniqueQuestions.forEach { question ->
             Button(requireContext()).apply {
                 text = question
                 textSize = 12f
@@ -2807,6 +2806,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         chatAdapter.submitList(emptyList()) // Clear the adapter
         currentConversationHistoryForToolCall.clear()
         binding.messageEditText.text?.clear()
+        binding.followUpQuestionsContainer.removeAllViews()
+        binding.followUpQuestionsContainer.visibility = View.GONE
         conversationId = generateConversationId()
         isGreetingSent = false // Allow greeting for the new conversation
         sendGreetingMessage()
@@ -4233,6 +4234,24 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 private fun updateActiveModelButton(modelName: String) {
     binding.activeModelButton.text = modelName
+}
+
+private fun getDisplayNameForModel(modelId: String): String {
+    return when (modelId) {
+        "gpt-3.5-turbo" -> "GPT-3.5 Turbo"
+        "gpt-4o" -> "GPT-4o"
+        "gpt-4o-mini" -> "GPT-4o Mini"
+        "gpt-4o-search-preview" -> "GPT-4o Search"
+        "gpt-4o-mini-search-preview" -> "GPT-4o Mini Search"
+        "gpt-4-turbo" -> "GPT-4 Turbo"
+        "dall-e-3" -> "DALL-E 3"
+        "claude-sonnet-4-20250514" -> "Claude Sonnet 4"
+        "claude-opus-4-20250514" -> "Claude Opus 4"
+        "o1" -> "O1"
+        "o1-mini" -> "O1 Mini"
+        "o3-mini" -> "O3 Mini"
+        else -> modelId
+    }
 }
 
 
