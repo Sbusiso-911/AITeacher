@@ -2881,7 +2881,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         containsRichContent: Boolean = false // Pass this flag
     ) {
         val newChatMessage = ChatMessage(
-            id = System.currentTimeMillis().toString(),
+            id = UUID.randomUUID().toString(),
             content = messageContent,
             isUser = isUser,
             citations = citations,
@@ -3349,7 +3349,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         isWebSearchResult: Boolean = false // If you adopted this from my suggestion
     ) {
         val newChatMessage = ChatMessage(
-            id = System.currentTimeMillis().toString(),
+            id = UUID.randomUUID().toString(),
             content = messageContent,
             isUser = isUser,
             citations = citations,
@@ -5236,7 +5236,7 @@ private fun getDisplayNameForModel(modelId: String): String {
             }
         }
         return ChatMessage(
-            id = messageObject.optString("id", System.currentTimeMillis().toString()),
+            id = messageObject.optString("id", UUID.randomUUID().toString()),
             content = messageObject.getString("content"),
             isUser = messageObject.getBoolean("isUser"),
             isTyping = messageObject.optBoolean("isTyping", false),
