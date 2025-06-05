@@ -350,6 +350,27 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
     }
 
+    // Convert OpenAI-style tool definitions to Anthropic's format
+    private fun convertToolsForClaude(openAiTools: JSONArray): JSONArray {
+        val claudeTools = JSONArray()
+        for (i in 0 until openAiTools.length()) {
+            val tool = openAiTools.getJSONObject(i)
+            val functionObj = tool.optJSONObject("function") ?: continue
+            val name = functionObj.optString("name")
+            val description = functionObj.optString("description")
+            val parameters = functionObj.optJSONObject("parameters")
+
+            val claudeTool = JSONObject().apply {
+                put("name", name)
+                put("description", description)
+                put("input_schema", parameters)
+                put("type", "custom")
+            }
+            claudeTools.put(claudeTool)
+        }
+        return claudeTools
+    }
+
     override fun onDetach() {
         super.onDetach()
         subscriptionClickListener = null
@@ -1318,9 +1339,14 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         val requestBodyJson = JSONObject().apply {
             put("model", currentModel) // Ensure this is a model that supports tools (e.g., gpt-4o, gpt-3.5-turbo-0125+)
             put("messages", messagesToSend)
-            // Only include tools if the model supports it and you have tools defined
-            if (modelSupportsTools(currentModel)) {
-                put("tools", getAvailableTools()) // Your function to get tool schemas
+            // Only include tools if the model supports them and this isn't a search-preview model
+            if (modelSupportsTools(currentModel) && !WEB_SEARCH_MODELS.contains(currentModel)) {
+                val tools = if (currentModel.startsWith("claude")) {
+                    convertToolsForClaude(getAvailableTools())
+                } else {
+                    getAvailableTools()
+                }
+                put("tools", tools)
                 // put("tool_choice", "auto") // "auto" is default
             }
             put("max_tokens", 300)
