@@ -434,6 +434,10 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         super.onViewCreated(view, savedInstanceState)
         Log.d("ChatFragment", "onViewCreated called")
 
+        // Load persisted preferences early so conversation ID and other
+        // settings are initialized before any messages are processed
+        loadSharedPrefs()
+
         selectedVoice = loadSelectedVoice()
         binding.voiceSelectionButton.text = "Voice: ${selectedVoice.replaceFirstChar { it.uppercase() }}"
 
@@ -2306,11 +2310,12 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
     private fun addMessageToList(chatMessage: ChatMessage, scrollToBottom: Boolean = true) {
-        val currentList = chatAdapter.currentList.toMutableList()
-        if (chatMessage.isTyping) {
-            currentList.removeAll { it.isTyping } // Ensure only one typing indicator
+        val currentList = chatAdapter.currentList.toMutableList().apply {
+            if (chatMessage.isTyping) {
+                removeAll { it.isTyping } // Ensure only one typing indicator
+            }
+            add(chatMessage)
         }
-        currentList.add(chatMessage)
         chatAdapter.submitList(currentList.toList()) {
             if (scrollToBottom && currentList.isNotEmpty()) {
                 binding.recyclerView.smoothScrollToPosition(currentList.size - 1)
