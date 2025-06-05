@@ -2560,88 +2560,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
     private fun addFollowUpQuestionsToChat(questions: List<String>) {
         binding.followUpQuestionsContainer.removeAllViews()
-
-        val uniqueQuestions = questions.distinct()
-
-        if (!isFollowUpEnabled || uniqueQuestions.isEmpty()) {
-            binding.followUpQuestionsContainer.visibility = View.GONE
-            return
-        }
-
-        // Create the toggle header button
-        val toggleButton = Button(requireContext()).apply {
-            //text = "Suggested Follow-ups ▼"
-            textSize = 14f
-            setTypeface(typeface, Typeface.BOLD)
-            setBackgroundColor(Color.TRANSPARENT)
-            setTextColor(ContextCompat.getColor(requireContext(), R.color.primary_color))
-
-            val params = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply {
-                setMargins(0, 0, 0, (8 * resources.displayMetrics.density).toInt())
-            }
-            layoutParams = params
-        }
-
-        // Create container for questions (initially hidden)
-        val questionsContainer = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-            visibility = View.GONE
-        }
-
-        // Add questions to the container
-        uniqueQuestions.forEach { question ->
-            Button(requireContext()).apply {
-                text = question
-                textSize = 12f
-                setTypeface(typeface, Typeface.NORMAL)
-                setBackgroundColor(Color.TRANSPARENT)
-                setTextColor(ContextCompat.getColor(requireContext(), R.color.primary_color))
-
-                val params = LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                ).apply {
-                    setMargins(0, 0, 0, (4 * resources.displayMetrics.density).toInt())
-                }
-                layoutParams = params
-
-                setOnClickListener {
-                    binding.messageEditText.setText(question)
-                    binding.messageEditText.setSelection(question.length)
-                }
-            }.also { questionsContainer.addView(it) }
-        }
-
-        // Toggle functionality
-        var isExpanded = false
-        toggleButton.setOnClickListener {
-            isExpanded = !isExpanded
-            if (isExpanded) {
-                questionsContainer.visibility = View.VISIBLE
-                toggleButton.text = "Suggested Follow-ups ▲"
-                questionsContainer.animate()
-                    .alpha(1f)
-                    .setDuration(200)
-                    .start()
-            } else {
-                questionsContainer.animate()
-                    .alpha(0f)
-                    .setDuration(200)
-                    .withEndAction {
-                        questionsContainer.visibility = View.GONE
-                    }
-                    .start()
-                toggleButton.text = "Suggested Follow-ups ▼"
-            }
-        }
-
-        // Add views to container
-        binding.followUpQuestionsContainer.addView(toggleButton)
-        binding.followUpQuestionsContainer.addView(questionsContainer)
-        binding.followUpQuestionsContainer.visibility = View.VISIBLE
+        binding.followUpQuestionsContainer.visibility = View.GONE
     }
 
 
@@ -2805,22 +2724,19 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         return allMessages.subList(startIndex, indexOfAnchor).reversed() // Get 'limit' messages before the anchor
     }
     private fun startNewConversation() {
-        chatAdapter.submitList(emptyList()) {
-            binding.recyclerView.scrollToPosition(0)
-        }
-        currentConversationHistoryForToolCall.clear()
-        binding.messageEditText.text?.clear()
-        binding.followUpQuestionsContainer.removeAllViews()
-        binding.followUpQuestionsContainer.visibility = View.GONE
-        conversationId = generateConversationId()
-
-        // Persist the new conversation ID so it loads correctly next time
+        val newId = generateConversationId()
         val appPrefs = requireContext().getSharedPreferences(PREFS_NAME_APP, Context.MODE_PRIVATE)
-        appPrefs.edit().putString("last_conversation_id", conversationId).apply()
+        appPrefs.edit().putString("last_conversation_id", newId).apply()
+        conversationId = newId
 
-        isGreetingSent = false // Allow greeting for the new conversation
-        sendGreetingMessage()
-        showCustomToast("New conversation started")
+        val currentIntent = requireActivity().intent
+        val intent = Intent(requireContext(), ChatActivity::class.java).apply {
+            putExtra("selected_model", currentModel)
+            putExtra("is_ad_free", currentIntent.getBooleanExtra("is_ad_free", false))
+            putExtra("expiration_time", currentIntent.getLongExtra("expiration_time", 0))
+        }
+        startActivity(intent)
+        activity?.finish()
     }
 
     // --- History and Pagination ---
