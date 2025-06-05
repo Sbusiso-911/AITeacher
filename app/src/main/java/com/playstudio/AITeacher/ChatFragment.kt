@@ -252,6 +252,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private var conversationId: String? = null
     private var tts: TextToSpeech? = null
     private var isTtsEnabled = false
+    // Holds conversation history across tool calls in a single turn
+    private val currentConversationHistoryForToolCall = mutableListOf<JSONObject>()
     private val chatHistoryKey = "chat_history"
     private var isFollowUpEnabled = true
 
@@ -1298,8 +1300,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     }
     // MODIFIED handleChatCompletion with Tool Calling Logic
     private fun handleChatCompletion(
-        userMessageContent: String,
-        currentConversationHistoryForToolCall: MutableList<JSONObject> = mutableListOf() // For multi-turn tool use
+        userMessageContent: String
     ) {
         val messagesToSend = JSONArray()
 
@@ -1469,8 +1470,10 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                             })
                         }
                         ongoingHistoryForThisTurn.addAll(toolResultsMessages) // Add tool results to history
-                        // Call API again with results
-                        handleChatCompletion(userMessageContent, ongoingHistoryForThisTurn)
+                        // Save for next call and call API again with results
+                        currentConversationHistoryForToolCall.clear()
+                        currentConversationHistoryForToolCall.addAll(ongoingHistoryForThisTurn)
+                        handleChatCompletion(userMessageContent)
 
                     } else {
                         // No tool_calls, this is a direct text response from the AI
@@ -2531,6 +2534,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     handleTextToSpeech(originalReplyContent) // Speak original, un-prefixed/un-augmented content
                 }
                 incrementInteractionCount()
+                // Reset history after completing the tool-assisted turn
+                currentConversationHistoryForToolCall.clear()
             }
 
         } catch (e: JSONException) {
