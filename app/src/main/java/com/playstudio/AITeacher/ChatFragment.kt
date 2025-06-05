@@ -389,6 +389,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        menu.clear()
         inflater.inflate(R.menu.harmburger_menu, menu)
         super.onCreateOptionsMenu(menu, inflater)
     }
@@ -530,6 +531,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
 
         updateActiveModelButton("GPT-3.5 Turbo")
+        switchUiForModel(currentModel)
 
         // Initialize TTS button state
         updateTtsButtonState()
@@ -578,6 +580,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         arguments?.getString("selected_model")?.let {
             currentModel = it
             updateUIForCurrentModel()
+            switchUiForModel(currentModel)
         }
         captureImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -779,7 +782,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         }
 
 
-        setupMenuProvider() // For new OptionsMenu handling
+        // setupMenuProvider() // Menu handled by onCreateOptionsMenu
         initializeActivityLaunchers()
         setupUIListeners()
         observeViewModels() // For OpenAI Live Audio, Gemini Live Audio, Subscription
@@ -2797,6 +2800,8 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     }
     private fun startNewConversation() {
         chatAdapter.submitList(emptyList()) // Clear the adapter
+        currentConversationHistoryForToolCall.clear()
+        binding.messageEditText.text?.clear()
         conversationId = generateConversationId()
         isGreetingSent = false // Allow greeting for the new conversation
         sendGreetingMessage()
@@ -2807,7 +2812,6 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
     private fun loadOlderMessages() {
         if (isLoadingMoreMessages) return
         isLoadingMoreMessages = true
-        showCustomToast("Loading older messages...") // Optional UI feedback
 
         val currentTopMessageId = chatAdapter.currentList.firstOrNull { !it.isTyping }?.id
 
@@ -3917,6 +3921,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
                         // Call your existing function to set up UI for specific models (like DALL-E)
                         updateUIForCurrentModel() // This handles DALL-E image view etc.
+                        switchUiForModel(currentModel)
                     }
                 }
                 // --- End UI Toggling Logic ---
