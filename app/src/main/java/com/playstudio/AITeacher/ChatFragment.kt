@@ -1372,8 +1372,26 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     val jsonResponse = JSONObject(responseStr)
                     Log.d("ChatFragment", "Received ChatCompletion Response: ${jsonResponse.toString(2)}")
 
-                    val choice = jsonResponse.optJSONArray("choices")?.optJSONObject(0)
-                    val messageFromApi = choice?.optJSONObject("message")
+                    var messageFromApi: JSONObject? = null
+
+                    if (jsonResponse.has("choices")) {
+                        val choice = jsonResponse.optJSONArray("choices")?.optJSONObject(0)
+                        messageFromApi = choice?.optJSONObject("message")
+                    } else if (jsonResponse.has("content")) {
+                        // Handle Anthropic Messages API format
+                        val contentArray = jsonResponse.getJSONArray("content")
+                        val textBuilder = StringBuilder()
+                        for (i in 0 until contentArray.length()) {
+                            val block = contentArray.getJSONObject(i)
+                            if (block.optString("type") == "text") {
+                                textBuilder.append(block.optString("text"))
+                            }
+                        }
+                        messageFromApi = JSONObject().apply {
+                            put("role", jsonResponse.optString("role", "assistant"))
+                            put("content", textBuilder.toString())
+                        }
+                    }
 
                     if (messageFromApi == null) {
                         withContext(Dispatchers.Main) {
@@ -1433,11 +1451,13 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                         val minimalResponseForHandler = JSONObject().apply {
                             put("choices", JSONArray().put(JSONObject().apply {
                                 put("message", messageFromApi)
-                                // Add usage if your handleSuccessResponse expects it
                                 if (jsonResponse.has("usage")) {
                                     put("usage", jsonResponse.getJSONObject("usage"))
                                 }
                             }))
+                            if (jsonResponse.has("stop_reason")) {
+                                put("stop_reason", jsonResponse.getString("stop_reason"))
+                            }
                         }.toString()
                         handleSuccessResponse(minimalResponseForHandler)
                     }
@@ -2308,6 +2328,11 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             removeTypingIndicator() // Call this early, outside the async block if response parsing is quick
 
             val jsonResponse = JSONObject(responseBody)
+            val stopReason = jsonResponse.optString("stop_reason")
+            if (stopReason == "refusal") {
+                showCustomToast("Claude refused to answer the request.")
+            }
+
             val choices = jsonResponse.optJSONArray("choices")
             // val usage = jsonResponse.optJSONObject("usage") // Keep if needed
 
@@ -3740,6 +3765,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
             "GPT-4o Search 🔍 - Web-connected AI\nExample: Get latest news, real-time information, and cited sources.",
             "GPT-4o Mini Search 🔍 - Lightweight web-connected AI\nExample: Quick web searches with cited results.",
             "Claude Sonnet 4 🤖 - Anthropic model\nExample: Advanced reasoning with new features.",
+            "Claude Opus 4 🤖 - Anthropic model\nExample: Most capable reasoning and analysis.",
             "O1 🛠️ - Optimized for specific tasks\nExample: Code debugging, data analysis, or technical documentation.",
             "O1 Mini 🧰 - Lightweight version of O1\nExample: Simple coding help, quick fixes, or small-scale tasks.",
             "O3 Mini 🧠 - Reasoning model for complex problem solving\nExample: Advanced coding, scientific reasoning, or multi-step planning.",
@@ -3771,20 +3797,21 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                     3 -> "gpt-4o-search-preview"
                     4 -> "gpt-4o-mini-search-preview"
                     5 -> "claude-sonnet-4-20250514"
-                    6 -> "o1"
-                    7 -> "o1-mini"
-                    8 -> "o3-mini"
-                    9 -> "gpt-4o-realtime-preview"
-                    10 -> "gpt-4o-audio-preview" // This is likely an OpenAI model needing its own handling if different from general text
-                    11 -> "gpt-4-turbo"
-                    12 -> "dall-e-3"
-                    13 -> "tts-1" // This is for OpenAI TTS output, not a conversational model usually
-                    14 -> "gemini" // Text-based Gemini
-                    15 -> "deepseek"
-                    16 -> "gpt-4.1-mini"
-                    17 -> "gemini-voice-chat"     // Identifier for Gemini Voice Chat
-                    18 -> "openai-realtime-voice"// Identifier for OpenAI Realtime Voice
-                    19 -> "computer-use-preview"
+                    6 -> "claude-opus-4-20250514"
+                    7 -> "o1"
+                    8 -> "o1-mini"
+                    9 -> "o3-mini"
+                    10 -> "gpt-4o-realtime-preview"
+                    11 -> "gpt-4o-audio-preview" // This is likely an OpenAI model needing its own handling if different from general text
+                    12 -> "gpt-4-turbo"
+                    13 -> "dall-e-3"
+                    14 -> "tts-1" // This is for OpenAI TTS output, not a conversational model usually
+                    15 -> "gemini" // Text-based Gemini
+                    16 -> "deepseek"
+                    17 -> "gpt-4.1-mini"
+                    18 -> "gemini-voice-chat"     // Identifier for Gemini Voice Chat
+                    19 -> "openai-realtime-voice"// Identifier for OpenAI Realtime Voice
+                    20 -> "computer-use-preview"
                     else -> "gpt-3.5-turbo"       // Default fallback
                 }
 
