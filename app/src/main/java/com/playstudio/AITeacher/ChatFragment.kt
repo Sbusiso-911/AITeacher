@@ -1457,6 +1457,11 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
 
     private fun modelSupportsTools(modelName: String): Boolean {
         // List models known to support function calling/tools
+        if (WEB_SEARCH_MODELS.contains(modelName)) {
+            // Search preview models do not currently support tool calling
+            return false
+        }
+
         return modelName.startsWith("gpt-4") ||
                 modelName.startsWith("claude") ||
                 modelName.contains("gpt-3.5-turbo-0125") ||
