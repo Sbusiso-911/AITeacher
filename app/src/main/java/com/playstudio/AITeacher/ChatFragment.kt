@@ -2507,6 +2507,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                 if (finalFollowUpsToShow.isEmpty()) {
                     generateDynamicFollowUpQuestions(originalReplyContent) { generatedQuestions ->
                         finalFollowUpsToShow.addAll(generatedQuestions)
+                        finalFollowUpsToShow = finalFollowUpsToShow.distinct().take(3).toMutableList()
                         addMessageToChat(
                             messageContent = processedContent,
                             isUser = false,
@@ -2517,6 +2518,7 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
                         addFollowUpQuestionsToChat(finalFollowUpsToShow)
                     }
                 } else {
+                    finalFollowUpsToShow = finalFollowUpsToShow.distinct().take(3).toMutableList()
                     addMessageToChat(
                         messageContent = processedContent,
                         isUser = false,
@@ -2803,12 +2805,19 @@ class ChatFragment : Fragment(), TextToSpeech.OnInitListener {
         return allMessages.subList(startIndex, indexOfAnchor).reversed() // Get 'limit' messages before the anchor
     }
     private fun startNewConversation() {
-        chatAdapter.submitList(emptyList()) // Clear the adapter
+        chatAdapter.submitList(emptyList()) {
+            binding.recyclerView.scrollToPosition(0)
+        }
         currentConversationHistoryForToolCall.clear()
         binding.messageEditText.text?.clear()
         binding.followUpQuestionsContainer.removeAllViews()
         binding.followUpQuestionsContainer.visibility = View.GONE
         conversationId = generateConversationId()
+
+        // Persist the new conversation ID so it loads correctly next time
+        val appPrefs = requireContext().getSharedPreferences(PREFS_NAME_APP, Context.MODE_PRIVATE)
+        appPrefs.edit().putString("last_conversation_id", conversationId).apply()
+
         isGreetingSent = false // Allow greeting for the new conversation
         sendGreetingMessage()
         showCustomToast("New conversation started")
