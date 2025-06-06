@@ -268,6 +268,26 @@
             android:layout_marginBottom="8dp"
             android:contentDescription="@string/message_input_layout">
 
+            <Button
+                android:id="@+id/startComputerUseButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Start"
+                android:textSize="16sp"
+                android:textColor="@color/white"
+                android:drawableStart="@drawable/ic_send_white"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="12dp"
+                android:layout_marginEnd="8dp"
+                android:minWidth="48dp"
+                android:minHeight="48dp"
+                android:background="@drawable/rounded_button_blue_dark"
+                android:fontFamily="sans-serif-medium"
+                android:visibility="gone"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
             <EditText
                 android:id="@+id/messageEditText"
                 android:layout_width="0dp"
@@ -286,7 +306,7 @@
                 android:scrollHorizontally="false"
                 android:autofillHints="username"
                 android:maxWidth="488dp"
-                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintStart_toEndOf="@id/startComputerUseButton"
                 app:layout_constraintEnd_toStartOf="@id/voiceInputButton"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />
@@ -457,6 +477,7 @@
                 android:textIsSelectable="true"
                 android:contentDescription="@string/openai_response_desc"/>
         </LinearLayout>
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
