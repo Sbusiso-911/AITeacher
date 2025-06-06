@@ -111,7 +111,12 @@ import com.playstudio.aiteacher.viewmodel.OpenAILiveAudioViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.net.URLEncoder
+
+
 import android.provider.CalendarContract
+import android.provider.Settings
+import android.view.accessibility.AccessibilityManager
+import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.RequestBody.Companion.asRequestBody
 import kotlin.coroutines.resume
 
@@ -175,6 +180,8 @@ class ChatFragment : Fragment() {
     }
 
     // In your Activity or Fragment
+    private lateinit var startComputerUseButton: Button
+    private lateinit var computerUseResponseTextView: TextView
 
     private var speechRecognizer: SpeechRecognizer? = null
 
@@ -200,6 +207,8 @@ class ChatFragment : Fragment() {
     private val openAILiveAudioViewModel: OpenAILiveAudioViewModel by viewModels()
 
 
+    // Manager for OpenAI computer-use API
+    //private val computerUseManager by lazy { ComputerUseManager(requireActivity()) }
     private lateinit var chatTextView: TextView
     private var interstitialAd: InterstitialAd? = null
     private var isInterstitialAdLoaded = false
@@ -323,6 +332,26 @@ class ChatFragment : Fragment() {
         }
     }
 
+    // Convert OpenAI-style tool definitions to Anthropic's format
+    private fun convertToolsForClaude(openAiTools: JSONArray): JSONArray {
+        val claudeTools = JSONArray()
+        for (i in 0 until openAiTools.length()) {
+            val tool = openAiTools.getJSONObject(i)
+            val functionObj = tool.optJSONObject("function") ?: continue
+            val name = functionObj.optString("name")
+            val description = functionObj.optString("description")
+            val parameters = functionObj.optJSONObject("parameters")
+
+            val claudeTool = JSONObject().apply {
+                put("name", name)
+                put("description", description)
+                put("input_schema", parameters)
+                put("type", "custom")
+            }
+            claudeTools.put(claudeTool)
+        }
+        return claudeTools
+    }
 
     override fun onDetach() {
         super.onDetach()
@@ -352,6 +381,7 @@ class ChatFragment : Fragment() {
         (requireActivity() as? AppCompatActivity)?.supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
             setHomeAsUpIndicator(R.drawable.ic_arrow_back)
+
         }
         //loadInterstitialAd() // Load the interstitial ad when the fragment resumes
     }
@@ -485,7 +515,7 @@ class ChatFragment : Fragment() {
         }
 
         // Check if it's the first launch
-        val isFirstLaunch = sharedPreferences.getBoolean(FIRST_LAUNCH_KEY, true)
+        /*val isFirstLaunch = sharedPreferences.getBoolean(FIRST_LAUNCH_KEY, true)
 
         if (isFirstLaunch) {
             // Show the tooltip dialog
@@ -494,7 +524,7 @@ class ChatFragment : Fragment() {
 
             // Update the shared preferences to indicate that the dialog has been shown
             sharedPreferences.edit().putBoolean(FIRST_LAUNCH_KEY, false).apply()
-        }
+        }*/
 
         suggestedMessage = arguments?.getString("suggested_message") ?: savedInstanceState?.getString("suggested_message")
         selectedModel = arguments?.getString("selected_model") ?: savedInstanceState?.getString("selected_model")
@@ -543,6 +573,7 @@ class ChatFragment : Fragment() {
             }
         }
 // In onViewCreated or onResume of ChatFragment
+
         cropImageLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == Activity.RESULT_OK) {
@@ -881,7 +912,6 @@ class ChatFragment : Fragment() {
 // Enhanced button click handler with permission checks
 
 
-
         // Initialize captureImageLauncher, cropImageLauncher, pickImageLauncher, pickDocumentLauncher
         // ... (your existing launcher initializations, ensure contexts are correct)
         //captureImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { /* ... */ }
@@ -969,27 +999,6 @@ class ChatFragment : Fragment() {
 
 
 
-
-    // Convert OpenAI-style tool definitions to Anthropic's format
-    private fun convertToolsForClaude(openAiTools: JSONArray): JSONArray {
-        val claudeTools = JSONArray()
-        for (i in 0 until openAiTools.length()) {
-            val tool = openAiTools.getJSONObject(i)
-            val functionObj = tool.optJSONObject("function") ?: continue
-            val name = functionObj.optString("name")
-            val description = functionObj.optString("description")
-            val parameters = functionObj.optJSONObject("parameters")
-
-            val claudeTool = JSONObject().apply {
-                put("name", name)
-                put("description", description)
-                put("input_schema", parameters)
-                put("type", "custom")
-            }
-            claudeTools.put(claudeTool)
-        }
-        return claudeTools
-    }
 
     // In ChatFragment.kt
 
@@ -1080,6 +1089,7 @@ class ChatFragment : Fragment() {
         binding.scanTextButton.visibility = View.VISIBLE
         binding.voiceInputButton.visibility = View.VISIBLE // Standard STT
         binding.sendButton.visibility = View.VISIBLE
+        binding.startComputerUseButton.visibility = View.GONE
         binding.ttsToggleButton.visibility = View.VISIBLE
         binding.followUpQuestionsContainer.visibility = if (isFollowUpEnabled) View.VISIBLE else View.GONE
         binding.generatedImageView.visibility = View.GONE
@@ -1106,6 +1116,19 @@ class ChatFragment : Fragment() {
                 binding.generatedImageView.visibility = View.VISIBLE // Or visible after generation
                 // Standard text input is still used for DALL-E prompt
                 binding.followUpQuestionsContainer.visibility = View.GONE
+            }
+            "computer-use-preview" -> {
+                binding.messageInputLayout.visibility = View.VISIBLE
+                binding.sendButton.visibility = View.GONE
+                binding.scanTextButton.visibility = View.GONE
+                binding.voiceInputButton.visibility = View.GONE
+                binding.ttsToggleButton.visibility = View.GONE
+                binding.startComputerUseButton.visibility = View.VISIBLE
+                binding.followUpQuestionsContainer.visibility = View.GONE
+
+                binding.openaiLiveAudioControls.visibility = View.GONE
+                binding.openAIStatusTextView.visibility = View.GONE
+                binding.openAIAiResponseTextView.visibility = View.GONE
             }
             // Add cases for other models if they have very specific UI needs
             else -> {
@@ -1275,6 +1298,20 @@ class ChatFragment : Fragment() {
                     if (jsonResponse.has("choices")) {
                         val choice = jsonResponse.optJSONArray("choices")?.optJSONObject(0)
                         messageFromApi = choice?.optJSONObject("message")
+                    } else if (jsonResponse.has("content")) {
+                        // Handle Anthropic Messages API format
+                        val contentArray = jsonResponse.getJSONArray("content")
+                        val textBuilder = StringBuilder()
+                        for (i in 0 until contentArray.length()) {
+                            val block = contentArray.getJSONObject(i)
+                            if (block.optString("type") == "text") {
+                                textBuilder.append(block.optString("text"))
+                            }
+                        }
+                        messageFromApi = JSONObject().apply {
+                            put("role", jsonResponse.optString("role", "assistant"))
+                            put("content", textBuilder.toString())
+                        }
                     }
 
                     if (messageFromApi == null) {
@@ -1362,13 +1399,17 @@ class ChatFragment : Fragment() {
     }
 
     private fun modelSupportsTools(modelName: String): Boolean {
-        // Web-search preview models don't support tool calling
-        if (WEB_SEARCH_MODELS.contains(modelName)) return false
+        // List models known to support function calling/tools
+        if (WEB_SEARCH_MODELS.contains(modelName)) {
+            // Search preview models do not currently support tool calling
+            return false
+        }
 
         return modelName.startsWith("gpt-4") ||
                 modelName.startsWith("claude") ||
                 modelName.contains("gpt-3.5-turbo-0125") ||
                 modelName.contains("gpt-3.5-turbo-1106")
+        // Add other models as OpenAI updates them.
     }
 
     // In ChatFragment.kt
@@ -2214,7 +2255,7 @@ class ChatFragment : Fragment() {
             val jsonResponse = JSONObject(responseBody)
             val stopReason = jsonResponse.optString("stop_reason")
             if (stopReason == "refusal") {
-                showCustomToast("The model refused to answer the request.")
+                showCustomToast("Claude refused to answer the request.")
             }
 
             val choices = jsonResponse.optJSONArray("choices")
@@ -3662,6 +3703,20 @@ class ChatFragment : Fragment() {
                         updateActiveModelButton("OpenAI Voice")
                         showCustomToast("Switched to OpenAI Realtime Voice")
                     }
+                    /*"computer-use-preview" -> {
+                        binding.computerUseControls.visibility = View.VISIBLE
+                        binding.messageInputLayout.visibility = View.VISIBLE
+                        binding.sendButton.visibility = View.GONE
+                        binding.scanTextButton.visibility = View.GONE
+                        binding.voiceInputButton.visibility = View.GONE
+                        binding.ttsToggleButton.visibility = View.GONE
+                        binding.followUpQuestionsContainer.visibility = View.GONE
+                        binding.generatedImageView.visibility = View.GONE
+                        binding.downloadButton.visibility = View.GONE
+                        binding.generatingText.visibility = View.GONE
+                        updateActiveModelButton("Computer Use")
+                        showCustomToast("Switched to Computer Use")
+                    }*/
                     else -> {
                         // Standard Text-Based Chat UI (for all other models)
 
@@ -3986,27 +4041,27 @@ class ChatFragment : Fragment() {
         binding.subscriptionOverlay.visibility = View.GONE
     }
 
-private fun updateActiveModelButton(modelName: String) {
-    binding.activeModelButton.text = modelName
-}
-
-private fun getDisplayNameForModel(modelId: String): String {
-    return when (modelId) {
-        "gpt-3.5-turbo" -> "GPT-3.5 Turbo"
-        "gpt-4o" -> "GPT-4o"
-        "gpt-4o-mini" -> "GPT-4o Mini"
-        "gpt-4o-search-preview" -> "GPT-4o Search"
-        "gpt-4o-mini-search-preview" -> "GPT-4o Mini Search"
-        "gpt-4-turbo" -> "GPT-4 Turbo"
-        "claude-sonnet-4-20250514" -> "Claude Sonnet 4"
-        "claude-opus-4-20250514" -> "Claude Opus 4"
-        "dall-e-3" -> "DALL-E 3"
-        "o1" -> "O1"
-        "o1-mini" -> "O1 Mini"
-        "o3-mini" -> "O3 Mini"
-        else -> modelId
+    private fun updateActiveModelButton(modelName: String) {
+        binding.activeModelButton.text = modelName
     }
-}
+
+    private fun getDisplayNameForModel(modelId: String): String {
+        return when (modelId) {
+            "gpt-3.5-turbo" -> "GPT-3.5 Turbo"
+            "gpt-4o" -> "GPT-4o"
+            "gpt-4o-mini" -> "GPT-4o Mini"
+            "gpt-4o-search-preview" -> "GPT-4o Search"
+            "gpt-4o-mini-search-preview" -> "GPT-4o Mini Search"
+            "gpt-4-turbo" -> "GPT-4 Turbo"
+            "dall-e-3" -> "DALL-E 3"
+            "claude-sonnet-4-20250514" -> "Claude Sonnet 4"
+            "claude-opus-4-20250514" -> "Claude Opus 4"
+            "o1" -> "O1"
+            "o1-mini" -> "O1 Mini"
+            "o3-mini" -> "O3 Mini"
+            else -> modelId
+        }
+    }
 
 
     // --------------------------
@@ -5282,10 +5337,7 @@ data class PrebuiltVoiceConfig(
 )
 
 
-// --- Response Data Classes ---
-data class GeminiTtsResponse(
-    val candidates: List<Candidate>?
-)
+
 
 data class Candidate(
     val content: ResponseContent?
