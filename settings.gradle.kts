@@ -1,10 +1,13 @@
+// settings.gradle.kts
+
 pluginManagement {
     repositories {
         google()
         mavenCentral()
         gradlePluginPortal()
-        maven { url = uri("https://jitpack.io") } // Add JitPack repository here
+        maven { url = uri("https://jitpack.io") }
     }
+
 }
 
 dependencyResolutionManagement {
@@ -12,15 +15,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url = uri("https://jitpack.io") } // Add JitPack repository here
-        jcenter() {
-            content{
-                include("com.thereartofdev.edmodo", "android-image-cropper")
-            }
-        }
+        maven { url = uri("https://jitpack.io") }
+        maven { url = uri("https://alphacephei.com/maven/") }
     }
 }
 
 rootProject.name = "AITeacher"
 include(":app")
-// Include other modules if you have any

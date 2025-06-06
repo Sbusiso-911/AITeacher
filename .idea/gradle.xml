@@ -10,9 +10,7 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/android-image-cropper" />
             <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/com.thereartofdev.edmodo" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="false" />

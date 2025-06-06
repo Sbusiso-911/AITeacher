@@ -43,6 +43,14 @@ class ChatAdapter(
     private val onLoadMoreRequested: () -> Unit // Callback for pagination
 ) : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatMessageDiffUtilCallback()) { // Use ListAdapter
 
+    init {
+        setHasStableIds(true)
+    }
+
+    override fun getItemId(position: Int): Long {
+        return getItem(position).id.hashCode().toLong()
+    }
+
     companion object {
         private const val VIEW_TYPE_SENT = 1
         private const val VIEW_TYPE_RECEIVED = 2

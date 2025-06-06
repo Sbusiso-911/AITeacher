@@ -9,6 +9,7 @@ import androidx.multidex.MultiDexApplication
 import androidx.work.Configuration as WorkManagerConfiguration
 import androidx.work.WorkManager
 import com.google.ar.core.Config
+import com.playstudio.aiteacher.history.DatabaseProvider
 import java.util.Locale
 
 class MyApplication : MultiDexApplication() {
@@ -16,7 +17,8 @@ class MyApplication : MultiDexApplication() {
     override fun onCreate() {
         super.onCreate()
 
-
+        // Initialize your database here - changed from initialize() to init()
+        DatabaseProvider.init(this)
 
         // Rest of your initialization code
         val workManagerConfig = WorkManagerConfiguration.Builder()
@@ -30,8 +32,6 @@ class MyApplication : MultiDexApplication() {
         setLocale(Locale.getDefault().language)
         createNotificationChannel()
     }
-
-
 
     fun setLocale(languageCode: String) {
         val locale = Locale(languageCode)

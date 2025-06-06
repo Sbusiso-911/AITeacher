@@ -116,6 +116,8 @@ common = "0.10.0"
 firebaseDatabaseKtx = "21.0.0"
 coreVersion = "1.13.0"
 runner = "1.6.1"
+roomCommonJvm = "2.7.1"
+roomRuntimeAndroid = "2.7.1"
 
 [libraries]
 android-activation = { module = "com.sun.mail:android-activation", version.ref = "sunAndroidMail" }
@@ -253,3 +255,5 @@ common = { group = "com.google.ai.client.generativeai", name = "common", version
 firebase-database-ktx = { group = "com.google.firebase", name = "firebase-database-ktx", version.ref = "firebaseDatabaseKtx" }
 androidx-core = { group = "androidx.core", name = "core", version.ref = "coreVersion" }
 androidx-runner = { group = "androidx.test", name = "runner", version.ref = "runner" }
+androidx-room-common-jvm = { group = "androidx.room", name = "room-common-jvm", version.ref = "roomCommonJvm" }
+androidx-room-runtime-android = { group = "androidx.room", name = "room-runtime-android", version.ref = "roomRuntimeAndroid" }
