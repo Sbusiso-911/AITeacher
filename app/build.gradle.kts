@@ -13,8 +13,8 @@ android {
         applicationId = "com.playstudio.aiteacher"
         minSdk = 28
         targetSdk = 34
-        versionCode = 77
-        versionName = "7.7"
+        versionCode = 82
+        versionName = "8.2"
         vectorDrawables.useSupportLibrary = true
 
         // Enable multidex
@@ -27,19 +27,21 @@ android {
         } else {
             throw GradleException("API_KEY not found in gradle.properties")
         }
+        // Read Anthropic API key for Claude models
+        val anthropicKey: String? = project.findProperty("ANTHROPIC_API_KEY") as String?
+        if (anthropicKey != null) {
+            buildConfigField("String", "ANTHROPIC_API_KEY", "\"$anthropicKey\"")
+        } else {
+            throw GradleException("ANTHROPIC_API_KEY not found in gradle.properties")
+        }
         // Read Google Vision API key from gradle.properties
         val googleVisionApiKey: String? = project.findProperty("GOOGLE_VISION_API_KEY") as String?
         if (googleVisionApiKey != null) {
             buildConfigField("String", "GOOGLE_VISION_API_KEY", "\"$googleVisionApiKey\"")
         } else {
             throw GradleException("GOOGLE_VISION_API_KEY not found in gradle.properties")
-        }
 
-        val anthropicApiKey: String? = project.findProperty("ANTHROPIC_API_KEY") as String?
-        if (anthropicApiKey != null) {
-            buildConfigField("String", "ANTHROPIC_API_KEY", "\"$anthropicApiKey\"")
-        } else {
-            throw GradleException("ANTHROPIC_API_KEY not found in gradle.properties")
+
         }
     }
 
@@ -153,6 +155,11 @@ dependencies {
 
     implementation("androidx.work:work-runtime-ktx:2.10.0")
 
+    // Room for conversation history
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    ksp("androidx.room:room-compiler:2.6.1")
+
     implementation("com.airbnb.android:lottie:5.0.3")
 
     implementation ("com.google.android.material:material:1.6.0") // or latest version
@@ -177,8 +184,8 @@ dependencies {
     //implementation ("com.arthenica:mobile-ffmpeg-min:4.4.LTS")
     //implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1") // For lifecycleScope
     // or use one of these if you need more features:
-     //implementation ("com.arthenica:mobile-ffmpeg-min:4.4.LTS")
-     //implementation ("com.arthenica:mobile-ffmpeg-full-gpl:4.4.LTs")
+    //implementation ("com.arthenica:mobile-ffmpeg-min:4.4.LTS")
+    //implementation ("com.arthenica:mobile-ffmpeg-full-gpl:4.4.LTs")
     //implementation("com.arthenica:mobile-ffmpeg-min:4.4.LTS")
 
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2") // For lifecycleScope
