@@ -223,33 +223,7 @@
                     android:visibility="gone"
                     android:padding="12dp"
                     android:background="@drawable/rounded_corners_light"
-                    android:contentDescription="@string/follow_up_questions_container_desc">
-
-                    <Button
-                        android:id="@+id/expandFollowUpQuestionsButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="▼"
-                        android:textColor="@color/trust_blue_dark"
-                        android:background="@android:color/transparent"
-                        android:layout_gravity="center_horizontal"
-                        android:padding="8dp" />
-
-                    <HorizontalScrollView
-                        android:id="@+id/followUpQuestionsScrollView"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="8dp"
-                        android:visibility="gone">
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal">
-                            <!-- Dynamic content -->
-                        </LinearLayout>
-                    </HorizontalScrollView>
-                </LinearLayout>
+                    android:contentDescription="@string/follow_up_questions_container_desc" />
 
                 <!-- Follow-up toggle
                 <LinearLayout
@@ -484,43 +458,5 @@
                 android:contentDescription="@string/openai_response_desc"/>
         </LinearLayout>
 
-        <!-- Computer Use Controls -->
-        <LinearLayout
-            android:id="@+id/computer_use_controls"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:padding="8dp"
-
-            android:visibility="gone"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/openai_live_audio_controls"
-            android:layout_marginBottom="8dp"
-            android:contentDescription="@string/computer_use_controls">
-
-            <Button
-                android:id="@+id/computerUseStartButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/start_computer_use"
-                android:contentDescription="@string/start_computer_use_desc"
-                style="@style/AppButton"/>
-
-
-            <Button
-                android:id="@+id/startComputerUseButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Start Computer Use" />
-
-            <TextView
-                android:id="@+id/computerUseResponseTextView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone" />
-
-        </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
