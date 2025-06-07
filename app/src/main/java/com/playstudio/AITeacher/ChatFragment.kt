@@ -3082,7 +3082,7 @@ class ChatFragment : Fragment() {
                     Log.e("ChatFragment", "Failed to download image")
                     withContext(Dispatchers.Main) {
                         showCustomToast("Failed to download image")
-                    }
+        val response = message
                     return@launch
                 }
 
@@ -3178,22 +3178,6 @@ class ChatFragment : Fragment() {
                 }
             }
             "o3-mini" -> {
-                if (checkDailyLimit("o3-mini", DAILY_LIMIT_GPT4)) {
-                    handleReasoningModelCompletion(message, "o3-mini")
-                    binding.messageEditText.text.clear()
-                    incrementModelUsage("o3-mini")
-                } else {
-                    showCustomToast("Daily limit for O3 Mini reached.")
-                }
-            }
-            else -> {
-                if (isUserSubscribed && subscriptionExpirationTime > System.currentTimeMillis() || canSendMessage) {
-                    sendMessageToAPI(response)
-                    binding.messageEditText.text.clear()
-                    if (!isUserSubscribed) {
-                        canSendMessage = false
-                    }
-                } else if (checkDailyMessageLimit()) {
                     incrementMessageCount()
                     sendMessageToAPI(response)
                     binding.messageEditText.text.clear()

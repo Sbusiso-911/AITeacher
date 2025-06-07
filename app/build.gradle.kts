@@ -13,27 +13,18 @@ android {
         applicationId = "com.playstudio.aiteacher"
         minSdk = 28
         targetSdk = 34
-        versionCode = 82
-        versionName = "8.2"
-        vectorDrawables.useSupportLibrary = true
+        // Read API keys from environment variables or gradle.properties
+        val apiKey: String? = System.getenv("OPENAI_API_KEY") ?: project.findProperty("API_KEY") as String?
+        require(!apiKey.isNullOrBlank()) { "API_KEY or OPENAI_API_KEY must be provided" }
+        buildConfigField("String", "API_KEY", "\"$apiKey\"")
 
-        // Enable multidex
-        multiDexEnabled = true
+        val googleVisionApiKey: String? = System.getenv("GOOGLE_VISION_API_KEY") ?: project.findProperty("GOOGLE_VISION_API_KEY") as String?
+        require(!googleVisionApiKey.isNullOrBlank()) { "GOOGLE_VISION_API_KEY must be provided" }
+        buildConfigField("String", "GOOGLE_VISION_API_KEY", "\"$googleVisionApiKey\"")
 
-        // Read API key from gradle.properties
-        val apiKey: String? = project.findProperty("API_KEY") as String?
-        if (apiKey != null) {
-            buildConfigField("String", "API_KEY", "\"$apiKey\"")
-        } else {
-            throw GradleException("API_KEY not found in gradle.properties")
-        }
-        // Read Anthropic API key for Claude models
-        val anthropicKey: String? = project.findProperty("ANTHROPIC_API_KEY") as String?
-        if (anthropicKey != null) {
-            buildConfigField("String", "ANTHROPIC_API_KEY", "\"$anthropicKey\"")
-        } else {
-            throw GradleException("ANTHROPIC_API_KEY not found in gradle.properties")
-        }
+        val anthropicApiKey: String? = System.getenv("ANTHROPIC_API_KEY") ?: project.findProperty("ANTHROPIC_API_KEY") as String?
+        require(!anthropicApiKey.isNullOrBlank()) { "ANTHROPIC_API_KEY must be provided" }
+        buildConfigField("String", "ANTHROPIC_API_KEY", "\"$anthropicApiKey\"")
         // Read Google Vision API key from gradle.properties
         val googleVisionApiKey: String? = project.findProperty("GOOGLE_VISION_API_KEY") as String?
         if (googleVisionApiKey != null) {
