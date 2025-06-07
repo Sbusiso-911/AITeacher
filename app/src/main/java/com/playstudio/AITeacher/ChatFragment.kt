@@ -1151,6 +1151,12 @@ class ChatFragment : Fragment() {
 
 
 
+        // Search-preview models don't support tools, so ensure any
+        // previous tool call context is cleared before building the request
+        if (WEB_SEARCH_MODELS.contains(currentModel)) {
+            currentConversationHistoryForToolCall.clear()
+        }
+
     private fun processUserMessageSend(userMessage: String) {
         // Central point for sending a message based on currentModel and limits
         hideKeyboard()
@@ -2559,6 +2565,10 @@ class ChatFragment : Fragment() {
             val errorMessage = when (response.code) {
                 400 -> {
                     if (currentModel.startsWith("o")) {
+        // Clear any residual tool call history so the next conversation
+        // does not accidentally send previous tool context to the API
+        currentConversationHistoryForToolCall.clear()
+
                         "Insufficient context window for reasoning tokens"
                     } else {
                         "Bad request: Check parameters"
