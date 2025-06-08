@@ -122,7 +122,7 @@ class EmailAccessibilityService : AccessibilityService() {
             addAction(ACTION_PROCESS_EMAIL)
             addAction(ACTION_DISMISS)
         }
-        registerReceiver(object : BroadcastReceiver() {
+        approvalReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 when (intent?.action) {
                     ACTION_PROCESS_EMAIL -> {
@@ -135,8 +135,20 @@ class EmailAccessibilityService : AccessibilityService() {
                     }
                 }
             }
-        }, filter)
+        }
+        registerReceiver(approvalReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
     }
+
+    override fun onDestroy() {
+        try {
+            unregisterReceiver(approvalReceiver)
+        } catch (e: IllegalArgumentException) {
+            // Receiver wasn't registered
+        }
+        super.onDestroy()
+    }
+
+    private lateinit var approvalReceiver: BroadcastReceiver
 
     override fun onInterrupt() {
         Log.d(TAG, "EmailAccessibilityService interrupted")
