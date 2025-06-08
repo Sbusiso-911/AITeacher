@@ -236,7 +236,6 @@
     <string name="share_email_title">Share Email With AI</string>
     <string name="email_extraction_instructions">Open your email app and select a message. A notification will appear once the content is captured.</string>
     <string name="open_email_app">Open Email</string>
-    <string name="request_email_permission">Grant Email Access</string>
     <string name="extract_email_button">Extract Email</string>
     <string name="enable_email_extraction_title">Enable Email Extraction</string>
     <string name="enable_email_extraction_message">To extract email content automatically, enable the AITeacher email extraction service in Accessibility settings.</string>

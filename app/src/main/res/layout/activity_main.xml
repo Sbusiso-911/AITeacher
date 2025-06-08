@@ -402,17 +402,6 @@
                         android:layout_marginTop="4dp">
 
                         <Button
-                            android:id="@+id/btnRequestEmailPermission"
-                            android:layout_width="0dp"
-                            android:layout_height="48dp"
-                            android:layout_weight="1"
-                            android:text="@string/request_email_permission"
-                            android:textColor="@android:color/white"
-                            android:textSize="14sp"
-                            android:background="@drawable/premium_dialog_background"
-                            android:layout_marginEnd="4dp" />
-
-                        <Button
                             android:id="@+id/btnOpenEmailApp"
                             android:layout_width="0dp"
                             android:layout_height="48dp"

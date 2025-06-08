@@ -623,13 +623,6 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             }
 
             // Email tools
-            findViewById<Button>(R.id.btnRequestEmailPermission).setOnClickListener {
-                requestEmailPermissions()
-                if (!isEmailExtractionServiceEnabled()) {
-                    promptEnableEmailExtraction()
-                }
-            }
-
             findViewById<Button>(R.id.btnOpenEmailApp).setOnClickListener {
                 openEmailApp()
             }
