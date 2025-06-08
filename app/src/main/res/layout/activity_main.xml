@@ -14,7 +14,7 @@
         android:layout_height="match_parent"
         android:fitsSystemWindows="true"
         tools:context=".MainActivity"
-        android:background="@color/clear">
+        android:background="@color/background_light">
 
         <!-- ScrollView to make the content scrollable -->
         <ScrollView
@@ -33,7 +33,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="16dp"
-                android:background="@color/clear"
+                android:background="@color/background_light"
                 android:fitsSystemWindows="true"
                 tools:context=".MainActivity">
 
