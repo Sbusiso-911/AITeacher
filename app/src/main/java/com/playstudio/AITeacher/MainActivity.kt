@@ -2240,12 +2240,6 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             saveSelectedColor(drawableResId)
             dialog.dismiss()
         }
-        dialogView.findViewById<View>(R.id.colorMagenta).setOnClickListener {
-            val drawableResId = R.drawable.gradient_magenta
-            setBackgroundColor(drawableResId)
-            saveSelectedColor(drawableResId)
-            dialog.dismiss()
-        }
         dialogView.findViewById<View>(R.id.colorBlack).setOnClickListener {
             val drawableResId = R.drawable.gradient_black
             setBackgroundColor(drawableResId)
