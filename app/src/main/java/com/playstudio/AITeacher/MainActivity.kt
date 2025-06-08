@@ -2223,7 +2223,13 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             dialog.dismiss()
         }
         dialogView.findViewById<View>(R.id.colorGreen).setOnClickListener {
-            val drawableResId = R.drawable.gradient_blue
+            val drawableResId = R.drawable.gradient_green
+            setBackgroundColor(drawableResId)
+            saveSelectedColor(drawableResId)
+            dialog.dismiss()
+        }
+        dialogView.findViewById<View>(R.id.colorBlue).setOnClickListener {
+            val drawableResId = R.drawable.gradient_navy
             setBackgroundColor(drawableResId)
             saveSelectedColor(drawableResId)
             dialog.dismiss()
