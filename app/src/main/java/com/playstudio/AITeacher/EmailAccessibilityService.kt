@@ -15,6 +15,7 @@ import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.core.app.NotificationCompat
+import com.playstudio.aiteacher.ChatActivity
 
 class EmailAccessibilityService : AccessibilityService() {
 
@@ -127,8 +128,13 @@ class EmailAccessibilityService : AccessibilityService() {
                 when (intent?.action) {
                     ACTION_PROCESS_EMAIL -> {
                         val text = intent.getStringExtra(EXTRA_EMAIL_CONTENT) ?: return
-                        // In a real implementation, send text to AI.
                         Log.d(TAG, "User approved AI processing: ${'$'}{text.take(100)}")
+                        val chatIntent = Intent(this@EmailAccessibilityService, ChatActivity::class.java).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            putExtra(Intent.EXTRA_TEXT, text)
+                            putExtra(Intent.EXTRA_SUBJECT, getString(R.string.email_extracted))
+                        }
+                        startActivity(chatIntent)
                     }
                     ACTION_DISMISS -> {
                         Log.d(TAG, "User dismissed email extraction")

@@ -38,6 +38,10 @@ import androidx.palette.graphics.Palette
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import com.airbnb.lottie.LottieAnimationView
+import android.view.accessibility.AccessibilityManager
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.provider.Settings
+import com.playstudio.aiteacher.EmailAccessibilityService
 import com.android.billingclient.api.*
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
@@ -2859,13 +2863,18 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
 
 
     private fun openGenericEmailPicker() {
+        if (!isEmailExtractionServiceEnabled()) {
+            promptEnableEmailExtraction()
+            return
+        }
+
         AlertDialog.Builder(this)
-            .setTitle("Share Email With AI")
-            .setMessage("Open your email app, select a message, then use the Share option and choose AITeacher. The contents will appear in chat.")
-            .setPositiveButton("Open Email") { _, _ ->
+            .setTitle(getString(R.string.share_email_title))
+            .setMessage(getString(R.string.email_extraction_instructions))
+            .setPositiveButton(getString(R.string.open_email_app)) { _, _ ->
                 openEmailApp()
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(android.R.string.cancel, null)
             .show()
     }
 
@@ -2879,6 +2888,24 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             Toast.makeText(this, "No email app found", Toast.LENGTH_SHORT).show()
             showAlternativeEmailOptions()
         }
+    }
+
+    private fun isEmailExtractionServiceEnabled(): Boolean {
+        val am = getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+        val enabled = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_GENERIC)
+        val id = "$packageName/${EmailAccessibilityService::class.java.name}"
+        return enabled.any { it.id == id }
+    }
+
+    private fun promptEnableEmailExtraction() {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.enable_email_extraction_title))
+            .setMessage(getString(R.string.enable_email_extraction_message))
+            .setPositiveButton(getString(R.string.open_accessibility_settings)) { _, _ ->
+                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
     private fun openEmailClient(account: Account? = null) {
         openGenericEmailPicker()
