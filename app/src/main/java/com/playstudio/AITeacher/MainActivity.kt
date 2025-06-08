@@ -622,18 +622,28 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                 false // Don't consume the event
             }
 
-            // Update your email button click listener
-            // Update your email button click listener
-            findViewById<ImageButton>(R.id.btnExtractEmail).setOnClickListener {
+            // Email tools
+            findViewById<Button>(R.id.btnRequestEmailPermission).setOnClickListener {
+                requestEmailPermissions()
+                if (!isEmailExtractionServiceEnabled()) {
+                    promptEnableEmailExtraction()
+                }
+            }
+
+            findViewById<Button>(R.id.btnOpenEmailApp).setOnClickListener {
+                openEmailApp()
+            }
+
+            findViewById<Button>(R.id.btnExtractEmail).setOnClickListener {
                 if (emailProviderHelper.hasEmailPermissions()) {
                     val accounts = emailProviderHelper.getAvailableEmailAccounts()
                     if (accounts.isNotEmpty()) {
                         showEmailAccountPicker(accounts)
                     } else {
-                        openGenericEmailPicker() // This will call startActivityForResult
+                        openGenericEmailPicker()
                     }
                 } else {
-                    requestEmailPermissions() // This is MainActivity's existing method, will be adapted
+                    requestEmailPermissions()
                 }
             }
 
@@ -2993,7 +3003,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             EmailProviderHelper.EMAIL_PERMISSION_REQUEST_CODE -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // Permissions granted, try again
-                    findViewById<ImageButton>(R.id.btnExtractEmail).performClick()
+                    findViewById<Button>(R.id.btnExtractEmail).performClick()
                 } else {
                     Toast.makeText(
                         this, "Permission to access accounts denied. Email feature may not work as expected.", Toast.LENGTH_LONG
