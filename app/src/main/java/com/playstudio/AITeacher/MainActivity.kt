@@ -2733,7 +2733,8 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                             emailMessage?.let { message ->
                                 passEmailToChatFragment(
                                     subject = message.subject,
-                                    body = message.body
+                                    body = message.body,
+                                    sender = message.from
                                 )
                             } ?: run {
                                 Toast.makeText(
@@ -2978,19 +2979,25 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             // Handle other permission request codes if you have them
         }
     }
-    private fun passEmailToChatFragment(subject: String, body: String) {
-        val formattedMessage = "Email Subject: $subject\n\nEmail Content:\n$body"
+    private fun passEmailToChatFragment(subject: String, body: String, sender: String?) {
+        val formattedMessage = buildString {
+            append("I received the following email\n")
+            sender?.let { append("From: $it\n") }
+            append("Subject: $subject\n\n")
+            append(body)
+            append("\n\nPlease draft a concise reply and use the send_email_by_voice tool to compose it.")
+        }
 
         // Check if ChatFragment is currently visible
         val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
 
         if (currentFragment is ChatFragment) {
-            currentFragment.setExtractedText(formattedMessage)
+            currentFragment.setQuestionText(formattedMessage)
         } else {
             // Create new ChatFragment instance and pass the text
             val chatFragment = ChatFragment().apply {
                 arguments = Bundle().apply {
-                    putString("extracted_text", formattedMessage)
+                    putString("prefilled_question", formattedMessage)
                 }
             }
 
