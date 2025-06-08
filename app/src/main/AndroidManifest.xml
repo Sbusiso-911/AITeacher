@@ -155,7 +155,16 @@
         <activity android:name=".PrivacyPolicyActivity" android:theme="@style/Theme.AITeacher"/>
         <activity android:name=".TermsOfUseActivity" android:theme="@style/Theme.AITeacher"/>
         <activity android:name=".FontSelectionActivity" android:theme="@style/Theme.AITeacher"/>
-        <activity android:name=".ChatActivity" />
+        <activity
+            android:name=".ChatActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="message/rfc822" />
+            </intent-filter>
+        </activity>
         <activity
             android:name="com.canhub.cropper.CropImageActivity"
             android:theme="@style/Base.Theme.AppCompat" />
