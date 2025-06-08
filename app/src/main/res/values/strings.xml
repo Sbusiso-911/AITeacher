@@ -229,5 +229,9 @@
     <string name="chapters_scroll_desc" />
     <string name="subjects_scroll_desc" />
     <string name="recent_conversations_desc" />
+    <string name="accessibility_service_description_email">This service extracts email content to provide AI-powered summaries. It only monitors email apps.</string>
+    <string name="email_extracted">Email extracted</string>
+    <string name="action_process_email">Get AI Summary</string>
+    <string name="dismiss">Dismiss</string>
     <string name="tts_button_desc" />
 </resources>
