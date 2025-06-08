@@ -2850,9 +2850,8 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
 
         AlertDialog.Builder(this)
             .setTitle("Select Email Account")
-            .setItems(accountNames) { _, which ->
-                // Call your method to open the email client with the selected account
-                openEmailClient(accounts[which]) // This calls startActivityForResult
+            .setItems(accountNames) { _, _ ->
+                openGenericEmailPicker()
             }
             .setNegativeButton("Cancel", null)
             .show()
@@ -2860,31 +2859,29 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
 
 
     private fun openGenericEmailPicker() {
-        try {
-            val intent = Intent(Intent.ACTION_PICK).apply {
-                type = "message/rfc822"
+        AlertDialog.Builder(this)
+            .setTitle("Share Email With AI")
+            .setMessage("Open your email app, select a message, then use the Share option and choose AITeacher. The contents will appear in chat.")
+            .setPositiveButton("Open Email") { _, _ ->
+                openEmailApp()
             }
-            startActivityForResult(intent, EmailProviderHelper.EMAIL_PICK_REQUEST) // Use constant from helper
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun openEmailApp() {
+        try {
+            val intent = Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_APP_EMAIL)
+            }
+            startActivity(intent)
         } catch (e: ActivityNotFoundException) {
             Toast.makeText(this, "No email app found", Toast.LENGTH_SHORT).show()
-            // Alternative approach for devices without email picker
             showAlternativeEmailOptions()
         }
     }
     private fun openEmailClient(account: Account? = null) {
-        // The 'account' parameter is often not directly usable with a generic ACTION_PICK intent.
-        // Email clients typically don't filter by a passed Account object for ACTION_PICK.
-        // The main purpose here is to launch an email picker.
-        val intent = Intent(Intent.ACTION_PICK).apply {
-            type = "message/rfc822"
-            // Passing 'account' as an extra is non-standard and likely ignored by most email apps for ACTION_PICK.
-            // if (account != null) { intent.putExtra("account", account) }
-        }
-        try {
-            startActivityForResult(intent, EmailProviderHelper.EMAIL_PICK_REQUEST) // Use constant from helper
-        } catch (e: ActivityNotFoundException) {
-            Toast.makeText(this, "No email app found", Toast.LENGTH_SHORT).show()
-        }
+        openGenericEmailPicker()
     }
     private fun showAlternativeEmailOptions() {
         AlertDialog.Builder(this)
