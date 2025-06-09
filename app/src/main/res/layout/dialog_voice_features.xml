@@ -22,7 +22,7 @@
         android:id="@+id/voice_feature_message"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="You can now set alarms, send emails or open your calendar just by speaking. The conversation continues smoothly after each command."
+        android:text="Switch to OpenAI Realtime voice to set alarms, send emails and keep the conversation flowing. Live smart! 😊"
         android:textColor="@color/white"
         android:textSize="16sp"
         android:fontFamily="@font/montserrat_medium"
