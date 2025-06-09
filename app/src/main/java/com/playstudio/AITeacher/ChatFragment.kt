@@ -2399,13 +2399,16 @@ class ChatFragment : Fragment(), VoiceToolHandler {
                 if (hasOpenAICitations && !augmentedByCustomWebSearch) {
                     // Prepend "Web Search Results" only if OpenAI citations exist and no custom search augmented it.
                     val prefix = "🔍 Official Search Results:\n\n"
-                    processedContent = prefix + originalReplyContent // Use originalReplyContent for prefixing
-                    // Adjust indices for openAIProvidedCitations if prefixing 'originalReplyContent'
-                    finalCitations.forEach {
-                        // This needs careful index math if citations refer to 'originalReplyContent'
-                        // it.startIndex += prefix.length
-                        // it.endIndex += prefix.length
+                    processedContent = prefix + originalReplyContent
+                    // Adjust citation indices to account for the prefix so links remain clickable
+                    val adjusted = finalCitations.map {
+                        it.copy(
+                            startIndex = it.startIndex + prefix.length,
+                            endIndex = it.endIndex + prefix.length
+                        )
                     }
+                    finalCitations.clear()
+                    finalCitations.addAll(adjusted)
                 }
                 // If augmentedByCustomWebSearch is true, processedContent already has the enhanced text.
 
