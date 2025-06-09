@@ -523,10 +523,10 @@ class ChatFragment : Fragment(), VoiceToolHandler {
         // Show voice command tips on first launch
         val sharedPreferences = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         if (sharedPreferences.getBoolean(FIRST_LAUNCH_KEY, true)) {
-            showVoiceFeaturesDialog()
             viewLifecycleOwner.lifecycleScope.launch {
-                delay(500)
                 handleTextToSpeech(getString(R.string.voice_greeting), force = true)
+                delay(4000)
+                showVoiceFeaturesDialog()
             }
             sharedPreferences.edit()
                 .putBoolean(FIRST_LAUNCH_KEY, false)
