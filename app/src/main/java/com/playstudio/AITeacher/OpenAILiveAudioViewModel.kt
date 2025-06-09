@@ -34,6 +34,7 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import org.json.JSONArray
 import org.json.JSONObject
+import com.playstudio.aiteacher.VoiceToolHandler
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -83,6 +84,9 @@ class OpenAILiveAudioViewModel : ViewModel() {
 
     private var sessionVoice: String = "alloy"
     private var sessionTools: JSONArray? = null
+
+    var toolHandler: VoiceToolHandler? = null
+        set(value) { field = value }
 
     fun setVoice(voice: String) {
         sessionVoice = voice
@@ -462,11 +466,38 @@ class OpenAILiveAudioViewModel : ViewModel() {
                     }
                     "response.done" -> {
                         _status.value = "AI finished."
-                        _aiTextMessage.value = "" // Clear streaming text, full text might be in final output
+                        _aiTextMessage.value = ""
                         val finalResponse = event.getJSONObject("response")
                         val outputArray = finalResponse.optJSONArray("output")
-                        outputArray?.optJSONObject(0)?.optString("text")?.let { finalText ->
-                            if (finalText.isNotBlank()) _aiTextMessage.value = finalText
+                        val firstItem = outputArray?.optJSONObject(0)
+                        if (firstItem != null && firstItem.optString("type") == "function_call") {
+                            val funcName = firstItem.optString("name")
+                            val callId = firstItem.optString("call_id")
+                            val arguments = firstItem.optString("arguments")
+                            toolHandler?.let { handler ->
+                                viewModelScope.launch {
+                                    val result = handler.executeTool(funcName, arguments)
+                                    val itemEvent = JSONObject().apply {
+                                        put("type", "conversation.item.create")
+                                        put("item", JSONObject().apply {
+                                            put("type", "function_call_output")
+                                            put("call_id", callId)
+                                            put("output", result)
+                                        })
+                                        put("event_id", UUID.randomUUID().toString())
+                                    }
+                                    webSocketClient?.send(itemEvent.toString())
+                                    val respCreate = JSONObject().apply {
+                                        put("type", "response.create")
+                                        put("event_id", UUID.randomUUID().toString())
+                                    }
+                                    webSocketClient?.send(respCreate.toString())
+                                }
+                            }
+                        } else {
+                            firstItem?.optString("text")?.let { finalText ->
+                                if (finalText.isNotBlank()) _aiTextMessage.value = finalText
+                            }
                         }
                         Log.i("OpenAILiveAudioVM", "Response done. Final text: ${_aiTextMessage.value}")
                         currentTextResponseId = null

@@ -119,10 +119,11 @@ import android.view.accessibility.AccessibilityManager
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.RequestBody.Companion.asRequestBody
 import kotlin.coroutines.resume
+import com.playstudio.aiteacher.VoiceToolHandler
 
 
 
-class ChatFragment : Fragment() {
+class ChatFragment : Fragment(), VoiceToolHandler {
     // Add this data class inside your ChatFragment class
     data class Citation(
         val url: String,
@@ -420,6 +421,9 @@ class ChatFragment : Fragment() {
 
         selectedVoice = loadSelectedVoice()
         binding.voiceSelectionButton.text = "Voice: ${selectedVoice.replaceFirstChar { it.uppercase() }}"
+        openAILiveAudioViewModel.setVoice(selectedVoice)
+        openAILiveAudioViewModel.setTools(getAvailableTools())
+        openAILiveAudioViewModel.toolHandler = this
 
         // Initialize the views
         arguments?.getString("recognized_text")?.let { text ->
@@ -1414,8 +1418,12 @@ class ChatFragment : Fragment() {
 
     // In ChatFragment.kt
 
+    override suspend fun executeTool(functionName: String, argumentsJson: String): String {
+        return executeToolFunction(functionName, argumentsJson)
+    }
+
     // --- Tool Execution Router ---
-    private suspend fun executeToolFunction(functionName: String, argumentsJsonString: String): String {
+    suspend fun executeToolFunction(functionName: String, argumentsJsonString: String): String {
         return try {
             val arguments = JSONObject(argumentsJsonString)
             Log.i("ChatFragmentTool", "Executing tool: $functionName with args: $arguments")
@@ -4188,6 +4196,7 @@ class ChatFragment : Fragment() {
         selectedVoice = voice
         saveSelectedVoice(voice)
         binding.voiceSelectionButton.text = "🎙️ ${voice.replaceFirstChar { it.uppercase() }}"
+        openAILiveAudioViewModel.setVoice(voice)
     }
 
     private fun updateTtsButtonState() {
