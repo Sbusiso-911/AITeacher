@@ -2222,8 +2222,6 @@ class ChatFragment : Fragment(), VoiceToolHandler {
                     binding.recyclerView.smoothScrollToPosition(chatMessages.size - 1)
                 }
             }
-            // Force redraw in case DiffUtil misses updates
-            chatAdapter.notifyDataSetChanged()
         }
         if (!chatMessage.isTyping) {
             saveChatHistory()
