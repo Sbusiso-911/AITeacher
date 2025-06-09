@@ -219,6 +219,8 @@ class ChatFragment : Fragment(), VoiceToolHandler {
     private val FIRST_LAUNCH_KEY = "first_launch"
     private val INTERACTION_COUNT_KEY = "interaction_count"
     private val RATING_REMINDER_COUNT_KEY = "rating_reminder_count"
+    private val VOICE_DIALOG_SHOWN_KEY = "voice_feature_shown"
+    private val VOICE_PROMO_LEVEL_KEY = "voice_promo_level"
     private var isLoading = false
     private var _binding: FragmentChatBinding? = null
     private val binding get() = _binding!!
@@ -518,17 +520,15 @@ class ChatFragment : Fragment(), VoiceToolHandler {
             showChatGptOptionsDialog()
         }
 
-        // Check if it's the first launch
-        /*val isFirstLaunch = sharedPreferences.getBoolean(FIRST_LAUNCH_KEY, true)
-
-        if (isFirstLaunch) {
-            // Show the tooltip dialog
-            val tooltipDialog = TooltipDialog()
-            tooltipDialog.show(parentFragmentManager, "TooltipDialog")
-
-            // Update the shared preferences to indicate that the dialog has been shown
-            sharedPreferences.edit().putBoolean(FIRST_LAUNCH_KEY, false).apply()
-        }*/
+        // Show voice command tips on first launch
+        val sharedPreferences = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        if (sharedPreferences.getBoolean(FIRST_LAUNCH_KEY, true)) {
+            showVoiceFeaturesDialog()
+            sharedPreferences.edit()
+                .putBoolean(FIRST_LAUNCH_KEY, false)
+                .putBoolean(VOICE_DIALOG_SHOWN_KEY, true)
+                .apply()
+        }
 
         suggestedMessage = arguments?.getString("suggested_message") ?: savedInstanceState?.getString("suggested_message")
         selectedModel = arguments?.getString("selected_model") ?: savedInstanceState?.getString("selected_model")
@@ -3077,6 +3077,31 @@ class ChatFragment : Fragment(), VoiceToolHandler {
         dialog.show()
     }
 
+    private fun showVoiceFeaturesDialog() {
+        val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_voice_features, null)
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(view)
+            .create()
+        view.findViewById<Button>(R.id.btn_close_voice).setOnClickListener { dialog.dismiss() }
+        dialog.show()
+    }
+
+    private fun checkAndShowVoiceFeaturePrompt() {
+        val prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val chatCount = getChatCount()
+        val shownLevel = prefs.getInt(VOICE_PROMO_LEVEL_KEY, 0)
+        val milestone = when {
+            chatCount >= 9 -> 9
+            chatCount >= 6 -> 6
+            chatCount >= 3 -> 3
+            else -> 0
+        }
+        if (milestone > 0 && milestone > shownLevel) {
+            showVoiceFeaturesDialog()
+            prefs.edit().putInt(VOICE_PROMO_LEVEL_KEY, milestone).apply()
+        }
+    }
+
     private fun startGeneratingAnimation() {
         val blinkAnimation = AnimationUtils.loadAnimation(requireContext(), R.anim.blink)
         binding.generatingText.startAnimation(blinkAnimation)
@@ -3217,6 +3242,7 @@ class ChatFragment : Fragment(), VoiceToolHandler {
                 }
                 incrementChatCount()
                 checkAndShowSubscriptionPrompt()
+                checkAndShowVoiceFeaturePrompt()
             }
         }
     }
