@@ -93,7 +93,28 @@ class OpenAILiveAudioViewModel : ViewModel() {
     }
 
     fun setTools(tools: JSONArray?) {
-        sessionTools = tools
+        sessionTools = tools?.let { convertToolsForRealtime(it) }
+    }
+
+    private fun convertToolsForRealtime(openAiTools: JSONArray): JSONArray {
+        if (openAiTools.length() == 0) return openAiTools
+        val firstObj = openAiTools.optJSONObject(0)
+        // If already in realtime format (has name at top level), return as-is
+        if (firstObj != null && firstObj.has("name") && !firstObj.has("function")) {
+            return openAiTools
+        }
+        val realtimeTools = JSONArray()
+        for (i in 0 until openAiTools.length()) {
+            val tool = openAiTools.optJSONObject(i) ?: continue
+            val functionObj = tool.optJSONObject("function") ?: continue
+            val realTool = JSONObject()
+            realTool.put("type", "function")
+            realTool.put("name", functionObj.optString("name"))
+            functionObj.optString("description")?.let { realTool.put("description", it) }
+            functionObj.optJSONObject("parameters")?.let { realTool.put("parameters", it) }
+            realtimeTools.put(realTool)
+        }
+        return realtimeTools
     }
 
     @SuppressLint("MissingPermission")
