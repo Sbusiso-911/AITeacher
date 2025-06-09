@@ -524,6 +524,10 @@ class ChatFragment : Fragment(), VoiceToolHandler {
         val sharedPreferences = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         if (sharedPreferences.getBoolean(FIRST_LAUNCH_KEY, true)) {
             showVoiceFeaturesDialog()
+            viewLifecycleOwner.lifecycleScope.launch {
+                delay(500)
+                handleTextToSpeech(getString(R.string.voice_greeting), force = true)
+            }
             sharedPreferences.edit()
                 .putBoolean(FIRST_LAUNCH_KEY, false)
                 .putBoolean(VOICE_DIALOG_SHOWN_KEY, true)
@@ -4175,8 +4179,8 @@ class ChatFragment : Fragment(), VoiceToolHandler {
         }
     }
 
-    private fun handleTextToSpeech(text: String) {
-        if (isTtsEnabled) {
+    private fun handleTextToSpeech(text: String, force: Boolean = false) {
+        if (isTtsEnabled || force) {
             val json = JSONObject().apply {
                 put("model", "tts-1")
                 put("input", text)
