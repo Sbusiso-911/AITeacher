@@ -1689,21 +1689,27 @@ class ChatFragment : Fragment(), VoiceToolHandler {
 
         val intent = Intent(AlarmClock.ACTION_SET_ALARM).apply {
             putExtra(AlarmClock.EXTRA_HOUR, hour)
-            putExtra(AlarmClock.EXTRA_MINUTES, minute) // Use the same import pattern
+            putExtra(AlarmClock.EXTRA_MINUTES, minute)
             putExtra(AlarmClock.EXTRA_MESSAGE, alarmMessage)
-            putExtra(AlarmClock.EXTRA_SKIP_UI, false) // Let user see the clock app UI to confirm/save
+            putExtra(AlarmClock.EXTRA_SKIP_UI, true) // Avoid leaving the app
 
             if (!daysOfWeek.isNullOrEmpty()) {
-                val calendarDays = ArrayList(daysOfWeek) // Assumes daysOfWeek contains Calendar.MONDAY, etc.
+                val calendarDays = ArrayList(daysOfWeek)
                 putExtra(AlarmClock.EXTRA_DAYS, calendarDays)
             }
         }
 
-        try {
+        return@withContext try {
             startActivity(intent)
-            JSONObject().apply { put("status", "success"); put("message", "Clock app opened to set alarm for ${String.format("%02d:%02d", hour, minute)}. Please confirm and save it there.") }.toString()
+            JSONObject().apply {
+                put("status", "success")
+                put("message", "Alarm set for ${String.format("%02d:%02d", hour, minute)}.")
+            }.toString()
         } catch (e: ActivityNotFoundException) {
-            JSONObject().apply { put("status", "error"); put("message", "No clock app found to set the alarm.") }.toString()
+            JSONObject().apply {
+                put("status", "error")
+                put("message", "No clock app found to set the alarm.")
+            }.toString()
         }
     }
 
