@@ -526,7 +526,7 @@ class ChatFragment : Fragment(), VoiceToolHandler {
             viewLifecycleOwner.lifecycleScope.launch {
                 handleTextToSpeech(getString(R.string.voice_greeting), force = true)
                 delay(4000)
-                showVoiceFeaturesDialog()
+                showPromotionDialog()
             }
             sharedPreferences.edit()
                 .putBoolean(FIRST_LAUNCH_KEY, false)
@@ -3081,12 +3081,13 @@ class ChatFragment : Fragment(), VoiceToolHandler {
         dialog.show()
     }
 
-    private fun showVoiceFeaturesDialog() {
-        val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_voice_features, null)
+    private fun showPromotionDialog() {
+        val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_promotion, null)
+        view.findViewById<TextView>(R.id.promotionMessage).text = getString(R.string.voice_features_dialog_message)
         val dialog = AlertDialog.Builder(requireContext())
             .setView(view)
             .create()
-        view.findViewById<Button>(R.id.btn_close_voice).setOnClickListener { dialog.dismiss() }
+        view.findViewById<Button>(R.id.btnClose).setOnClickListener { dialog.dismiss() }
         dialog.show()
     }
 
@@ -3101,7 +3102,7 @@ class ChatFragment : Fragment(), VoiceToolHandler {
             else -> 0
         }
         if (milestone > 0 && milestone > shownLevel) {
-            showVoiceFeaturesDialog()
+            showPromotionDialog()
             prefs.edit().putInt(VOICE_PROMO_LEVEL_KEY, milestone).apply()
         }
     }
