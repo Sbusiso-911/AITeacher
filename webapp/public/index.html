@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Teacher Web</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 1rem; }
+        #messages { border: 1px solid #ccc; padding: 1rem; height: 300px; overflow-y: scroll; }
+        .msg { margin-bottom: 1rem; }
+        .user { font-weight: bold; color: blue; }
+        .assistant { color: green; }
+    </style>
+</head>
+<body>
+<h2>AI Teacher Web</h2>
+<label>Conversation ID: <input type="text" id="conversationId"></label>
+<button id="load">Load</button>
+<div id="messages"></div>
+<input type="text" id="messageInput" placeholder="Type a message" style="width:80%">
+<button id="send">Send</button>
+<script>
+const apiBase = '';
+let convoId = '';
+document.getElementById('load').onclick = async () => {
+    convoId = document.getElementById('conversationId').value.trim();
+    if (!convoId) return alert('Enter conversation ID');
+    const res = await fetch(`/conversations/${convoId}`);
+    const data = await res.json();
+    const messagesEl = document.getElementById('messages');
+    messagesEl.innerHTML = '';
+    data.forEach(m => {
+        const div = document.createElement('div');
+        div.className = 'msg ' + (m.isUser ? 'user' : 'assistant');
+        div.textContent = m.content;
+        messagesEl.appendChild(div);
+    });
+};
+document.getElementById('send').onclick = async () => {
+    const text = document.getElementById('messageInput').value;
+    if (!convoId) return alert('Load a conversation first');
+    if (!text) return;
+    await fetch(`/conversations/${convoId}/messages`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ content: text, isUser: true })
+    });
+    document.getElementById('messageInput').value = '';
+    document.getElementById('load').click();
+};
+</script>
+</body>
+</html>

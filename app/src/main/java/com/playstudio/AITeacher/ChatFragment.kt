@@ -223,6 +223,7 @@ class ChatFragment : Fragment() {
     private val binding get() = _binding!!
     // private lateinit var chatAdapter: ChatAdapter
     private val chatMessages = mutableListOf<ChatMessage>()
+    private val remoteService = RemoteConversationService()
     private var rewardedAd: RewardedAd? = null
     private var canSendMessage = false
     private val client = OkHttpClient.Builder()
@@ -2213,6 +2214,9 @@ class ChatFragment : Fragment() {
         }
         if (!chatMessage.isTyping) {
             saveChatHistory()
+            conversationId?.let { id ->
+                remoteService.appendMessage(id, chatMessage)
+            }
         }
     }
     private fun addOlderMessagesToList(olderMessages: List<ChatMessage>) {
@@ -4997,6 +5001,18 @@ class ChatFragment : Fragment() {
         chatAdapter.submitList(chatMessages.toList()) {
             if (chatMessages.isNotEmpty()) {
                 binding.recyclerView.smoothScrollToPosition(chatMessages.size - 1)
+            }
+        }
+
+        // Fetch additional messages from remote service
+        val remoteMessages = remoteService.fetchConversation(currentConversationId)
+        if (remoteMessages.isNotEmpty()) {
+            chatMessages.clear()
+            chatMessages.addAll(remoteMessages)
+            chatAdapter.submitList(chatMessages.toList()) {
+                if (chatMessages.isNotEmpty()) {
+                    binding.recyclerView.smoothScrollToPosition(chatMessages.size - 1)
+                }
             }
         }
     }
