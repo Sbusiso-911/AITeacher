@@ -1,0 +1,12 @@
+{
+  "name": "aiteacher-webapp",
+  "version": "1.0.0",
+  "description": "Simple backend for AITeacher chat history sync",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
