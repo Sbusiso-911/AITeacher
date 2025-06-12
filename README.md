@@ -20,7 +20,17 @@ npm start
 
 The server listens on port `3000` by default. Navigate to `http://localhost:3000` in your browser.
 
+If you are running the Android app in an emulator it already points to
+`http://10.0.2.2:3000`, which maps to the host machine. When testing on a
+physical device you will need to edit `RemoteConversationService` and replace
+the base URL with your computer's IP address.
+
 ### Getting the Conversation ID
 
 On the phone, open the menu in a chat and choose **Copy Conversation ID**. Paste this ID into the web app to load the history and continue the conversation from your computer.
+
+Messages typed on the web page will appear on the phone the next time the
+conversation is opened. Likewise, sending a message from the phone immediately
+writes it to the JSON store so that refreshing the browser shows the latest
+history.
 

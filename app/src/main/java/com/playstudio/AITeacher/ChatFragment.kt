@@ -384,6 +384,8 @@ class ChatFragment : Fragment() {
             setHomeAsUpIndicator(R.drawable.ic_arrow_back)
 
         }
+        // Reload messages from the remote service in case another device added new ones
+        loadChatHistory()
         //loadInterstitialAd() // Load the interstitial ad when the fragment resumes
     }
 
