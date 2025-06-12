@@ -403,6 +403,15 @@ class ChatFragment : Fragment() {
                 showReportDialog()
                 true
             }
+            R.id.menu_copy_conversation_id -> {
+                conversationId?.let { id ->
+                    val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clip = ClipData.newPlainText("Conversation ID", id)
+                    clipboard.setPrimaryClip(clip)
+                    showCustomToast("Conversation ID copied")
+                } ?: showCustomToast("No conversation ID")
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
