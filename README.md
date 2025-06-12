@@ -15,9 +15,11 @@ This repository contains the Android application and a minimal Node.js web backâ
 ```bash
 cd webapp
 npm install
-npm start
+npm start     # runs `node server.js`
 ```
 
 The server listens on `http://localhost:3000` by default.
 
 You can configure the Android appâ€™s `WEB_APP_BASE_URL` constants to point to this server for local testing.
+
+This simple server does not rely on Firebase; running it with `npm start` is enough for local experimentation.
