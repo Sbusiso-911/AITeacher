@@ -117,6 +117,9 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
     private lateinit var fingerAnimationView: LottieAnimationView
     private lateinit var scrollView: ScrollView
 
+    // User/account identifier for syncing with the web app
+    private lateinit var userId: String
+
     private var versionTapCount = 0
     private var lastVersionTapTime = 0L
     // Declare LottieAnimationView and overlay View references
@@ -500,6 +503,9 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
 
         // Initialize SharedPreferences
         sharedPreferences = getSharedPreferences(prefsName, MODE_PRIVATE)
+
+        // Obtain or create a unique user ID for syncing with the web app
+        userId = getOrCreateUserId()
 
         // Load the last interaction time from SharedPreferences
         lastInteractionTime = sharedPreferences.getLong(lastInteractionTimeKey, 0)
@@ -2365,6 +2371,11 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
 
         private const val SECRET_TAP_COUNT = 7
         private const val SECRET_TAP_TIMEOUT = 1000L // 1 second between taps
+
+        // Shared constants so fragments can access user identifier
+        const val USER_PREFS = "user_prefs"
+        const val USER_ID_KEY = "user_id"
+        const val WEB_APP_BASE_URL = "https://your-webapp.example.com"
     }
 
     private fun checkNotificationPermission() {
@@ -3091,4 +3102,28 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
         "👔 Help me write a job description for a developer",
         "📈 Draft a project status update for stakeholders"
     )
+
+    /**
+     * Retrieve or create a unique identifier for this app installation. This ID
+     * will be used for syncing chat history with the web app.
+     */
+    private fun getOrCreateUserId(): String {
+        val prefs = getSharedPreferences(USER_PREFS, MODE_PRIVATE)
+        var id = prefs.getString(USER_ID_KEY, null)
+        if (id == null) {
+            id = java.util.UUID.randomUUID().toString()
+            prefs.edit().putString(USER_ID_KEY, id).apply()
+        }
+        return id
+    }
+
+    /**
+     * Launches the web version of the app and passes along the local user id so
+     * that conversations can be linked across platforms.
+     */
+    private fun openWebApp() {
+        val uri = Uri.parse("${WEB_APP_BASE_URL}?user_id=${getOrCreateUserId()}")
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+        startActivity(intent)
+    }
 }

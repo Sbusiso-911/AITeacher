@@ -263,6 +263,9 @@ class ChatFragment : Fragment() {
         private const val SEARCH_ENGINE_ID = "YOUR_SEARCH_ENGINE_ID"
         private const val WEB_SEARCH_ENABLED = true
 
+        // Base URL of the accompanying web application for syncing history
+        private const val WEB_APP_BASE_URL = "https://your-webapp.example.com/api"
+
 
         // SharedPreferences Keys
         private const val PREFS_NAME_APP = "app_prefs" // Main app prefs
@@ -746,6 +749,7 @@ class ChatFragment : Fragment() {
         }
 
         loadChatHistory()
+        fetchChatHistoryFromServer()
 
         arguments?.getString("conversation_json")?.let { conversationJson ->
             loadConversationFromJson(conversationJson)
@@ -1057,6 +1061,11 @@ class ChatFragment : Fragment() {
             appPrefs.edit().putString("last_conversation_id", it).apply()
         }
         isFollowUpEnabled = appPrefs.getBoolean("follow_up_enabled", true)
+    }
+
+    private fun getUserId(): String {
+        val prefs = requireContext().getSharedPreferences(MainActivity.USER_PREFS, Context.MODE_PRIVATE)
+        return prefs.getString(MainActivity.USER_ID_KEY, "") ?: ""
     }
 
 
@@ -5057,6 +5066,9 @@ class ChatFragment : Fragment() {
 
         editor.putString(chatHistoryKey, updatedChatsArray.toString())
         editor.apply()
+
+        // Also push the conversation to the web app for cross-device syncing
+        syncChatHistoryWithServer(currentConvId, messagesJsonArray)
     }
 
 
@@ -5090,6 +5102,67 @@ class ChatFragment : Fragment() {
             timestamp = messageObject.optLong("timestamp", System.currentTimeMillis()),
             containsRichContent = messageObject.optBoolean("containsRichContent", false)
         )
+    }
+
+    /**
+     * Upload the given conversation to the web app so history is shared between
+     * the Android and web versions.
+     */
+    private fun syncChatHistoryWithServer(id: String, messages: JSONArray) {
+        val bodyJson = JSONObject().apply {
+            put("user_id", getUserId())
+            put("conversation_id", id)
+            put("messages", messages)
+        }
+        val body = bodyJson.toString().toRequestBody("application/json".toMediaTypeOrNull())
+        val request = Request.Builder()
+            .url("${WEB_APP_BASE_URL}/sync")
+            .post(body)
+            .build()
+        okHttpClient.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e("ChatFragment", "Failed to sync history", e)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                response.close()
+            }
+        })
+    }
+
+    /**
+     * Retrieve any stored history from the web app and merge it locally.
+     */
+    private fun fetchChatHistoryFromServer() {
+        val url = "${WEB_APP_BASE_URL}/history?user_id=${getUserId()}"
+        val request = Request.Builder().url(url).build()
+        okHttpClient.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e("ChatFragment", "Failed to fetch history", e)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                response.body?.string()?.let { bodyStr ->
+                    try {
+                        val arr = JSONArray(bodyStr)
+                        val msgs = mutableListOf<ChatMessage>()
+                        for (i in 0 until arr.length()) {
+                            msgs.add(parseChatMessageFromJson(arr.getJSONObject(i)))
+                        }
+                        requireActivity().runOnUiThread {
+                            if (msgs.isNotEmpty()) {
+                                chatMessages.clear()
+                                chatMessages.addAll(msgs)
+                                chatAdapter.submitList(chatMessages.toList())
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("ChatFragment", "Error parsing history", e)
+                    }
+                }
+                response.close()
+            }
+        })
     }
 
     private fun showChatHistoryDialog() {
