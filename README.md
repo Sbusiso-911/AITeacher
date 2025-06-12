@@ -9,7 +9,7 @@ This repository contains the Android application and a minimal Node.js web backâ
 
 ## Running the Web App
 
-1. Install Node.js (version 18 or later).
+1. Install Node.js **22** (this web app expects Node 22).
 2. Navigate to `webapp` and install dependencies:
 
 ```bash
