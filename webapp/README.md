@@ -16,4 +16,4 @@ npm install
 npm start
 ```
 
-The server will listen on port `3000` by default.
+The server requires **Node.js 22** and will listen on port `3000` by default.
