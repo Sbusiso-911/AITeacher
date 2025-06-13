@@ -91,6 +91,7 @@ exports.chat = functions.https.onCall(async (data, context) => {
 
     // Update conversation history
     conversationMessages.push({ role: "assistant", content: reply });
+    conversationMessages = conversationMessages.slice(-6);
     await chatRef.set({ messages: conversationMessages }, { merge: true });
 
     return { reply };
