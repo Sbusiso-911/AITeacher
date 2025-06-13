@@ -1,6 +1,7 @@
 package com.playstudio.aiteacher
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
@@ -38,6 +39,56 @@ class ChatActivity : AppCompatActivity(), ChatFragment.OnSubscriptionClickListen
 
             supportFragmentManager.commit {
                 replace(R.id.fragment_container, chatFragment)
+            }
+        }
+
+        handleSharedEmail(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleSharedEmail(intent)
+    }
+
+    private fun handleSharedEmail(intent: Intent) {
+        if (Intent.ACTION_SEND == intent.action && intent.type != null) {
+            val streamUri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+            if (streamUri != null) {
+                EmailProviderHelper(this).extractEmailContent(Intent().setData(streamUri)) { message ->
+                    message?.let {
+                        injectEmailIntoChat(it.subject, it.body, it.from)
+                    }
+                }
+                return
+            }
+
+            val subject = intent.getStringExtra(Intent.EXTRA_SUBJECT) ?: "(No Subject)"
+            val body = intent.getStringExtra(Intent.EXTRA_TEXT) ?: ""
+            val sender = intent.getStringExtra(Intent.EXTRA_EMAIL)
+            injectEmailIntoChat(subject, body, sender)
+        }
+    }
+
+    private fun injectEmailIntoChat(subject: String, body: String, sender: String?) {
+        val formattedMessage = buildString {
+            append("I received the following email\n")
+            sender?.let { append("From: $it\n") }
+            append("Subject: $subject\n\n")
+            append(body)
+            append("\n\nPlease draft a concise reply and use the send_email_by_voice tool to compose it.")
+        }
+
+        val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container) as? ChatFragment
+        if (fragment != null) {
+            fragment.setQuestionText(formattedMessage)
+        } else {
+            val newFragment = ChatFragment().apply {
+                arguments = Bundle().apply {
+                    putString("prefilled_question", formattedMessage)
+                }
+            }
+            supportFragmentManager.commit {
+                replace(R.id.fragment_container, newFragment)
             }
         }
     }

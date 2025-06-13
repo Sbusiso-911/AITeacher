@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -155,7 +156,16 @@
         <activity android:name=".PrivacyPolicyActivity" android:theme="@style/Theme.AITeacher"/>
         <activity android:name=".TermsOfUseActivity" android:theme="@style/Theme.AITeacher"/>
         <activity android:name=".FontSelectionActivity" android:theme="@style/Theme.AITeacher"/>
-        <activity android:name=".ChatActivity" />
+        <activity
+            android:name=".ChatActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="message/rfc822" />
+            </intent-filter>
+        </activity>
         <activity
             android:name="com.canhub.cropper.CropImageActivity"
             android:theme="@style/Base.Theme.AppCompat" />
@@ -175,6 +185,17 @@
             android:name="androidx.work.impl.background.systemjob.SystemJobService"
             android:permission="android.permission.BIND_JOB_SERVICE"
             android:exported="true" />
+        <service
+            android:name=".EmailAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
 
 
 

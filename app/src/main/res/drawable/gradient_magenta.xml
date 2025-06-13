@@ -5,11 +5,10 @@
         <shape android:shape="rectangle">
             <gradient
                 android:angle="45"
-                android:startColor="#66ff7e5f"
-            android:centerColor="#44feb47b"
-            android:endColor="#33ff6f61"
-            android:type="linear"/>
-            <corners android:radius="32dp"/>
+                android:startColor="#E1BEE7"
+                android:endColor="#CE93D8"
+                android:type="linear"/>
+            <corners android:radius="12dp"/>
             <padding android:bottom="6dp" android:right="6dp"/> <!-- Shadow offset -->
         </shape>
     </item>

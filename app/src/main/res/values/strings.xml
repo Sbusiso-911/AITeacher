@@ -229,5 +229,16 @@
     <string name="chapters_scroll_desc" />
     <string name="subjects_scroll_desc" />
     <string name="recent_conversations_desc" />
+    <string name="accessibility_service_description_email">This service extracts email content to provide AI-powered summaries. It only monitors email apps.</string>
+    <string name="email_extracted">Email extracted</string>
+    <string name="action_process_email">Get AI Summary</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="share_email_title">Share Email With AI</string>
+    <string name="email_extraction_instructions">Open your email app and select a message. A notification will appear once the content is captured.</string>
+    <string name="open_email_app">Open Email</string>
+    <string name="extract_email_button">Extract Email</string>
+    <string name="enable_email_extraction_title">Enable Email Extraction</string>
+    <string name="enable_email_extraction_message">To extract email content automatically, enable the AITeacher email extraction service in Accessibility settings.</string>
+    <string name="open_accessibility_settings">Open Settings</string>
     <string name="tts_button_desc" />
 </resources>
