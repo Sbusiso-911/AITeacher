@@ -1,0 +1,229 @@
+<resources>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="light_blue">#ADD8E6</color>
+    <color name="light_green">#90EE90</color>
+    <color name="light_yellow">#FFFFE0</color>
+    <color name="light_grey">#D3D3D3</color>
+    <color name="dark_grey">#333333</color>
+
+    <color name="link_color">#1a73e8</color>
+    <color name="default_background_color">#FFFFFF</color>
+    <color name="red">#FF0000</color>
+    <color name="green">#008000</color>
+    <color name="blue">#0000FF</color>
+    <color name="yellow">#FFFF00</color>
+    <color name="cyan">#00FFFF</color>
+    <color name="magenta">#FF00FF</color>
+    <color name="orange">#FFA500</color>
+    <color name="purple">#800080</color>
+    <color name="pink">#FFC0CB</color>
+    <color name="brown">#A52A2A</color>
+    <color name="teal">#008080</color>
+    <color name="navy">#000080</color>
+    <color name="maroon">#800000</color>
+    <color name="olive">#808000</color>
+    <color name="purple_500">#9C27B0</color>
+    <color name="purple_700">#7B1FA2</color>
+    <color name="teal_200">#80CBC4</color>
+    <color name="teal_700">#00796B</color>
+    <color name="colorPrimary">#6200EE</color>
+    <color name="colorPrimaryDark">#fc4a1a</color>
+    <color name="colorAccent">#03DAC5</color>
+    <color name="light_purple">#E6E6FA</color>
+    <color name="purple_200">#FFBB86FC</color>
+
+    <color name="glow_start">#FF00FF00</color> <!-- Example color: Green -->
+    <color name="glow_end">#FF0000FF</color> <!-- Example color: Blue -->
+
+    <!-- New colors -->
+    <color name="slight_light_blue">#DDEEFF</color>
+
+    <color name="sky_blue">#87CEEB</color>
+
+    <color name="slight_light_purple">#EEE6EE</color>
+
+    <color name="custom1_blue">#9999FF</color>
+
+    <color name="button_background_color">#FF6200EE</color>
+
+    <color name="button_text_color">#FFFFFF</color> <!-- White color -->
+    <color name="colorTtsDefault">#FFFFFF</color> <!-- Example default color for TTS button -->
+    <color name="colorTtsEnabled">#FF5722</color> <!-- Example color for TTS enabled -->
+    <color name="colorTtsDisabled">#9E9E9E</color> <!-- Example color for TTS disabled -->
+    <color name="colorFetchEmail">#4CAF50</color> <!-- Example color for fetch email button -->
+    <color name="colorCustom2">#1073d6</color>
+
+    <color name="colorCustomYellow">#cad7d9</color> <!-- Example color for fetch email button -->
+
+    <color name="your_button_color">#340000</color>
+
+    <color name="clear">#00000000</color>
+
+    <color name="darker_green">#2A9D67</color>
+
+    <color name="dark_green">#1B6B45</color>
+
+    <color name="dark_goldenrod">#B8860B</color>
+
+    <!-- Define your color palette here -->
+    <color name="primary_color">#6200EE</color>
+    <color name="secondary_color">#03DAC5</color>
+    <color name="background_color">#FFFFFF</color>
+    <color name="text_color">#000000</color>
+    <color name="accent_color">#FF0266</color>
+    <color name="grey">#808080</color>
+    <color name="secondaryTextColor">#A9A9A9</color>
+    <!-- Define your primary color -->
+    <color name="primaryColor">#6200EE</color>
+    <!-- Define your primary dark color -->
+    <color name="primaryDarkColor">#3700B3</color>
+
+
+
+    <!-- Urgency/Action Colors -->
+    <color name="urgency_red">#FF3A30</color> <!-- Bright red for urgency -->
+    <color name="action_orange">#FF9500</color> <!-- Orange for action -->
+
+    <!-- Trust Colors -->
+    <color name="trust_blue_translucent">#4065A3D0</color> <!-- Semi-transparent blue -->
+
+
+
+
+    <!-- Navy Primary Color -->
+    <color name="navy_primary">#1A3A8F</color>
+    <color name="navy_primary_light">#4D6AB5</color>
+    <color name="navy_primary_dark">#0F2257</color>
+
+    <!-- Background Colors -->
+    <color name="background_light">#F8FAFD</color>
+    <color name="background_white">#FFFFFF</color>
+
+    <!-- Text Colors -->
+    <!--color name="text_primary">#2D3748</color-->
+    <!--color name="text_secondary">#718096</color-->
+    <color name="text_hint">#A0AEC0</color>
+
+    <!-- Accent Colors -->
+    <color name="accent_blue">#4299E1</color>
+    <color name="accent_green">#48BB78</color>
+    <color name="accent_orange">#ED8936</color>
+
+
+    <!-- Primary colors -->
+
+    <color name="primaryLightColor">#BB86FC</color>
+    <color name="secondaryColor">#03DAC6</color>
+
+    <!-- Text colors -->
+    <color name="primaryText">#000000</color>
+    <color name="secondaryText">#FFFFFF</color>
+
+    <!-- Card colors -->
+    <color name="cardBackground">#909090</color>
+    <color name="cardStroke">#E0E0E0</color>
+
+    <!-- Status colors -->
+    <color name="successColor">#4CAF50</color>
+    <color name="warningColor">#FFC107</color>
+    <color name="errorColor">#F44336</color>
+
+    <!-- Shining Navy Color Palette -->
+    <color name="shining_navy_primary">#1A237E</color>
+    <color name="shining_navy_dark">#000051</color>
+    <color name="shining_navy_light">#534BAE</color>
+
+    <!-- Supporting Colors -->
+    <color name="card_surface">#010f56</color>
+    <color name="text_primary">#909090</color>
+    <color name="text_secondary">#757575</color>
+
+    <color name="bronze_main">#CD7F32</color>
+    <color name="silver_main">#C0C0C0</color>
+    <color name="gold_main">#FFD700</color>
+    <color name="free_tier_text">#9E9E9E</color>
+    <color name="free_tier_hint">#BDBDBD</color>
+    <color name="premium_badge_bg">#2A2A2A</color>
+    <color name="premium_gold_30p">#4DFFD700</color>
+
+
+    <color name="white_87">#DEFFFFFF</color>
+
+
+    <color name="greenn">#4CAF50</color>
+    <color name="greyy">#9E9E9E</color>
+
+    <color name="card_stroke">#33000000</color>  <!-- Semi-transparent black for card border -->
+    <color name="card_background">#FFFFFF</color>  <!-- White card background -->
+
+
+    <color name="gold">#FFD700</color>
+
+    <color name="trust_blue_background">#E3F2FD</color>
+    <color name="trust_blue">#1E88E5</color>
+    <color name="trust_blue_dark">#1565C0</color>
+    <color name="trust_blue_light">#90CAF9</color>
+    <color name="trust_blue_very_light">#E3F2FD</color>
+    <color name="trust_blue_semi_transparent">#801E88E5</color>
+    <color name="white_50_percent">#80FFFFFF</color>
+
+
+    <!-- Premium color palette -->
+    <color name="premium_primary">#1A237E</color>
+    <color name="premium_primary_dark">#000051</color>
+    <color name="premium_primary_light">#534BAE</color>
+    <color name="premium_accent">#FFC107</color>
+    <color name="premium_text_primary">#212121</color>
+    <color name="premium_text_secondary">#757575</color>
+    <color name="premium_divider">#BDBDBD</color>
+    <color name="premium_background">#FAFAFA</color>
+    <color name="premium_card_background">#FFFFFF</color>
+
+
+    <!-- Premium Colors -->
+    <color name="premium_gold">#FFD700</color>
+    <color name="premium_gold_dark">#FFC000</color>
+
+    <!-- Trust Background Gradient Colors -->
+    <color name="trust_gradient_start">#0A1A2F</color>
+    <color name="trust_gradient_end">#142950</color>
+
+    <!-- White Variations -->
+    <color name="whitee">#FFFFFF</color>
+    <color name="white_70">#B3FFFFFF</color>
+
+    <!-- Accent Colors -->
+    <color name="popular_badge_bg">#1E3A6B</color>
+    <color name="savings_badge_bg">#1E3A6B</color>
+
+
+
+    <color name="best_value_background">#FF3A30</color>  <!-- Light green background -->
+
+
+
+    <color name="premium_gradient_start">#FF6B6B</color>
+    <color name="premium_gradient_end">#FF8E53</color>
+
+    <!-- Add this line -->
+    <color name="premium_shadow">#4D000000</color>  <!-- Semi-transparent black -->
+
+    <!-- Define as color array -->
+    <array name="premium_gradient_colors">
+        <item>@color/premium_gradient_start</item>
+        <item>@color/premium_gradient_end</item>
+    </array>
+
+    <array name="rainbow_gradient_colors">
+        <item>#FFFF0000</item> <!-- Red -->
+        <item>#FFFFFF00</item> <!-- Yellow -->
+        <item>#FF00FF00</item> <!-- Green -->
+        <item>#FF00FFFF</item> <!-- Cyan -->
+        <item>#FF0000FF</item> <!-- Blue -->
+        <item>#FFFF00FF</item> <!-- Magenta -->
+    </array>
+
+    <!-- Recommended plan background -->
+
+</resources>

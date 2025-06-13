@@ -1,0 +1,23 @@
+<!-- res/drawable/gradient_shadow_layer.xml -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Warm gradient shadow -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="45"
+                android:startColor="#66ff7e5f"
+            android:centerColor="#44feb47b"
+            android:endColor="#33ff6f61"
+            android:type="linear"/>
+            <corners android:radius="32dp"/>
+            <padding android:bottom="6dp" android:right="6dp"/> <!-- Shadow offset -->
+        </shape>
+    </item>
+
+    <!-- Button content area -->
+    <item android:top="2dp" android:left="2dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent"/>
+        </shape>
+    </item>
+</layer-list>

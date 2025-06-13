@@ -1,0 +1,31 @@
+<!-- res/drawable/gradient_rounded_stroke_shadow.xml -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer Shadow -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#402c3e50"
+            android:endColor="#4000d2ff"
+            android:angle="45"/>
+            <corners android:radius="10dp"/>
+            <stroke
+                android:width="1dp"
+                android:color="#502c3e50"/>
+            <padding android:bottom="5dp" android:right="3dp"/>
+        </shape>
+    </item>
+
+    <!-- Main Content -->
+    <item android:top="2dp" android:left="2dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#2c3e50"
+                android:endColor="#00d2ff"
+                android:angle="45"/>
+            <corners android:radius="8dp"/>
+            <stroke
+                android:width="2dp"
+                android:color="#909090"/>
+        </shape>
+    </item>
+</layer-list>

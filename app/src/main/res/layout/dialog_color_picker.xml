@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Choose a color"
+        android:textSize="14sp"
+        android:layout_gravity="center_horizontal"
+        android:paddingBottom="16dp"/>
+
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="3"
+        android:rowCount="2"
+        android:layout_gravity="center_horizontal">
+
+        <!-- Color Red -->
+        <LinearLayout
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_margin="8dp">
+            <TextView
+                android:id="@+id/colorRed"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:background="@drawable/gradient_red"
+                android:gravity="center"
+                android:text="Red"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:padding="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Red Color"/>
+        </LinearLayout>
+
+        <!-- Color Green -->
+        <LinearLayout
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_margin="8dp">
+            <TextView
+                android:id="@+id/colorGreen"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:background="@drawable/gradient_green"
+                android:gravity="center"
+                android:text="DeepBlue"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:padding="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Green Color"/>
+        </LinearLayout>
+
+        <!-- Color Blue -->
+        <LinearLayout
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_margin="8dp">
+            <TextView
+                android:id="@+id/colorBlue"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:background="@drawable/gradient_blue"
+                android:gravity="center"
+                android:text="Navy"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:padding="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Blue Color"/>
+        </LinearLayout>
+
+        <!-- Color Cyan -->
+        <LinearLayout
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_margin="8dp">
+            <TextView
+                android:id="@+id/colorCyan"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:background="@drawable/gradient_cyan"
+                android:gravity="center"
+                android:text="Milk"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:padding="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Cyan Color"/>
+        </LinearLayout>
+
+        <!-- Color Magenta -->
+        <LinearLayout
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_margin="8dp">
+            <TextView
+                android:id="@+id/colorMagenta"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:background="@drawable/gradient_magenta"
+                android:gravity="center"
+                android:text="Brown"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:padding="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Magenta Color"/>
+        </LinearLayout>
+
+        <!-- Color Black -->
+        <LinearLayout
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_margin="8dp">
+            <TextView
+                android:id="@+id/colorBlack"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:background="@drawable/gradient_black"
+                android:gravity="center"
+                android:text="Light Blue"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:padding="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Black Color"/>
+        </LinearLayout>
+
+    </GridLayout>
+</LinearLayout>

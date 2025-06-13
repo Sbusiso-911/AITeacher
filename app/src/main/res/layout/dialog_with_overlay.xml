@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#80000000"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- Premium dialog container -->
+    <LinearLayout
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/premium_dialog_background"
+        android:padding="24dp"
+        android:elevation="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Header with animated icon -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="24dp"> <!-- Increased margin -->
+
+            <com.airbnb.lottie.LottieAnimationView
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                app:lottie_rawRes="@raw/ai_model_switch"
+                app:lottie_autoPlay="true"
+                app:lottie_loop="true"
+                app:tint="@color/premium_gold"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="Select AI Model"
+                android:textColor="@color/premium_gold"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/montserrat_bold"
+                android:letterSpacing="0.02"/>
+        </LinearLayout>
+
+        <!-- Model list with improved spacing -->
+        <ListView
+            android:id="@+id/optionsListView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:divider="@drawable/list_divider"
+        android:dividerHeight="1dp"
+        android:paddingVertical="8dp"
+        android:scrollbars="none"
+        android:clipToPadding="false"/>
+
+        <!-- Action buttons container -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="24dp"
+            android:gravity="end"
+            android:paddingTop="16dp">
+
+            <!-- Cancel button -->
+            <Button
+                android:id="@+id/cancelButton"
+                style="@style/DialogButton"
+                android:layout_marginEnd="8dp"
+                android:text="Cancel"
+                android:background="@drawable/button_outline_gold"/>
+
+            <!-- Confirm button -->
+            <Button
+                android:id="@+id/confirmButton"
+                style="@style/DialogButton"
+                android:text="Select"
+                android:background="@drawable/button_solid_gold"/>
+        </LinearLayout>
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

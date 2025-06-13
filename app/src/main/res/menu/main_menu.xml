@@ -1,0 +1,29 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_settings"
+        android:title="⚙️ Settings"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_new_conversation"
+        android:title="💬 New Conversation"
+        android:orderInCategory="101"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_change_background_color"
+        android:title="🎨 Change Background Color"
+        android:orderInCategory="102"
+        app:showAsAction="never" />
+    <!-- Add this new item -->
+    <item
+        android:id="@+id/action_redeem_promo"
+        android:title="Redeem Promo"
+        android:visible="false"
+    app:showAsAction="never"/>
+    <item
+        android:id="@id/hidden_version_item"
+        android:title="Version"
+        android:visible="false"
+        app:showAsAction="never"/>
+</menu>

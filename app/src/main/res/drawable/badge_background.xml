@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle"> <!-- Rectangle for rounded corners -->
+
+    <corners android:radius="16dp"/> <!-- Rounded corners -->
+
+    <gradient
+        android:startColor="#00d2ff"
+        android:centerColor="#5AFFE7"
+        android:endColor="#00d2ff"
+        android:angle="270"/> <!-- Gradient direction -->
+</shape>

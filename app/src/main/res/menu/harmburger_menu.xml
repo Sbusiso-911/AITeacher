@@ -1,0 +1,22 @@
+<!-- res/menu/chat_menu.xml -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_new_conversation"
+        android:icon="@drawable/ic_new_conversation"
+        android:title="🆕 New Conversation"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_help"
+        android:icon="@drawable/ic_help"
+        android:title="❓ Help"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_report"
+        android:icon="@drawable/ic_report"
+        android:title="🚩 Report"
+        app:showAsAction="never" />
+</menu>

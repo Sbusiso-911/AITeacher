@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:layout_marginBottom="3dp"
+    android:background="@drawable/bg_message_received"> <!-- Use custom background -->
+
+    <!-- Horizontal layout for emoji and message -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="start">  <!-- Align items to the left -->
+
+        <!-- Emoji ImageView on the left -->
+        <ImageView
+            android:id="@+id/emojiImageView"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="8dp"
+            android:src="@drawable/ic_ai_emoji"
+            android:background="@drawable/circle_white_background"
+            android:contentDescription="@string/ai_emoji" />
+
+        <!-- Message TypeWriterTextView next to the emoji -->
+        <com.playstudio.aiteacher.TypeWriterTextView
+            android:id="@+id/messageTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="#E1DFDF"
+            android:text="@string/received_message"
+            android:padding="8dp"
+            android:autoLink="web"
+            android:linksClickable="true"
+            android:textIsSelectable="true"/>
+    </LinearLayout>
+
+    <!-- Follow-up questions container -->
+    <LinearLayout
+        android:id="@+id/followUpQuestionsContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:textColor="#808080"
+        android:visibility="gone"
+        android:padding="8dp" />
+
+    <!-- Copy icon inside a layout to position it -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:layout_marginTop="8dp">  <!-- Margin for spacing -->
+
+        <ImageView
+            android:id="@+id/copy_icon"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/ic_copy"
+            android:contentDescription="@string/copy_received_message" />
+    </LinearLayout>
+
+    <!-- Citation Indicator (MUST exist) -->
+    <ImageView
+        android:id="@+id/citation_indicator"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="8dp"
+        android:src="@drawable/ic_source"
+        android:visibility="gone"
+        app:layout_constraintStart_toEndOf="@id/messageTextView"
+        app:layout_constraintTop_toTopOf="@id/messageTextView"/>
+
+</LinearLayout>

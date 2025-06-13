@@ -1,0 +1,17 @@
+<resources>
+    <declare-styleable name="YourCustomView">
+        <attr name="colorSelectionButtonStyle" format="reference" />
+        <attr name="iconColor" format="color" />
+    </declare-styleable>
+    <declare-styleable name="GradientButton">
+
+        <attr name="textColors" format="reference" />
+        <attr name="buttonCornerRadius" format="dimension" />
+        <attr name="startColor" format="color" />
+        <attr name="endColor" format="color" />
+        <attr name="strokeWidth" format="dimension" />
+        <attr name="strokeColor" format="color" />
+        <attr name="backgroundColors" format="reference" />
+        <attr name="cornerRadius" format="dimension" />
+    </declare-styleable>
+</resources>

@@ -1,0 +1,210 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!--package="com.playstudio.aiteacher"-->
+
+    <!-- Necessary Permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="com.android.vending.BILLING" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+
+    <!-- Permissions for API level 33+ (Tiramisu) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"
+        tools:targetApi="33" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"
+        tools:targetApi="33" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"
+        tools:targetApi="33" />
+
+    <!-- Alarm and WakeLock Permissions -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Other Permissions -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.USE_CREDENTIALS" />
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
+
+    <!-- Camera feature -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="com.google.android.play.feature.HPE_EXPERIENCE" android:required="false" />
+    <!-- ARCore required features -->
+    <uses-feature android:name="android.hardware.camera.ar" android:required="false" />
+    <uses-feature android:name="android.hardware.opengles.version" android:required="false" android:version="0x00030000"/>
+
+    <!-- Declare package visibility requirements -->
+    <queries>
+        <!-- Example: Query specific packages -->
+        <package android:name="com.google.android.gm" /> <!-- Gmail -->
+        <package android:name="com.microsoft.office.outlook" /> <!-- Outlook -->
+        <package android:name="com.yahoo.mobile.client.android.mail" /> <!-- Yahoo Mail -->
+        <package android:name="com.android.email" /> <!-- AOSP Email -->
+        <package android:name="com.samsung.android.email.provider" /> <!-- Samsung Email -->
+        <package android:name="com.google.android.apps.maps" /> <!-- Google Maps -->
+        <package android:name="com.whatsapp" /> <!-- WhatsApp -->
+
+        <!-- Example: Query apps that handle specific intents -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="text/plain" />
+        </intent>
+
+        <!-- Example: Query all installed apps (if absolutely necessary) -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launch"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AITeacher"
+        android:enableOnBackInvokedCallback="true"
+        android:name=".MyApplication"
+        android:requestLegacyExternalStorage="true">
+
+        <!-- Disable WorkManagerInitializer -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
+
+        <meta-data
+            android:name="com.google.ar.core"
+            android:value="optional"
+            tools:replace="android:value" />
+
+        <meta-data
+            android:name="com.google.ar.core.min_apk_version"
+            android:value="250210000"
+            tools:replace="android:value" />
+
+        <!-- AdMob Application ID -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-9180832030816304~8161771130" />
+
+        <!-- OAuth2 Client ID -->
+        <meta-data
+            android:name="com.google.android.gms.auth.api.credentials.CredentialPickerConfig"
+            android:value="@string/server_client_id" />
+
+        <!-- Facebook SDK Application ID -->
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+
+        <!-- Splash Activity -->
+        <activity
+            android:name=".SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AITeacher.Splash">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Main Activity -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize|stateHidden">
+        </activity>
+
+
+        <activity
+            android:name=".HistoryActivity"
+            android:exported="true">
+            <!-- Add intent-filter if needed -->
+        </activity>
+
+        <!-- Other Activities -->
+        <activity android:name=".SettingsActivity" android:theme="@style/Theme.AITeacher"/>
+        <activity android:name=".ContactUsActivity" android:theme="@style/Theme.AITeacher"/>
+        <activity android:name=".PrivacyPolicyActivity" android:theme="@style/Theme.AITeacher"/>
+        <activity android:name=".TermsOfUseActivity" android:theme="@style/Theme.AITeacher"/>
+        <activity android:name=".FontSelectionActivity" android:theme="@style/Theme.AITeacher"/>
+        <activity android:name=".ChatActivity" />
+        <activity
+            android:name="com.canhub.cropper.CropImageActivity"
+            android:theme="@style/Base.Theme.AppCompat" />
+
+        <!-- Example of a custom broadcast receiver -->
+        <receiver
+            android:name=".YourBroadcastReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.playstudio.aiteacher.MainActivity" />
+            </intent-filter>
+        </receiver>
+
+
+        <!-- WorkManager SystemJobService -->
+        <service
+            android:name="androidx.work.impl.background.systemjob.SystemJobService"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:exported="true" />
+
+
+
+
+
+
+
+
+
+
+        <!-- Reminder Broadcast Receiver -->
+        <receiver
+            android:name=".ReminderBroadcastReceiver"
+            android:exported="false" />
+
+        <!-- Reminder Dialog Activity -->
+        <activity
+            android:name=".ReminderDialogActivity"
+            android:theme="@style/Theme.AppCompat.Dialog.Alert"
+            android:excludeFromRecents="true"
+            android:taskAffinity="" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+    </application>
+</manifest>

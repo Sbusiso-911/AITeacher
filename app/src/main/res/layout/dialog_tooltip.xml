@@ -1,0 +1,120 @@
+<!-- res/layout/dialog_tooltip.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="280dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/premium_dialog_background"
+    android:elevation="8dp">
+
+    <!-- Header with friendly animation -->
+<LinearLayout
+android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:orientation="horizontal"
+android:gravity="center_vertical"
+android:layout_marginBottom="16dp">
+
+<com.airbnb.lottie.LottieAnimationView
+    android:layout_width="36dp"
+    android:layout_height="36dp"
+    app:lottie_rawRes="@raw/waving_hand"
+    app:lottie_autoPlay="true"
+    app:lottie_loop="true"
+    app:tint="@color/premium_gold"/>
+
+<TextView
+    android:id="@+id/tooltip_title"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="12dp"
+    android:text="Welcome to AI Teacher!"
+    android:textColor="@color/premium_gold"
+    android:textSize="20sp"
+    android:textStyle="bold"
+    android:fontFamily="@font/montserrat_bold"
+    android:letterSpacing="0.02"/>
+</LinearLayout>
+
+    <!-- Main message with friendly tone -->
+<TextView
+android:id="@+id/tooltip_message"
+android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:text="Let me show you around ✨"
+android:textColor="@color/white"
+android:textSize="16sp"
+android:fontFamily="@font/montserrat_medium"
+android:lineSpacingExtra="4dp"
+android:layout_marginBottom="16dp"/>
+
+    <!-- Feature explanations with icons -->
+<LinearLayout
+android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:orientation="horizontal"
+android:layout_marginBottom="12dp"
+android:gravity="center_vertical">
+
+<ImageView
+    android:layout_width="24dp"
+    android:layout_height="24dp"
+    android:src="@drawable/ic_mic_gold"
+    app:tint="@color/premium_gold"
+    android:contentDescription="Microphone"/>
+
+<TextView
+    android:id="@+id/mic_button_explanation"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="12dp"
+    android:text="Speak instead of type\nLong press for voice commands"
+    android:textColor="@color/white"
+    android:textSize="14sp"
+    android:fontFamily="@font/montserrat_medium"/>
+</LinearLayout>
+
+<LinearLayout
+android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:orientation="horizontal"
+android:layout_marginBottom="24dp"
+android:gravity="center_vertical">
+
+<ImageView
+    android:layout_width="24dp"
+    android:layout_height="24dp"
+    android:src="@drawable/ic_scan_gold"
+    app:tint="@color/premium_gold"
+    android:contentDescription="Scan"/>
+
+<TextView
+    android:id="@+id/scan_button_explanation"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="12dp"
+    android:text="Scan documents\nWorks with PDFs, Word and homework"
+    android:textColor="@color/white"
+    android:textSize="14sp"
+    android:fontFamily="@font/montserrat_medium"/>
+</LinearLayout>
+
+    <!-- Friendly CTA button -->
+<Button
+android:id="@+id/close_button"
+android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:text="Let's Get Started!"
+android:textAllCaps="true"
+android:textSize="16sp"
+android:textStyle="bold"
+android:fontFamily="@font/montserrat_bold"
+android:textColor="@color/white"
+android:background="@drawable/button_premium_gradient"
+android:paddingVertical="12dp"
+android:drawableEnd="@drawable/ic_arrow_right"
+android:drawablePadding="8dp"
+android:drawableTint="@color/white"/>
+    </LinearLayout>

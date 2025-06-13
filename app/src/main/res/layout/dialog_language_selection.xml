@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/white">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select Language"
+        android:textAppearance="?attr/textAppearanceHeadline6"
+        android:textColor="@android:color/black"
+        android:paddingBottom="16dp" />
+
+    <RadioGroup
+        android:id="@+id/radioGroupLanguages"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Add RadioButtons for each language option -->
+        <RadioButton
+            android:id="@+id/radioLanguage1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Language 1"
+            android:textColor="@android:color/black" />
+
+        <RadioButton
+            android:id="@+id/radioLanguage2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Language 2"
+            android:textColor="@android:color/black" />
+
+        <!-- Add more RadioButtons as needed -->
+    </RadioGroup>
+
+    <ImageButton
+        android:id="@+id/btnCancel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_cancel"
+    android:contentDescription="@string/cancel"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:layout_gravity="end"
+    android:paddingTop="16dp" />
+</LinearLayout>

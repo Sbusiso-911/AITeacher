@@ -1,0 +1,9 @@
+<!-- res/anim/blinking_box.xml -->
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+    <alpha
+        android:fromAlpha="0.0"
+        android:toAlpha="0.0"
+        android:duration="0"
+        android:repeatCount="infinite"
+        android:repeatMode="reverse" />
+</set>
