@@ -223,6 +223,7 @@ class ChatFragment : Fragment() {
     private val binding get() = _binding!!
     // private lateinit var chatAdapter: ChatAdapter
     private val chatMessages = mutableListOf<ChatMessage>()
+    private val remoteService = RemoteConversationService()
     private var rewardedAd: RewardedAd? = null
     private var canSendMessage = false
     private val client = OkHttpClient.Builder()
@@ -383,6 +384,8 @@ class ChatFragment : Fragment() {
             setHomeAsUpIndicator(R.drawable.ic_arrow_back)
 
         }
+        // Reload messages from the remote service in case another device added new ones
+        loadChatHistory()
         //loadInterstitialAd() // Load the interstitial ad when the fragment resumes
     }
 
@@ -400,6 +403,15 @@ class ChatFragment : Fragment() {
             }
             R.id.menu_report -> {
                 showReportDialog()
+                true
+            }
+            R.id.menu_copy_conversation_id -> {
+                conversationId?.let { id ->
+                    val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clip = ClipData.newPlainText("Conversation ID", id)
+                    clipboard.setPrimaryClip(clip)
+                    showCustomToast("Conversation ID copied")
+                } ?: showCustomToast("No conversation ID")
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -2213,6 +2225,9 @@ class ChatFragment : Fragment() {
         }
         if (!chatMessage.isTyping) {
             saveChatHistory()
+            conversationId?.let { id ->
+                remoteService.appendMessage(id, chatMessage)
+            }
         }
     }
     private fun addOlderMessagesToList(olderMessages: List<ChatMessage>) {
@@ -4997,6 +5012,18 @@ class ChatFragment : Fragment() {
         chatAdapter.submitList(chatMessages.toList()) {
             if (chatMessages.isNotEmpty()) {
                 binding.recyclerView.smoothScrollToPosition(chatMessages.size - 1)
+            }
+        }
+
+        // Fetch additional messages from remote service
+        val remoteMessages = remoteService.fetchConversation(currentConversationId)
+        if (remoteMessages.isNotEmpty()) {
+            chatMessages.clear()
+            chatMessages.addAll(remoteMessages)
+            chatAdapter.submitList(chatMessages.toList()) {
+                if (chatMessages.isNotEmpty()) {
+                    binding.recyclerView.smoothScrollToPosition(chatMessages.size - 1)
+                }
             }
         }
     }

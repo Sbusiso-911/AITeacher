@@ -19,4 +19,10 @@
         android:icon="@drawable/ic_report"
         android:title="🚩 Report"
         app:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_copy_conversation_id"
+        android:icon="@drawable/ic_copy"
+        android:title="🔗 Copy Conversation ID"
+        app:showAsAction="never" />
 </menu>
