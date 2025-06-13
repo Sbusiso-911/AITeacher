@@ -22,8 +22,8 @@ The server listens on port `3000` by default. Navigate to `http://localhost:3000
 
 If you are running the Android app in an emulator it already points to
 `http://10.0.2.2:3000`, which maps to the host machine. When testing on a
-physical device you will need to edit `RemoteConversationService` and replace
-the base URL with your computer's IP address.
+physical device set a `REMOTE_BASE_URL` value in your `gradle.properties` to
+your computer's IP address so the app can find the server.
 
 ### Getting the Conversation ID
 

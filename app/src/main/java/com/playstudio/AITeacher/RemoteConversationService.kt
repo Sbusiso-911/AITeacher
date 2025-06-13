@@ -8,8 +8,11 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
+import com.playstudio.aiteacher.BuildConfig
 
-class RemoteConversationService(private val baseUrl: String = "http://10.0.2.2:3000") {
+class RemoteConversationService(
+    private val baseUrl: String = BuildConfig.REMOTE_BASE_URL
+) {
 
     private val client = OkHttpClient()
 

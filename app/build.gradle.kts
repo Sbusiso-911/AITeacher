@@ -40,9 +40,12 @@ android {
             buildConfigField("String", "GOOGLE_VISION_API_KEY", "\"$googleVisionApiKey\"")
         } else {
             throw GradleException("GOOGLE_VISION_API_KEY not found in gradle.properties")
-
-
         }
+
+        // Base URL for optional web sync service
+        val remoteBaseUrl: String =
+            project.findProperty("REMOTE_BASE_URL") as String? ?: "http://10.0.2.2:3000"
+        buildConfigField("String", "REMOTE_BASE_URL", "\"$remoteBaseUrl\"")
     }
 
     buildFeatures {
