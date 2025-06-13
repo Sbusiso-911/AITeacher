@@ -1,0 +1,4 @@
+
+API_KEY=openai_key_here
+GOOGLE_VISION_API_KEY=Google_vision_key_here
+GEMINI_API_KEY=Gemini_key_here

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AI Teacher Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+    #app-container { max-width: 700px; margin: 20px auto; padding: 20px; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.1); border-radius: 8px; }
+    h1 { text-align: center; color: #4a4a4a; }
+    #messages { height: 450px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; background: #f9f9f9; border-radius: 4px; }
+    .message { margin: 10px 0; padding: 10px 15px; border-radius: 15px; line-height: 1.4; max-width: 80%; word-wrap: break-word; }
+    .user-message { background: #007bff; color: white; margin-left: auto; border-bottom-right-radius: 0; }
+    .bot-message { background: #e9ecef; color: #333; margin-right: auto; border-bottom-left-radius: 0; }
+    #input-area { display: flex; margin-bottom: 10px; }
+    #messageInput { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px 0 0 4px; font-size: 1em; }
+    #sendBtn { padding: 10px 15px; background: #28a745; color: white; border: none; cursor: pointer; border-radius: 0 4px 4px 0; font-size: 1em; }
+    #sendBtn:hover { background: #218838; }
+    #auth-container, #controls { text-align: center; margin-bottom: 15px; }
+    .auth-button, #clearBtn { padding: 10px 15px; background: #6c757d; color: white; border: none; cursor: pointer; border-radius: 4px; margin: 5px; font-size: 0.9em; }
+    .auth-button:hover, #clearBtn:hover { background: #5a6268; }
+    #typing-indicator { display: none; color: gray; font-style: italic; margin-bottom: 10px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <h1>AI Teacher Chat</h1>
+
+    <div id="auth-container">
+      <button id="signInBtn" class="auth-button">Sign In with Google</button>
+    </div>
+
+    <div id="chat-ui" style="display:none;">
+      <div id="messages"></div>
+      <div id="typing-indicator">AI Teacher is thinking...</div>
+      <div id="input-area">
+        <input type="text" id="messageInput" placeholder="Ask your question...">
+        <button id="sendBtn">Send</button>
+      </div>
+      <div id="controls">
+        <button id="clearBtn">Clear Chat History</button>
+        <button id="signOutBtn" class="auth-button">Sign Out</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // IMPORTANT: Replace with your Firebase project's config object
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const functions = firebase.functions();
+    // const db = firebase.firestore(); // Not directly used in client for history, functions handle it
+
+    // DOM elements
+    const authContainer = document.getElementById('auth-container');
+    const chatUI = document.getElementById('chat-ui');
+    const messagesDiv = document.getElementById('messages');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const signInBtn = document.getElementById('signInBtn');
+    const signOutBtn = document.getElementById('signOutBtn');
+    const typingIndicator = document.getElementById('typing-indicator');
+
+    let currentUser = null;
+
+    // Auth state listener
+    auth.onAuthStateChanged(user => {
+      currentUser = user;
+      if (user) {
+        authContainer.style.display = 'none';
+        chatUI.style.display = 'block';
+        loadChatHistory();
+        addMessage(`Hello ${user.displayName || 'student'}! How can I help you learn today?`, 'bot-message');
+      } else {
+        authContainer.style.display = 'block';
+        chatUI.style.display = 'none';
+        messagesDiv.innerHTML = ''; // Clear messages on sign out
+      }
+    });
+
+    // Sign in handler
+    signInBtn.addEventListener('click', () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).catch(error => {
+        console.error("Sign in error", error);
+        alert("Could not sign in: " + error.message);
+      });
+    });
+
+    // Sign out handler
+    signOutBtn.addEventListener('click', () => {
+      auth.signOut();
+    });
+
+    // Send message handler
+    sendBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault(); // Prevent new line on Enter
+        sendMessage();
+      }
+    });
+
+    // Clear chat handler
+    clearBtn.addEventListener('click', clearChat);
+
+    async function sendMessage() {
+      if (!currentUser) {
+        alert("Please sign in to chat.");
+        return;
+      }
+      const messageText = messageInput.value.trim();
+      if (!messageText) return;
+
+      addMessage(messageText, 'user-message');
+      messageInput.value = '';
+      messageInput.focus();
+      typingIndicator.style.display = 'block';
+      sendBtn.disabled = true;
+
+      try {
+        const askAI = functions.httpsCallable('askAI');
+        const result = await askAI({ message: messageText });
+        addMessage(result.data.reply, 'bot-message');
+      } catch (error) {
+        console.error('Error calling askAI function:', error);
+        addMessage('Error: Could not get a response. ' + (error.message || ''), 'bot-message');
+      } finally {
+        typingIndicator.style.display = 'none';
+        sendBtn.disabled = false;
+      }
+    }
+
+    async function loadChatHistory() {
+      if (!currentUser) return;
+      messagesDiv.innerHTML = ''; // Clear previous messages before loading
+      try {
+        const getHistory = functions.httpsCallable('getChatHistory');
+        const result = await getHistory();
+        if (result.data && result.data.history) {
+          result.data.history.forEach(msg => addMessage(msg.text, msg.className));
+        }
+      } catch (error) {
+        console.error('Error loading history:', error);
+        // Optionally add an error message to the chat
+      }
+    }
+
+    async function clearChat() {
+      if (!currentUser) return;
+      if (confirm('Are you sure you want to clear your chat history? This cannot be undone.')) {
+        try {
+          const clearHistoryFunction = functions.httpsCallable('clearUserChat');
+          await clearHistoryFunction();
+          messagesDiv.innerHTML = ''; // Clear UI
+          addMessage('Chat history cleared.', 'bot-message'); // Confirmation
+        } catch (error) {
+          console.error('Error clearing chat:', error);
+          addMessage('Error: Could not clear chat history.', 'bot-message');
+        }
+      }
+    }
+
+    function addMessage(text, className) {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message', className);
+      messageDiv.textContent = text; // Use textContent for security
+      messagesDiv.appendChild(messageDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to bottom
+    }
+  </script>
+</body>
+</html>

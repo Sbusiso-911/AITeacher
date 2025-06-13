@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Assuming your chat data is in a collection named 'chats'
+    // and each document ID is the user's UID
+    match /chats/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    // Add other rules for other collections if needed
+  }
+}
