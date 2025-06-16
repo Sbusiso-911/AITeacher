@@ -168,7 +168,7 @@ const AVAILABLE_MODELS = [
   { id: 'gpt-4o-2024-08-06', name: 'GPT-4o', provider: 'openai', description: 'Flagship OpenAI model, multimodal.', supportsTools: true },
   { id: 'gpt-4o-mini-2024-07-18', name: 'GPT-4o mini', provider: 'openai', description: 'Smaller, faster, multimodal OpenAI model.' },
   { id: 'gpt-4.1', name: 'GPT-4.1', provider: 'openai', description: 'Advanced OpenAI model for text generation.', supportsTools: true, usesResponses: true },
-  { id: 'gpt-4o-search-preview', name: 'GPT-4o Search Preview', provider: 'openai', description: 'OpenAI model with web search capabilities (web search not enabled in this app version).' },
+  { id: 'gpt-4o-search-preview', name: 'GPT-4o Search Preview', provider: 'openai', description: 'OpenAI model with web search capabilities (web search not enabled in this app version).', limitedParams: true },
   { id: 'claude-opus-4-20250514', name: 'Claude Opus 4', provider: 'anthropic', description: 'Most capable Claude 4 model from Anthropic.' },
   { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', provider: 'anthropic', description: 'Balanced Claude 4 model from Anthropic.' },
   { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'google', description: 'Google\'s fast Gemini 2.0 model.' },
@@ -193,6 +193,15 @@ function getApiKey(provider) {
     if (provider === 'google') return process.env.GOOGLE_API_KEY || functions.config().google?.key;
   } catch (e) { logger.warn(`Error accessing config for ${provider}: ${e.message}`); }
   return null;
+}
+
+function buildChatPayload(modelConfig, messages, extra = {}) {
+  const payload = { model: modelConfig.id, messages, ...extra };
+  if (!modelConfig.limitedParams) {
+    payload.temperature = 0.7;
+    payload.max_tokens = 1500;
+  }
+  return payload;
 }
 
 exports.getAvailableModels = onCall(async (request) => {
@@ -340,12 +349,7 @@ exports.chat = onCall({
             replyText = followUp.output_text || '';
           }
         } else {
-          const chatPayload = {
-            model: modelConfig.id,
-            messages: history,
-            temperature: 0.7,
-            max_tokens: 1500,
-          };
+        const chatPayload = buildChatPayload(modelConfig, history);
           if (modelConfig.supportsTools) {
             chatPayload.tools = getTools(false);
             chatPayload.tool_choice = 'auto';
@@ -365,24 +369,16 @@ exports.chat = onCall({
               const result = handler ? await handler(args) : `Tool '${name}' not implemented.`;
               toolResults.push({ role: 'tool', tool_call_id: call.id, content: result });
             }
-            const secondResponse = await openai.chat.completions.create({
-              model: modelConfig.id,
-              messages: [...historyForTools, ...toolResults],
-              temperature: 0.7,
-              max_tokens: 1500,
-            });
+            const secondResponse = await openai.chat.completions.create(
+              buildChatPayload(modelConfig, [...historyForTools, ...toolResults])
+            );
             replyText = secondResponse.choices[0].message.content || '';
             finishReason = secondResponse.choices[0].finish_reason;
           }
           if (finishReason === 'length') replyText += ' ... (output truncated)';
         }
       } else {
-        const basePayload = {
-          model: modelConfig.id,
-          messages: history,
-          temperature: 0.7,
-          max_tokens: 1500,
-        };
+        const basePayload = buildChatPayload(modelConfig, history);
         if (modelConfig.supportsTools) {
           basePayload.tools = getTools(false);
           basePayload.tool_choice = 'auto';
@@ -414,12 +410,9 @@ exports.chat = onCall({
             const result = handler ? await handler(args) : `Tool '${name}' not implemented.`;
             toolResults.push({ role: 'tool', tool_call_id: call.id, content: result });
           }
-          const secondResponse = await openai.chat.completions.create({
-            model: modelConfig.id,
-            messages: [...historyForTools, ...toolResults],
-            temperature: 0.7,
-            max_tokens: 1500,
-          });
+          const secondResponse = await openai.chat.completions.create(
+            buildChatPayload(modelConfig, [...historyForTools, ...toolResults])
+          );
           replyText = secondResponse.choices[0].message.content || '';
           finishReason = secondResponse.choices[0].finish_reason;
         }
