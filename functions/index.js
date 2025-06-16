@@ -3,6 +3,7 @@ require('dotenv').config();
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const logger = require("firebase-functions/logger");
+const functions = require("firebase-functions");
 
 const admin = require("firebase-admin");
 admin.initializeApp();
@@ -155,8 +156,8 @@ const SYSTEM_PROMPT_TEXT = "You are a helpful AI assistant. Respond conversation
 const AVAILABLE_MODELS = [
   { id: 'gpt-4o-2024-08-06', name: 'GPT-4o', provider: 'openai', description: 'Flagship OpenAI model, multimodal.', supportsTools: true },
   { id: 'gpt-4o-mini-2024-07-18', name: 'GPT-4o mini', provider: 'openai', description: 'Smaller, faster, multimodal OpenAI model.' },
-  { id: 'gpt-4.1', name: 'GPT-4.1', provider: 'openai', description: 'Advanced OpenAI model for text generation.', supportsTools: true },
-  { id: 'gpt-4o-search-preview', name: 'GPT-4o Search Preview', provider: 'openai', description: 'OpenAI model with web search capabilities (web search not enabled in this app version).', supportsTools: true },
+  { id: 'gpt-4.1', name: 'GPT-4.1', provider: 'openai', description: 'Advanced OpenAI model for text generation.', supportsTools: true, usesResponses: true },
+  { id: 'gpt-4o-search-preview', name: 'GPT-4o Search Preview', provider: 'openai', description: 'OpenAI model with web search capabilities (web search not enabled in this app version).', supportsTools: true, usesResponses: true },
   { id: 'claude-opus-4-20250514', name: 'Claude Opus 4', provider: 'anthropic', description: 'Most capable Claude 4 model from Anthropic.' },
   { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', provider: 'anthropic', description: 'Balanced Claude 4 model from Anthropic.' },
   { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'google', description: 'Google\'s fast Gemini 2.0 model.' },
@@ -283,52 +284,93 @@ exports.chat = onCall({
     if (modelConfig.provider === 'openai') {
       const openai = new OpenAI({ apiKey });
       const messagesForAPI = adaptConversationHistoryForProvider(dbConversationMessages, 'openai', userMessageContent);
-      const basePayload = {
-        model: modelConfig.id,
-        messages: messagesForAPI.slice(-20),
-        temperature: 0.7,
-        max_tokens: 1500,
-      };
-      if (modelConfig.supportsTools) {
-        basePayload.tools = TOOLS;
-        basePayload.tool_choice = 'auto';
-      }
-      let firstResponse;
-      try {
-        firstResponse = await openai.chat.completions.create(basePayload);
-      } catch (err) {
-        if (modelConfig.supportsTools && err.message && err.message.includes('tools is not supported')) {
-          logger.warn(`Model ${modelConfig.id} reported tools unsupported, retrying without tools.`);
-          delete basePayload.tools;
-          delete basePayload.tool_choice;
-          firstResponse = await openai.chat.completions.create(basePayload);
-        } else {
-          throw err;
+      const history = messagesForAPI.slice(-20);
+
+      if (modelConfig.usesResponses) {
+        const basePayload = { model: modelConfig.id, input: history };
+        if (modelConfig.supportsTools) {
+          basePayload.tools = TOOLS;
         }
-      }
-      replyText = firstResponse.choices[0].message.content || '';
-      let finishReason = firstResponse.choices[0].finish_reason;
-      let historyForTools = messagesForAPI.slice(-20);
-      if (finishReason === 'tool_calls' && firstResponse.choices[0].message.tool_calls) {
-        historyForTools.push(firstResponse.choices[0].message);
-        const toolResults = [];
-        for (const call of firstResponse.choices[0].message.tool_calls) {
-          const name = call.function.name;
-          let args = {};
-          try { args = JSON.parse(call.function.arguments || "{}"); } catch (e) {}
-          const handler = toolHandlers[name];
-          const result = handler ? await handler(args) : `Tool '${name}' not implemented.`;
-          toolResults.push({ role: 'tool', tool_call_id: call.id, content: result });
+        let firstResponse;
+        try {
+          firstResponse = await openai.responses.create(basePayload);
+        } catch (err) {
+          if (modelConfig.supportsTools && err.message && err.message.includes('tools is not supported')) {
+            logger.warn(`Model ${modelConfig.id} reported tools unsupported, retrying without tools.`);
+            delete basePayload.tools;
+            firstResponse = await openai.responses.create(basePayload);
+          } else {
+            throw err;
+          }
         }
-        const secondResponse = await openai.chat.completions.create({
+        let toolCalls = Array.isArray(firstResponse.output) ? firstResponse.output.filter(o => o.type === 'function_call') : [];
+        replyText = firstResponse.output_text || '';
+        if (toolCalls.length > 0) {
+          const toolOutputs = [];
+          for (const call of toolCalls) {
+            const name = call.name;
+            let args = {};
+            try { args = JSON.parse(call.arguments || '{}'); } catch (e) {}
+            const handler = toolHandlers[name];
+            const result = handler ? await handler(args) : `Tool '${name}' not implemented.`;
+            toolOutputs.push({ type: 'function_call_output', call_id: call.call_id, output: result });
+          }
+          const followUp = await openai.responses.create({
+            model: modelConfig.id,
+            input: [...history, ...toolCalls, ...toolOutputs],
+            tools: modelConfig.supportsTools ? TOOLS : undefined,
+          });
+          replyText = followUp.output_text || '';
+        }
+      } else {
+        const basePayload = {
           model: modelConfig.id,
-          messages: [...historyForTools, ...toolResults],
+          messages: history,
           temperature: 0.7,
           max_tokens: 1500,
-        });
-        replyText = secondResponse.choices[0].message.content || '';
+        };
+        if (modelConfig.supportsTools) {
+          basePayload.tools = TOOLS;
+          basePayload.tool_choice = 'auto';
+        }
+        let firstResponse;
+        try {
+          firstResponse = await openai.chat.completions.create(basePayload);
+        } catch (err) {
+          if (modelConfig.supportsTools && err.message && err.message.includes('tools is not supported')) {
+            logger.warn(`Model ${modelConfig.id} reported tools unsupported, retrying without tools.`);
+            delete basePayload.tools;
+            delete basePayload.tool_choice;
+            firstResponse = await openai.chat.completions.create(basePayload);
+          } else {
+            throw err;
+          }
+        }
+        replyText = firstResponse.choices[0].message.content || '';
+        let finishReason = firstResponse.choices[0].finish_reason;
+        let historyForTools = history;
+        if (finishReason === 'tool_calls' && firstResponse.choices[0].message.tool_calls) {
+          historyForTools = [...historyForTools, firstResponse.choices[0].message];
+          const toolResults = [];
+          for (const call of firstResponse.choices[0].message.tool_calls) {
+            const name = call.function.name;
+            let args = {};
+            try { args = JSON.parse(call.function.arguments || '{}'); } catch (e) {}
+            const handler = toolHandlers[name];
+            const result = handler ? await handler(args) : `Tool '${name}' not implemented.`;
+            toolResults.push({ role: 'tool', tool_call_id: call.id, content: result });
+          }
+          const secondResponse = await openai.chat.completions.create({
+            model: modelConfig.id,
+            messages: [...historyForTools, ...toolResults],
+            temperature: 0.7,
+            max_tokens: 1500,
+          });
+          replyText = secondResponse.choices[0].message.content || '';
+          finishReason = secondResponse.choices[0].finish_reason;
+        }
+        if (finishReason === 'length') replyText += ' ... (output truncated)';
       }
-      if (finishReason === 'length') replyText += ' ... (output truncated)';
     } else if (modelConfig.provider === 'anthropic') {
       const anthropic = new Anthropic({ apiKey });
       const messagesForAPI = adaptConversationHistoryForProvider(dbConversationMessages, 'anthropic', userMessageContent);
