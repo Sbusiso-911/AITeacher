@@ -30,7 +30,9 @@ const TOOLS = [
           },
         },
         required: ["location"],
+        additionalProperties: false,
       },
+      strict: true,
     },
   },
   {
@@ -46,7 +48,9 @@ const TOOLS = [
           description: { type: "string" },
         },
         required: ["title", "start_time_iso"],
+        additionalProperties: false,
       },
+      strict: true,
     },
   },
   {
@@ -62,7 +66,9 @@ const TOOLS = [
           body: { type: "string" },
         },
         required: ["recipient", "subject", "body"],
+        additionalProperties: false,
       },
+      strict: true,
     },
   },
   {
@@ -76,7 +82,9 @@ const TOOLS = [
           phone_number: { type: "string" },
           contact_name: { type: "string" },
         },
+        additionalProperties: false,
       },
+      strict: true,
     },
   },
   {
@@ -92,7 +100,9 @@ const TOOLS = [
           message: { type: "string" },
         },
         required: ["hour", "minute"],
+        additionalProperties: false,
       },
+      strict: true,
     },
   },
   {
@@ -105,7 +115,9 @@ const TOOLS = [
         properties: {
           topic: { type: "string" },
         },
+        additionalProperties: false,
       },
+      strict: true,
     },
   },
 ];
