@@ -17,111 +17,99 @@ const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require("@googl
 const TOOLS = [
   {
     type: "function",
-    function: {
-      name: "get_weather",
-      description: "Fetches the current weather for a given city.",
-      parameters: {
-        type: "object",
-        properties: {
-          location: { type: "string", description: "City name" },
-          unit: {
-            type: "string",
-            description: "Temperature unit",
-            enum: ["celsius", "fahrenheit"],
-          },
+    name: "get_weather",
+    description: "Fetches the current weather for a given city.",
+    parameters: {
+      type: "object",
+      properties: {
+        location: { type: "string", description: "City name" },
+        unit: {
+          type: "string",
+          description: "Temperature unit",
+          enum: ["celsius", "fahrenheit"],
         },
-        required: ["location", "unit"],
-        additionalProperties: false,
       },
-      strict: true,
+      required: ["location", "unit"],
+      additionalProperties: false,
     },
+    strict: true,
   },
   {
     type: "function",
-    function: {
-      name: "set_calendar_reminder",
-      description: "Sets a reminder on the user's calendar (mock).",
-      parameters: {
-        type: "object",
-        properties: {
-          title: { type: "string" },
-          start_time_iso: { type: "string" },
-          description: { type: ["string", "null"] },
-        },
-        required: ["title", "start_time_iso", "description"],
-        additionalProperties: false,
+    name: "set_calendar_reminder",
+    description: "Sets a reminder on the user's calendar (mock).",
+    parameters: {
+      type: "object",
+      properties: {
+        title: { type: "string" },
+        start_time_iso: { type: "string" },
+        description: { type: ["string", "null"] },
       },
-      strict: true,
+      required: ["title", "start_time_iso", "description"],
+      additionalProperties: false,
     },
+    strict: true,
   },
   {
     type: "function",
-    function: {
-      name: "send_email_by_voice",
-      description: "Creates an email draft (mock).",
-      parameters: {
-        type: "object",
-        properties: {
-          recipient: { type: "string" },
-          subject: { type: "string" },
-          body: { type: "string" },
-        },
-        required: ["recipient", "subject", "body"],
-        additionalProperties: false,
+    name: "send_email_by_voice",
+    description: "Creates an email draft (mock).",
+    parameters: {
+      type: "object",
+      properties: {
+        recipient: { type: "string" },
+        subject: { type: "string" },
+        body: { type: "string" },
       },
-      strict: true,
+      required: ["recipient", "subject", "body"],
+      additionalProperties: false,
     },
+    strict: true,
   },
   {
     type: "function",
-    function: {
-      name: "make_phone_call",
-      description: "Initiates a phone call (mock).",
-      parameters: {
-        type: "object",
-        properties: {
-          phone_number: { type: "string" },
-          contact_name: { type: ["string", "null"] },
-        },
-        required: ["phone_number", "contact_name"],
-        additionalProperties: false,
+    name: "make_phone_call",
+    description: "Initiates a phone call (mock).",
+    parameters: {
+      type: "object",
+      properties: {
+        phone_number: { type: "string" },
+        contact_name: { type: ["string", "null"] },
       },
-      strict: true,
+      required: ["phone_number", "contact_name"],
+      additionalProperties: false,
     },
+    strict: true,
   },
   {
     type: "function",
-    function: {
-      name: "set_alarm",
-      description: "Sets an alarm on the device clock (mock).",
-      parameters: {
-        type: "object",
-        properties: {
-          hour: { type: "integer" },
-          minute: { type: "integer" },
-          message: { type: ["string", "null"] },
-        },
-        required: ["hour", "minute", "message"],
-        additionalProperties: false,
+    name: "set_alarm",
+    description: "Sets an alarm on the device clock (mock).",
+    parameters: {
+      type: "object",
+      properties: {
+        hour: { type: "integer" },
+        minute: { type: "integer" },
+        message: { type: ["string", "null"] },
       },
-      strict: true,
+      required: ["hour", "minute", "message"],
+      additionalProperties: false,
     },
+    strict: true,
   },
   {
     type: "function",
-    function: {
-      name: "start_meeting_recording",
-      description: "Starts an audio recording for a meeting (mock).",
-      parameters: {
-        type: "object",
-        properties: {
-          topic: { type: ["string", "null"] },
-        },
-        required: ["topic"],
-        additionalProperties: false,
+    name: "start_meeting_recording",
+    description: "Starts an audio recording for a meeting (mock).",
+    parameters: {
+      type: "object",
+      properties: {
+        topic: { type: ["string", "null"] },
       },
-      strict: true,
+      required: ["topic"],
+      additionalProperties: false,
     },
+    strict: true,
   },
 ];
 
