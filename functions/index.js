@@ -14,7 +14,8 @@ const Anthropic = require("@anthropic-ai/sdk");
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require("@google/generative-ai");
 
 
-const TOOLS = [
+// Base tool definitions shared across providers
+const BASE_TOOLS = [
   {
     type: "function",
     name: "get_weather",
@@ -136,6 +137,28 @@ const toolHandlers = {
     return `Started recording${topic ? ` for ${topic}` : ""} (demo).`;
   },
 };
+
+function getTools(useResponses) {
+  return BASE_TOOLS.map(t => {
+    if (useResponses) {
+      return {
+        type: 'function',
+        name: t.name,
+        description: t.description,
+        parameters: t.parameters,
+        strict: t.strict,
+      };
+    }
+    return {
+      type: 'function',
+      function: {
+        name: t.name,
+        description: t.description,
+        parameters: t.parameters,
+      },
+    };
+  });
+}
 
 setGlobalOptions({ region: "us-central1", cpu: "gcf_gen1" });
 
@@ -277,7 +300,7 @@ exports.chat = onCall({
       if (modelConfig.usesResponses) {
         const basePayload = { model: modelConfig.id, input: history };
         if (modelConfig.supportsTools) {
-          basePayload.tools = TOOLS;
+          basePayload.tools = getTools(true);
         }
         let firstResponse;
         try {
@@ -306,7 +329,7 @@ exports.chat = onCall({
           const followUp = await openai.responses.create({
             model: modelConfig.id,
             input: [...history, ...toolCalls, ...toolOutputs],
-            tools: modelConfig.supportsTools ? TOOLS : undefined,
+            tools: modelConfig.supportsTools ? getTools(true) : undefined,
           });
           replyText = followUp.output_text || '';
         }
@@ -318,7 +341,7 @@ exports.chat = onCall({
           max_tokens: 1500,
         };
         if (modelConfig.supportsTools) {
-          basePayload.tools = TOOLS;
+          basePayload.tools = getTools(false);
           basePayload.tool_choice = 'auto';
         }
         let firstResponse;
