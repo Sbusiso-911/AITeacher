@@ -46,7 +46,7 @@ const BASE_TOOLS = [
         start_time_iso: { type: "string" },
         description: { type: ["string", "null"] },
       },
-      required: ["title", "start_time_iso"],
+      required: ["title", "start_time_iso", "description"],
       additionalProperties: false,
     },
     strict: true,
@@ -77,7 +77,7 @@ const BASE_TOOLS = [
         phone_number: { type: "string" },
         contact_name: { type: ["string", "null"] },
       },
-      required: ["phone_number"],
+      required: ["phone_number", "contact_name"],
       additionalProperties: false,
     },
     strict: true,
@@ -93,7 +93,7 @@ const BASE_TOOLS = [
         minute: { type: "integer" },
         message: { type: ["string", "null"] },
       },
-      required: ["hour", "minute"],
+      required: ["hour", "minute", "message"],
       additionalProperties: false,
     },
     strict: true,
@@ -107,7 +107,7 @@ const BASE_TOOLS = [
       properties: {
         topic: { type: ["string", "null"] },
       },
-      required: [],
+      required: ["topic"],
       additionalProperties: false,
     },
     strict: true,
@@ -119,8 +119,8 @@ const toolHandlers = {
     const u = unit === "fahrenheit" ? "°F" : "°C";
     return `The weather in ${location} is 25${u} and sunny (demo).`;
   },
-  async set_calendar_reminder({ title, start_time_iso }) {
-    return `Reminder '${title}' set for ${start_time_iso} (demo).`;
+  async set_calendar_reminder({ title, start_time_iso, description }) {
+    return `Reminder '${title}' set for ${start_time_iso}${description ? ` (${description})` : ''} (demo).`;
   },
   async send_email_by_voice({ recipient, subject }) {
     return `Draft email to ${recipient} with subject '${subject}' created (demo).`;
