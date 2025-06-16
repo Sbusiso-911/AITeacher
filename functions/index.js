@@ -140,23 +140,14 @@ const toolHandlers = {
 
 function getTools(useResponses) {
   return BASE_TOOLS.map(t => {
-    if (useResponses) {
-      return {
-        type: 'function',
-        name: t.name,
-        description: t.description,
-        parameters: t.parameters,
-        strict: t.strict,
-      };
-    }
-    return {
-      type: 'function',
-      function: {
-        name: t.name,
-        description: t.description,
-        parameters: t.parameters,
-      },
+    const fn = {
+      name: t.name,
+      description: t.description,
+      parameters: t.parameters,
     };
+    const tool = { type: 'function', function: fn };
+    if (useResponses) tool.strict = t.strict;
+    return tool;
   });
 }
 
