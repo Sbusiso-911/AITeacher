@@ -139,10 +139,10 @@ setGlobalOptions({ region: "us-central1", cpu: "gcf_gen1" });
 const SYSTEM_PROMPT_TEXT = "You are a helpful AI assistant. Respond conversationally and concisely.";
 
 const AVAILABLE_MODELS = [
-  { id: 'gpt-4o-2024-08-06', name: 'GPT-4o', provider: 'openai', description: 'Flagship OpenAI model, multimodal.' },
+  { id: 'gpt-4o-2024-08-06', name: 'GPT-4o', provider: 'openai', description: 'Flagship OpenAI model, multimodal.', supportsTools: true },
   { id: 'gpt-4o-mini-2024-07-18', name: 'GPT-4o mini', provider: 'openai', description: 'Smaller, faster, multimodal OpenAI model.' },
-  { id: 'gpt-4.1', name: 'GPT-4.1', provider: 'openai', description: 'Advanced OpenAI model for text generation.' },
-  { id: 'gpt-4o-search-preview', name: 'GPT-4o Search Preview', provider: 'openai', description: 'OpenAI model with web search capabilities (web search not enabled in this app version).' },
+  { id: 'gpt-4.1', name: 'GPT-4.1', provider: 'openai', description: 'Advanced OpenAI model for text generation.', supportsTools: true },
+  { id: 'gpt-4o-search-preview', name: 'GPT-4o Search Preview', provider: 'openai', description: 'OpenAI model with web search capabilities (web search not enabled in this app version).', supportsTools: true },
   { id: 'claude-opus-4-20250514', name: 'Claude Opus 4', provider: 'anthropic', description: 'Most capable Claude 4 model from Anthropic.' },
   { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', provider: 'anthropic', description: 'Balanced Claude 4 model from Anthropic.' },
   { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'google', description: 'Google\'s fast Gemini 2.0 model.' },
@@ -274,13 +274,24 @@ exports.chat = onCall({
         messages: messagesForAPI.slice(-20),
         temperature: 0.7,
         max_tokens: 1500,
-        tools: TOOLS,
-        tool_choice: 'auto'
       };
-      if (modelConfig.id === 'gpt-4.1') {
-        basePayload.tools = [...TOOLS, { type: 'web_search_preview' }];
+      if (modelConfig.supportsTools) {
+        basePayload.tools = TOOLS;
+        basePayload.tool_choice = 'auto';
       }
-      const firstResponse = await openai.chat.completions.create(basePayload);
+      let firstResponse;
+      try {
+        firstResponse = await openai.chat.completions.create(basePayload);
+      } catch (err) {
+        if (modelConfig.supportsTools && err.message && err.message.includes('tools is not supported')) {
+          logger.warn(`Model ${modelConfig.id} reported tools unsupported, retrying without tools.`);
+          delete basePayload.tools;
+          delete basePayload.tool_choice;
+          firstResponse = await openai.chat.completions.create(basePayload);
+        } else {
+          throw err;
+        }
+      }
       replyText = firstResponse.choices[0].message.content || '';
       let finishReason = firstResponse.choices[0].finish_reason;
       let historyForTools = messagesForAPI.slice(-20);
