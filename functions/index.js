@@ -168,7 +168,7 @@ const AVAILABLE_MODELS = [
   { id: 'gpt-4o-2024-08-06', name: 'GPT-4o', provider: 'openai', description: 'Flagship OpenAI model, multimodal.', supportsTools: true },
   { id: 'gpt-4o-mini-2024-07-18', name: 'GPT-4o mini', provider: 'openai', description: 'Smaller, faster, multimodal OpenAI model.' },
   { id: 'gpt-4.1', name: 'GPT-4.1', provider: 'openai', description: 'Advanced OpenAI model for text generation.', supportsTools: true, usesResponses: true },
-  { id: 'gpt-4o-search-preview', name: 'GPT-4o Search Preview', provider: 'openai', description: 'OpenAI model with web search capabilities (web search not enabled in this app version).', supportsTools: true },
+  { id: 'gpt-4o-search-preview', name: 'GPT-4o Search Preview', provider: 'openai', description: 'OpenAI model with web search capabilities (web search not enabled in this app version).' },
   { id: 'claude-opus-4-20250514', name: 'Claude Opus 4', provider: 'anthropic', description: 'Most capable Claude 4 model from Anthropic.' },
   { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', provider: 'anthropic', description: 'Balanced Claude 4 model from Anthropic.' },
   { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'google', description: 'Google\'s fast Gemini 2.0 model.' },
