@@ -6,22 +6,292 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.3/dist/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <style>
-    body { font-family: sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
-    #app-container { max-width: 700px; margin: 20px auto; padding: 20px; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.1); border-radius: 8px; }
-    h1 { text-align: center; color: #4a4a4a; }
-    #messages { height: 450px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; background: #f9f9f9; border-radius: 4px; }
-    .message { margin: 10px 0; padding: 10px 15px; border-radius: 15px; line-height: 1.4; max-width: 80%; word-wrap: break-word; }
-    .user-message { background: #007bff; color: white; margin-left: auto; border-bottom-right-radius: 0; }
-    .bot-message { background: #e9ecef; color: #333; margin-right: auto; border-bottom-left-radius: 0; }
-    #input-area { display: flex; margin-bottom: 10px; }
-    #messageInput { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px 0 0 4px; font-size: 1em; }
-    #sendBtn { padding: 10px 15px; background: #28a745; color: white; border: none; cursor: pointer; border-radius: 0 4px 4px 0; font-size: 1em; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; 
+      margin: 0; 
+      background-color: #f4f7f6; 
+      color: #333; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      min-height: 100vh;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    #app-container { 
+      width: 100%; 
+      max-width: 720px; 
+      margin: 20px auto; 
+      padding: 25px; 
+      background: white; 
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08); 
+      border-radius: 16px; 
+      display: flex; 
+      flex-direction: column; 
+      height: 90vh; 
+      max-height: 850px; 
+    }
+    h1 { 
+      text-align: center; 
+      color: #2c3e50; 
+      font-weight: 600; 
+      font-size: 1.8em;
+      margin-bottom: 25px; 
+    }
+    
+    #current-model-display { 
+      text-align: center; 
+      margin-bottom: 20px; 
+      padding: 12px 15px; 
+      background: #f8f9fa; 
+      border-radius: 10px; 
+      border: 1px solid #e9ecef;
+      font-size: 0.95em;
+    }
+    #current-model-name { 
+      font-weight: 600; 
+      font-size: 1.1em; 
+      margin-bottom: 4px;
+      color: #343a40;
+    }
+    #current-model-provider { 
+      font-size: 0.9em; 
+      color: #5f6368; 
+    }
+    
+    #messages { 
+      flex-grow: 1; 
+      overflow-y: auto; 
+      border: 1px solid #dee2e6; 
+      padding: 15px; 
+      margin-bottom: 15px; 
+      background: #f9f9f9; 
+      border-radius: 10px; 
+      scroll-behavior: smooth; 
+    }
+    .message { 
+      margin: 12px 0; 
+      padding: 10px 18px; 
+      border-radius: 20px; 
+      line-height: 1.5; 
+      max-width: 85%; 
+      word-wrap: break-word; 
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06); 
+      font-size: 0.95em;
+    }
+    .user-message { 
+      background: #007bff; 
+      color: white; 
+      margin-left: auto; 
+      border-bottom-right-radius: 5px; 
+    }
+    .bot-message { 
+      background: #e9ecef; 
+      color: #212529; 
+      margin-right: auto; 
+      border-bottom-left-radius: 5px; 
+    }
+    .model-info { 
+      font-size: 0.75em; 
+      color: #6c757d; 
+      margin-top: 8px; 
+      font-style: italic; 
+      text-align: right; 
+      display: block; 
+    }
+    .message.bot-message .model-info {
+        text-align: left; 
+    }
+
+    #input-area { 
+      display: flex; 
+      margin-bottom: 15px; 
+      gap: 12px; 
+    }
+    #messageInput { 
+      flex-grow: 1; 
+      padding: 12px 18px; 
+      border: 1px solid #ced4da; 
+      border-radius: 25px; 
+      font-size: 1em; 
+      transition: border-color 0.2s, box-shadow 0.2s; 
+    }
+    #messageInput:focus { 
+      border-color: #007bff; 
+      outline: none; 
+      box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); 
+    }
+    #sendBtn { 
+      padding: 12px 20px; 
+      background: #28a745; 
+      color: white; 
+      border: none; 
+      cursor: pointer; 
+      border-radius: 25px; 
+      font-size: 1em; 
+      font-weight: 500; 
+      transition: background-color 0.2s; 
+    }
     #sendBtn:hover { background: #218838; }
-    #auth-container, #controls { text-align: center; margin-bottom: 15px; }
-    .auth-button, #clearBtn { padding: 10px 15px; background: #6c757d; color: white; border: none; cursor: pointer; border-radius: 4px; margin: 5px; font-size: 0.9em; }
-    .auth-button:hover, #clearBtn:hover { background: #5a6268; }
-    #typing-indicator { display: none; color: gray; font-style: italic; margin-bottom: 10px; text-align: center; }
+    #sendBtn:disabled { background: #adb5bd; cursor: not-allowed; }
+    
+    #auth-container { text-align: center; margin: 40px 0; }
+    #controls { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 10px; 
+      flex-wrap: wrap; 
+      gap: 10px;
+    }
+    .auth-button, #clearBtn, #switchModelBtn { 
+      padding: 10px 18px; 
+      border: none; 
+      cursor: pointer; 
+      border-radius: 20px; 
+      font-size: 0.9em; 
+      font-weight: 500; 
+      transition: background-color 0.2s, transform 0.1s;
+      flex-grow: 1; 
+      min-width: 120px; 
+      text-align: center;
+    }
+     .auth-button:active, #clearBtn:active, #switchModelBtn:active {
+        transform: translateY(1px);
+    }
+
+    #signInBtn.auth-button { background: #007bff; color: white; }
+    #signInBtn.auth-button:hover { background: #0069d9; }
+    
+    #switchModelBtn { background: #17a2b8; color: white; }
+    #switchModelBtn:hover { background: #138496; }
+
+    #clearBtn { background: #6c757d; color: white; }
+    #clearBtn:hover { background: #5a6268; }
+
+    #signOutBtn.auth-button { background-color: #dc3545; color: white; }
+    #signOutBtn.auth-button:hover { background-color: #c82333; }
+
+
+    #typing-indicator { 
+      display: none; 
+      color: #6c757d; 
+      font-style: italic; 
+      margin-bottom: 12px; 
+      text-align: center; 
+      font-size: 0.9em; 
+    }
+    
+    #modelModal { 
+      display: none; 
+      position: fixed; 
+      z-index: 1000; 
+      left: 0; top: 0; 
+      width: 100%; height: 100%; 
+      background-color: rgba(0,0,0,0.6); 
+      backdrop-filter: blur(5px); 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+    }
+    #modelModalContent { 
+      background-color: white; 
+      padding: 25px 30px; 
+      border-radius: 16px; 
+      width: 90%; 
+      max-width: 580px; 
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15); 
+      position: relative; 
+      max-height: 85vh; 
+      overflow-y: auto;
+    }
+    #modelModalContent h3 { 
+      margin-top: 5px; 
+      text-align: center; 
+      color: #333; 
+      font-weight: 600; 
+      margin-bottom: 25px; 
+      font-size: 1.5em;
+    }
+    .model-option { 
+      display: block; 
+      width: 100%; 
+      padding: 15px 18px; 
+      margin: 10px 0; 
+      border: 1px solid #e0e0e0; 
+      border-radius: 10px; 
+      background: #fdfdfd; 
+      cursor: pointer; 
+      text-align: left; 
+      font-size: 1em; 
+      transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s; 
+      box-sizing: border-box; 
+    }
+    .model-option:hover { 
+      background: #f1f3f5; 
+      border-color: #adb5bd; 
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .model-option.selected { 
+      background: #e3f2fd; 
+      border-color: #007bff; 
+      font-weight: 500; 
+      box-shadow: 0 0 0 2px rgba(0,123,255,.3);
+    }
+    .model-name-provider { 
+        font-weight: 500; 
+        color: #212529;
+        display: block; 
+        margin-bottom: 3px;
+    }
+    .model-provider { 
+      font-size: 0.8em; 
+      font-weight: normal;
+      color: #495057; 
+      margin-left: 8px; 
+      padding: 2px 6px;
+      border-radius: 4px;
+      background-color: #e9ecef;
+    }
+    .model-description {
+      font-size: 0.88em;
+      color: #6c757d;
+      display: block;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    #closeModal { 
+      position: absolute; 
+      top: 15px; right: 20px; 
+      font-size: 30px; 
+      font-weight: 300; 
+      cursor: pointer; 
+      color: #888; 
+      line-height: 1; 
+      padding: 5px;
+    }
+    #closeModal:hover { color: #333; }
+    
+    .provider-openai { border-left: 3px solid #00a67e; }
+    .provider-anthropic { border-left: 3px solid #d97706; }
+    .provider-google { border-left: 3px solid #4285f4; }
+
+    #messages::-webkit-scrollbar, #modelModalContent::-webkit-scrollbar { display: none; }
+    #messages, #modelModalContent { -ms-overflow-style: none; scrollbar-width: none; }
+
   </style>
 </head>
 <body>
@@ -33,37 +303,52 @@
     </div>
 
     <div id="chat-ui" style="display:none;">
+      <div id="current-model-display">
+        <div id="current-model-name">Loading model...</div>
+        <div id="current-model-provider">Provider...</div>
+      </div>
+      
       <div id="messages"></div>
       <div id="typing-indicator">AI Teacher is thinking...</div>
+
       <div id="input-area">
-        <input type="text" id="messageInput" placeholder="Ask your question...">
-        <button id="sendBtn">Send</button>
+        <input type="text" id="messageInput" placeholder="Ask your question..." autocomplete="off">
+        <button id="sendBtn" title="Send message">Send</button>
       </div>
       <div id="controls">
-        <button id="clearBtn">Clear Chat History</button>
-        <button id="signOutBtn" class="auth-button">Sign Out</button>
+        <button id="switchModelBtn" title="Change AI model">Switch Model</button>
+        <button id="clearBtn" title="Clear chat history">Clear Chat</button>
+        <button id="signOutBtn" class="auth-button" title="Sign out">Sign Out</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modelModal">
+    <div id="modelModalContent">
+      <span id="closeModal" title="Close model selection">×</span>
+      <h3>Choose AI Model</h3>
+      <div id="modelOptions">
+        <!-- Model options will be populated here -->
       </div>
     </div>
   </div>
 
   <script>
-    // IMPORTANT: Replace with your Firebase project's config object
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyAnYFw5OpXW8qWetXm1Mc4Nebaxm95JawQ",
+      authDomain: "aiteacher-75856.firebaseapp.com",
+      databaseURL: "https://aiteacher-75856-default-rtdb.firebaseio.com",
+      projectId: "aiteacher-75856",
+      storageBucket: "aiteacher-75856.firebasestorage.app",
+      messagingSenderId: "445083727571",
+      appId: "1:445083727571:web:a5b9dca3867bd49a484626",
+      measurementId: "G-VELME9V9E3"
     };
 
-    // Initialize Firebase
     const app = firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const functions = firebase.functions();
-    // const db = firebase.firestore(); // Not directly used in client for history, functions handle it
 
-    // DOM elements
     const authContainer = document.getElementById('auth-container');
     const chatUI = document.getElementById('chat-ui');
     const messagesDiv = document.getElementById('messages');
@@ -73,113 +358,281 @@
     const signInBtn = document.getElementById('signInBtn');
     const signOutBtn = document.getElementById('signOutBtn');
     const typingIndicator = document.getElementById('typing-indicator');
+    const switchModelBtn = document.getElementById('switchModelBtn');
+    const modelModal = document.getElementById('modelModal');
+    const modelOptions = document.getElementById('modelOptions');
+    const closeModal = document.getElementById('closeModal');
+    const currentModelName = document.getElementById('current-model-name');
+    const currentModelProvider = document.getElementById('current-model-provider');
 
     let currentUser = null;
+    let availableModels = [];
+    let selectedModel = null; 
 
-    // Auth state listener
     auth.onAuthStateChanged(user => {
       currentUser = user;
       if (user) {
         authContainer.style.display = 'none';
         chatUI.style.display = 'block';
-        loadChatHistory();
-        addMessage(`Hello ${user.displayName || 'student'}! How can I help you learn today?`, 'bot-message');
+        loadAvailableModelsAndHistory();
       } else {
         authContainer.style.display = 'block';
         chatUI.style.display = 'none';
-        messagesDiv.innerHTML = ''; // Clear messages on sign out
+        messagesDiv.innerHTML = '';
+        selectedModel = null;
+        availableModels = [];
+        updateCurrentModelDisplay();
       }
     });
 
-    // Sign in handler
+    async function loadAvailableModelsAndHistory() {
+        await loadAvailableModels(); 
+        await loadChatHistory();     
+        if (currentUser && messagesDiv.children.length === 0) { 
+             const initialModelName = selectedModel ? selectedModel.name.replace(` (${selectedModel.provider})`, '') : 'Default';
+             const greetingText = `Hello ${currentUser.displayName || 'student'}! Current model: ${initialModelName}. Ask me anything or click "Switch Model".`;
+             addMessage(greetingText, 'bot-message', selectedModel ? selectedModel.id : null, selectedModel ? selectedModel.provider : null);
+        }
+    }
+
+    async function loadAvailableModels() {
+      try {
+        const getModelsFunction = functions.httpsCallable('getAvailableModels');
+        const result = await getModelsFunction();
+        availableModels = result.data.models || [];
+        const defaultModelIdFromServer = result.data.defaultModel;
+
+        if (!selectedModel && defaultModelIdFromServer) { 
+            selectedModel = availableModels.find(m => m.id === defaultModelIdFromServer) || null;
+        }
+        if (!selectedModel && availableModels.length > 0) { 
+            selectedModel = availableModels[0]; 
+        }
+        
+        updateCurrentModelDisplay();
+        console.log('Loaded', availableModels.length, 'AI models from backend. Server Default ID:', defaultModelIdFromServer, 'UI Selected:', selectedModel ? selectedModel.name : 'None');
+
+      } catch (error) {
+        console.error('Error loading models from backend:', error);
+        addMessage('Error loading models from server. Using a fallback list. Some models may not be functional.', 'bot-message');
+        
+        availableModels = [
+          { id: 'gpt-4o-2024-08-06', name: 'GPT-4o', provider: 'openai', description: 'Flagship OpenAI model (fallback).' },
+          { id: 'gpt-4o-mini-2024-07-18', name: 'GPT-4o mini', provider: 'openai', description: 'Smaller OpenAI model (fallback).' },
+          { id: 'gpt-4.1', name: 'GPT-4.1', provider: 'openai', description: 'Advanced OpenAI model (fallback).' },
+          { id: 'gpt-4o-search-preview', name: 'GPT-4o Search Preview', provider: 'openai', description: 'OpenAI model with search (fallback, search not active in app).' },
+          { id: 'claude-opus-4-20250514', name: 'Claude Opus 4', provider: 'anthropic', description: 'Most capable Claude 4 model (fallback).' },
+          { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', provider: 'anthropic', description: 'Balanced Claude 4 model (fallback).' },
+          { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'google', description: 'Google\'s fast Gemini 2.0 model (fallback).' },
+          { id: 'gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash (Latest)', provider: 'google', description: 'Fast Google model (general fallback).' }
+        ];
+        
+        if (!selectedModel || !availableModels.find(m => m.id === selectedModel.id)) {
+            selectedModel = availableModels.length > 0 ? availableModels[0] : null;
+        }
+        updateCurrentModelDisplay();
+        console.log('Using fallback models due to loading error. Selected:', selectedModel ? selectedModel.name : 'None');
+      }
+    }
+
+    function updateCurrentModelDisplay() {
+      if (selectedModel) {
+        currentModelName.textContent = selectedModel.name.replace(` (${selectedModel.provider})`, ''); 
+        currentModelProvider.textContent = `Provider: ${selectedModel.provider.charAt(0).toUpperCase() + selectedModel.provider.slice(1)}`;
+      } else {
+        currentModelName.textContent = "No model selected";
+        currentModelProvider.textContent = "Please select a model";
+      }
+    }
+
+    function showModelModal() {
+      modelOptions.innerHTML = ''; 
+      if (availableModels.length === 0) {
+          modelOptions.innerHTML = '<p>No AI models are currently available. Please try again later or contact support.</p>';
+          modelModal.style.display = 'flex';
+          return;
+      }
+      availableModels.forEach(model => {
+        const button = document.createElement('button');
+        button.className = 'model-option';
+        if (selectedModel && selectedModel.id === model.id) {
+          button.classList.add('selected');
+        }
+        const providerNameCapitalized = model.provider.charAt(0).toUpperCase() + model.provider.slice(1);
+        const providerSpan = `<span class="model-provider provider-${model.provider.toLowerCase()}">(${providerNameCapitalized})</span>`;
+        
+        button.innerHTML = `
+          <span class="model-name-provider">${model.name.replace(` (${model.provider})`, '')} ${providerSpan}</span>
+          ${model.description ? `<span class="model-description">${model.description}</span>` : ''}
+        `;
+        button.addEventListener('click', () => {
+          selectedModel = model;
+          updateCurrentModelDisplay();
+          modelModal.style.display = 'none';
+          const switchedModelName = selectedModel.name.replace(` (${selectedModel.provider})`, '');
+          addMessage(`Switched to ${switchedModelName}. Ask your questions!`, 'bot-message', selectedModel.id, selectedModel.provider);
+        });
+        modelOptions.appendChild(button);
+      });
+      modelModal.style.display = 'flex'; 
+    }
+
+    switchModelBtn.addEventListener('click', showModelModal);
+    closeModal.addEventListener('click', () => { modelModal.style.display = 'none'; });
+    window.addEventListener('click', (event) => { 
+      if (event.target === modelModal) modelModal.style.display = 'none';
+    });
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && modelModal.style.display === 'flex') {
+            modelModal.style.display = 'none';
+        }
+    });
+
     signInBtn.addEventListener('click', () => {
       const provider = new firebase.auth.GoogleAuthProvider();
       auth.signInWithPopup(provider).catch(error => {
-        console.error("Sign in error", error);
-        alert("Could not sign in: " + error.message);
+        console.error("Sign in error:", error);
+        alert("Sign in failed: " + error.message);
       });
     });
 
-    // Sign out handler
-    signOutBtn.addEventListener('click', () => {
-      auth.signOut();
-    });
+    signOutBtn.addEventListener('click', () => { auth.signOut(); });
 
-    // Send message handler
     sendBtn.addEventListener('click', sendMessage);
     messageInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault(); // Prevent new line on Enter
+        e.preventDefault();
         sendMessage();
       }
     });
 
-    // Clear chat handler
     clearBtn.addEventListener('click', clearChat);
 
     async function sendMessage() {
-      if (!currentUser) {
-        alert("Please sign in to chat.");
+      if (!currentUser) { alert("Please sign in to continue."); return; }
+      if (!selectedModel) {
+        alert("Please select an AI model. Click 'Switch Model'.");
+        showModelModal();
         return;
       }
       const messageText = messageInput.value.trim();
       if (!messageText) return;
 
       addMessage(messageText, 'user-message');
+      const oldMessageInputValue = messageInput.value; 
       messageInput.value = '';
       messageInput.focus();
       typingIndicator.style.display = 'block';
       sendBtn.disabled = true;
+      switchModelBtn.disabled = true;
 
       try {
-        const askAI = functions.httpsCallable('askAI');
-        const result = await askAI({ message: messageText });
-        addMessage(result.data.reply, 'bot-message');
-      } catch (error) {
-        console.error('Error calling askAI function:', error);
-        addMessage('Error: Could not get a response. ' + (error.message || ''), 'bot-message');
+        const chatFunction = functions.httpsCallable('chat');
+        const result = await chatFunction({ message: messageText, model: selectedModel.id });
+        const response = result.data;
+
+        if (response && typeof response.reply === 'string') { 
+          addMessage(response.reply, 'bot-message', response.model, response.provider);
+        } else { 
+          const errorMessage = (response && response.error) ? response.error : 
+                               (result.data && result.data.message) ? result.data.message : 
+                               'The AI could not process your request or returned an unexpected response.';
+          console.error('Chat function response error or unexpected format:', response || result);
+          addMessage(errorMessage, 'bot-message', selectedModel.id, selectedModel.provider);
+          if (oldMessageInputValue) messageInput.value = oldMessageInputValue;
+        }
+      } catch (error) { 
+        console.error('Error calling chat function (frontend HttpsError):', error);
+        addMessage(`Error: ${error.code || 'Client Error'} - ${error.message || 'Could not get a response.'}`, 'bot-message', selectedModel.id, selectedModel.provider);
+        if (oldMessageInputValue) messageInput.value = oldMessageInputValue; 
       } finally {
         typingIndicator.style.display = 'none';
         sendBtn.disabled = false;
+        switchModelBtn.disabled = false;
       }
     }
 
     async function loadChatHistory() {
       if (!currentUser) return;
-      messagesDiv.innerHTML = ''; // Clear previous messages before loading
+      messagesDiv.innerHTML = '';
       try {
-        const getHistory = functions.httpsCallable('getChatHistory');
-        const result = await getHistory();
-        if (result.data && result.data.history) {
-          result.data.history.forEach(msg => addMessage(msg.text, msg.className));
+        const getChatHistoryFunction = functions.httpsCallable('getChatHistory');
+        const result = await getChatHistoryFunction();
+        const data = result.data;
+
+        if (data && data.messages && Array.isArray(data.messages)) {
+          data.messages.forEach(msg => {
+            addMessage(msg.content, msg.role === 'user' ? 'user-message' : 'bot-message');
+          });
+          console.log('Loaded', data.messages.length, 'messages from history.');
+
+          if (data.lastModel && availableModels.length > 0) { 
+            const lastModelFromHistory = availableModels.find(m => m.id === data.lastModel);
+            if (lastModelFromHistory) {
+              selectedModel = lastModelFromHistory;
+            } else if (!selectedModel && availableModels.length > 0) { 
+              selectedModel = availableModels[0]; 
+            }
+          } else if (!selectedModel && availableModels.length > 0) {
+             selectedModel = availableModels[0]; 
+          }
+        } else {
+            console.log("No chat history found or history is empty.");
+            if (!selectedModel && availableModels.length > 0) { 
+                selectedModel = availableModels[0];
+            }
         }
+        updateCurrentModelDisplay(); 
       } catch (error) {
-        console.error('Error loading history:', error);
-        // Optionally add an error message to the chat
+        console.error('Error loading chat history:', error);
+        addMessage(`Could not load chat history: ${error.message}`, 'bot-message');
+        if (!selectedModel && availableModels.length > 0) { 
+            selectedModel = availableModels[0];
+            updateCurrentModelDisplay();
+        }
       }
     }
 
     async function clearChat() {
       if (!currentUser) return;
-      if (confirm('Are you sure you want to clear your chat history? This cannot be undone.')) {
+      if (confirm('Are you sure you want to clear your entire chat history? This action cannot be undone.')) {
         try {
-          const clearHistoryFunction = functions.httpsCallable('clearUserChat');
-          await clearHistoryFunction();
-          messagesDiv.innerHTML = ''; // Clear UI
-          addMessage('Chat history cleared.', 'bot-message'); // Confirmation
+          await functions.httpsCallable('clearChat')();
+          messagesDiv.innerHTML = '';
+          const modelName = selectedModel ? selectedModel.name.replace(` (${selectedModel.provider})`, '') : "current model";
+          addMessage(`Chat history cleared. Ready for a new conversation with ${modelName}!`, 'bot-message', selectedModel ? selectedModel.id : null, selectedModel ? selectedModel.provider : null);
         } catch (error) {
           console.error('Error clearing chat:', error);
-          addMessage('Error: Could not clear chat history.', 'bot-message');
+          addMessage(`Error clearing chat: ${error.message}`, 'bot-message');
         }
       }
     }
 
-    function addMessage(text, className) {
+    function addMessage(text, className, modelId = null, provider = null) {
       const messageDiv = document.createElement('div');
       messageDiv.classList.add('message', className);
-      messageDiv.textContent = text; // Use textContent for security
+
+      if (className === 'bot-message') {
+        const rawHtml = marked.parse(text, { mangle: false, headerIds: false });
+        const cleanHtml = DOMPurify.sanitize(rawHtml);
+        messageDiv.innerHTML = cleanHtml;
+        messageDiv.querySelectorAll('a').forEach(a => { a.target = '_blank'; a.rel = 'noopener noreferrer'; });
+        if (window.MathJax) { MathJax.typesetPromise([messageDiv]); }
+      } else {
+        messageDiv.textContent = text;
+      }
+      
+      if (className === 'bot-message' && modelId && provider && availableModels.length > 0) {
+        const modelUsed = availableModels.find(m => m.id === modelId); 
+        const modelDisplayName = modelUsed ? modelUsed.name.replace(` (${modelUsed.provider})`, '') : modelId; 
+        
+        const modelInfo = document.createElement('div');
+        modelInfo.classList.add('model-info');
+        modelInfo.textContent = `via ${modelDisplayName}`;
+        messageDiv.appendChild(modelInfo);
+      }
       messagesDiv.appendChild(messageDiv);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to bottom
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
   </script>
 </body>
