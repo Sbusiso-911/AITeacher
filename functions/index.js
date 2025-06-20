@@ -14,6 +14,7 @@ const Anthropic = require("@anthropic-ai/sdk");
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require("@google/generative-ai");
 
 
+// Tools mirrored from the Android app
 // Base tool definitions shared across providers
 const BASE_TOOLS = [
   {
