@@ -12,6 +12,25 @@ const db = admin.firestore();
 const { OpenAI } = require("openai");
 const Anthropic = require("@anthropic-ai/sdk");
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require("@google/generative-ai");
+const twilio = require("twilio");
+const { google } = require("googleapis");
+
+const twilioClient = twilio(
+  process.env.TWILIO_ACCOUNT_SID || functions.config().twilio?.sid,
+  process.env.TWILIO_AUTH_TOKEN || functions.config().twilio?.secret
+);
+
+const serviceEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || functions.config().google_service?.email;
+const serviceKey = (process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || functions.config().google_service?.private_key || '').replace(/\\n/g, '\n');
+let gmail, calendar;
+if (serviceEmail && serviceKey) {
+  const auth = new google.auth.JWT(serviceEmail, null, serviceKey, [
+    'https://www.googleapis.com/auth/gmail.compose',
+    'https://www.googleapis.com/auth/calendar'
+  ]);
+  gmail = google.gmail({ version: 'v1', auth });
+  calendar = google.calendar({ version: 'v3', auth });
+}
 
 
 // Tools mirrored from the Android app
@@ -121,13 +140,38 @@ const toolHandlers = {
     return `The weather in ${location} is 25${u} and sunny (demo).`;
   },
   async set_calendar_reminder({ title, start_time_iso, description }) {
+    if (calendar) {
+      try {
+        const event = { summary: title, description: description || '', start: { dateTime: start_time_iso }, end: { dateTime: start_time_iso } };
+        const res = await calendar.events.insert({ calendarId: 'primary', requestBody: event });
+        return `Calendar event created: ${res.data.htmlLink || title}`;
+      } catch (e) { logger.error('Calendar API error', e); return 'Failed to create calendar event.'; }
+    }
     return `Reminder '${title}' set for ${start_time_iso}${description ? ` (${description})` : ''} (demo).`;
   },
-  async send_email_by_voice({ recipient, subject }) {
+  async send_email_by_voice({ recipient, subject, body }) {
+    if (gmail) {
+      try {
+        const raw = Buffer.from(`To: ${recipient}\r\nSubject: ${subject}\r\n\r\n${body}`).toString('base64').replace(/\+/g, '-').replace(/\//g, '_');
+        const res = await gmail.users.drafts.create({ userId: 'me', requestBody: { message: { raw } } });
+        return `Email draft created with id ${res.data.id}.`;
+      } catch (e) { logger.error('Gmail API error', e); return 'Failed to create email draft.'; }
+    }
     return `Draft email to ${recipient} with subject '${subject}' created (demo).`;
   },
   async make_phone_call({ phone_number, contact_name }) {
-    const target = contact_name || phone_number || "unknown number";
+    if (twilioClient && process.env.TWILIO_FROM_NUMBER) {
+      try {
+        const twiml = `<Response><Say>Hello${contact_name ? ' ' + contact_name : ''}, this is a test call.</Say></Response>`;
+        const call = await twilioClient.calls.create({
+          to: phone_number,
+          from: process.env.TWILIO_FROM_NUMBER,
+          twiml,
+        });
+        return `Call initiated with SID ${call.sid}.`;
+      } catch (e) { logger.error('Twilio call error', e); return 'Failed to initiate phone call.'; }
+    }
+    const target = contact_name || phone_number || 'unknown number';
     return `Pretend calling ${target}.`;
   },
   async set_alarm({ hour, minute, message }) {
