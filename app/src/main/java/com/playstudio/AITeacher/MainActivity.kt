@@ -526,6 +526,8 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        // Apply dark gradient background
+        binding.rootLayout.background = ContextCompat.getDrawable(this, R.drawable.dark_gradient_background)
 
         // Set the custom action bar background
         supportActionBar?.setBackgroundDrawable(

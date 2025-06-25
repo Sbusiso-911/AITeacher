@@ -14,7 +14,7 @@
         android:layout_height="match_parent"
         android:fitsSystemWindows="true"
         tools:context=".MainActivity"
-        android:background="@color/clear">
+        android:background="@drawable/dark_gradient_background">
 
         <!-- ScrollView to make the content scrollable -->
         <ScrollView
