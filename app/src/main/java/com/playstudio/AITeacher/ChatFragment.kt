@@ -269,6 +269,10 @@ class ChatFragment : Fragment() {
         private const val PREFS_NAME_CHAT = "chat_prefs" // Specific to chat
         // ... other keys
 
+        // Keys for storing user ID across sessions
+        private const val USER_PREFS = "user_prefs"
+        private const val USER_ID_KEY = "user_id"
+
         // Add these:
         private var isLoadingMoreMessages = false
         private val MESSAGES_PAGE_SIZE = 20 // Or your desired page size
