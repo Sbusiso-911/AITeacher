@@ -1,8 +1,1 @@
-fc-ede91412f4e644178f9b6a4be2a95afe
-
-
-
-
-
-
-env FIRECRAWL_API_KEY=fc-ede91412f4e644178f9b6a4be2a95afe npx -y firecrawl-mcp
+1234567890
