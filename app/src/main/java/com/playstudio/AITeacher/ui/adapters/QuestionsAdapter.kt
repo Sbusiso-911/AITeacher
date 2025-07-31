@@ -64,8 +64,9 @@ class QuestionsAdapter(
                 ContextCompat.getColor(itemView.context, difficultyColor)
             )
 
-            // Setup question based on type
-            when (question.questionType) {
+            // Setup question based on type; fall back to multiple choice if missing
+            val type = question.questionType ?: QuestionType.MULTIPLE_CHOICE
+            when (type) {
                 QuestionType.MULTIPLE_CHOICE -> setupMultipleChoice(question)
                 QuestionType.TRUE_FALSE -> setupTrueFalse(question)
                 QuestionType.SHORT_ANSWER -> setupShortAnswer(question)
