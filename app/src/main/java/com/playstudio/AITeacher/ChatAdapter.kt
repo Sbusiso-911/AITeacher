@@ -15,7 +15,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -223,14 +222,18 @@ class ChatAdapter(
                     // It's better to have a separate layout for follow-up buttons (e.g., item_follow_up_button.xml)
                     // and inflate it, rather than creating Buttons programmatically for styling consistency.
                     // For now, programmatic creation:
-                    val button = Button(itemView.context).apply {
-                        text = question
-                        // Add styling (e.g., from a style resource)
-                        // setTextColor(Color.parseColor("#E1DFDF")) // Example
-                        // background = null // Example
-                        setOnClickListener {
-                            onFollowUpQuestionClicked(question)
+                    val button = MaterialButton(itemView.context, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                        layoutParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        ).apply {
+                            setMargins(0, 4, 0, 4)
                         }
+                        text = question
+                        textSize = 12f
+                        setPadding(16, 8, 16, 8)
+                        minWidth = 0
+                        setOnClickListener { onFollowUpQuestionClicked(question) }
                     }
                     binding.followUpButtonsContainer.addView(button)
                 }
