@@ -283,7 +283,7 @@ class ChatAdapter(
         }
     }
 
-    class StructuredMessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    inner class StructuredMessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val structuredContentContainer: LinearLayout = view.findViewById(R.id.structuredContentContainer)
         private val toggleButton: MaterialButton = view.findViewById(R.id.toggleStructuredButton)
         private var currentStructuredView: com.playstudio.aiteacher.ui.StructuredContentView? = null
