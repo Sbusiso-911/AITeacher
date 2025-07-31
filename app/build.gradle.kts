@@ -69,6 +69,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -124,6 +125,7 @@ configurations.all {
 }
 
 dependencies {
+    coreLibraryDesugaring(libs.desugarJdkLibs)
     implementation(libs.kotlin.stdlib)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
