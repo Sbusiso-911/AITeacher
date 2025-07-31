@@ -297,6 +297,11 @@ object StructuredOutputSchemas {
         - Show expected outputs
         - Suggest improvements or variations
 
+        General:
+        - If you mention a graph, diagram, or example, provide the actual content
+          or a simple textual representation immediately. Do not reference
+          materials without including them.
+
         For science topics:
         - Use analogies to explain complex concepts
         - Include real-world applications

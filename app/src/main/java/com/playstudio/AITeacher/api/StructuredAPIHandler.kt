@@ -322,8 +322,8 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
         return when (responseType) {
             ResponseType.STEP_BY_STEP -> "$basePrompt\n\nPlease provide a detailed step-by-step solution with clear explanations for each step."
             ResponseType.QUIZ -> "$basePrompt\n\nPlease include practice questions to test understanding of this topic."
-            ResponseType.CODE_TUTORIAL -> "$basePrompt\n\nPlease include working code examples with explanations."
-            ResponseType.LESSON -> "$basePrompt\n\nPlease provide a comprehensive lesson with examples, practice questions, and clear learning objectives."
+            ResponseType.CODE_TUTORIAL -> "$basePrompt\n\nPlease include complete, runnable code examples with thorough explanations. If you mention diagrams or graphs, provide a simple ASCII or textual representation so the user can visualize it."
+            ResponseType.LESSON -> "$basePrompt\n\nPlease provide a comprehensive lesson with detailed examples, practice questions, and clear learning objectives. Avoid referencing any example, graph, or diagram unless you actually include it."
             else -> basePrompt
         }
     }
