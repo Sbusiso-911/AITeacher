@@ -153,7 +153,7 @@ class ChatAdapter(
     class ReceivedMessageViewHolder(
         private val binding: ItemMessageReceivedBinding, // Use ViewBinding
         private val onCitationClickedCallback: (citation: com.playstudio.aiteacher.ChatFragment.Citation) -> Unit,
-        private val onFollowUpQuestionClickedCallback: (question: String) -> Unit
+        private val onFollowUpQuestionClicked: (question: String) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
         // The views for follow-up questions (headerButton, questionsContainer)
@@ -229,7 +229,7 @@ class ChatAdapter(
                         // setTextColor(Color.parseColor("#E1DFDF")) // Example
                         // background = null // Example
                         setOnClickListener {
-                            onFollowUpQuestionClickedCallback(question)
+                            onFollowUpQuestionClicked(question)
                         }
                     }
                     binding.followUpButtonsContainer.addView(button)
@@ -343,11 +343,11 @@ class ChatAdapter(
             }
 
             quizModeButton.setOnClickListener {
-                onFollowUpQuestionClickedCallback("Quiz me on this topic")
+                onFollowUpQuestionClicked("Quiz me on this topic")
             }
 
             moreExamplesButton.setOnClickListener {
-                onFollowUpQuestionClickedCallback("More examples, please")
+                onFollowUpQuestionClicked("More examples, please")
             }
         }
     }
