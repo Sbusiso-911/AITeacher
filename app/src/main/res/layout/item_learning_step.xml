@@ -108,14 +108,14 @@
 
             <!-- Full Explanation -->
             <TextView
+                android:id="@+id/fullStepExplanation"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/glass_text_primary"
                 android:textSize="14sp"
                 android:lineSpacingExtra="2dp"
                 android:fontFamily="@font/montserrat"
-                android:layout_marginBottom="8dp"
-                android:text="@{step.explanation}" />
+                android:layout_marginBottom="8dp" />
 
             <!-- Step Output (if available) -->
             <LinearLayout
