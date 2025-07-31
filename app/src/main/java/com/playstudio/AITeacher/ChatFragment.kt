@@ -5978,7 +5978,11 @@ class ChatFragment : Fragment() {
                 put("citations", citationsArray)
                 put("timestamp", chatMsg.timestamp)
                 put("containsRichContent", chatMsg.containsRichContent)
-                put("structuredContentJson", chatMsg.structuredContentJson)
+                if (chatMsg.structuredContentJson != null) {
+                    put("structuredContentJson", chatMsg.structuredContentJson)
+                } else {
+                    put("structuredContentJson", JSONObject.NULL)
+                }
             })
         }
 
@@ -6043,7 +6047,11 @@ class ChatFragment : Fragment() {
             timestamp = messageObject.optLong("timestamp", System.currentTimeMillis()),
             containsRichContent = messageObject.optBoolean("containsRichContent", false),
             isWebSearchResult = messageObject.optBoolean("isWebSearchResult", false),
-            structuredContentJson = messageObject.optString("structuredContentJson", null)
+            structuredContentJson = if (messageObject.has("structuredContentJson") && !messageObject.isNull("structuredContentJson")) {
+                messageObject.getString("structuredContentJson")
+            } else {
+                null
+            }
         )
     }
 
