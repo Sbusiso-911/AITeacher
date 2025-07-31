@@ -53,7 +53,8 @@ class QuestionsAdapter(
             binding.questionPoints.text = "${question.points} pt${if (question.points != 1) "s" else ""}"
             
             // Difficulty indicator
-            val difficultyColor = when (question.difficulty) {
+            val difficultyLevel = question.difficulty ?: com.playstudio.aiteacher.models.DifficultyLevel.BEGINNER
+            val difficultyColor = when (difficultyLevel) {
                 com.playstudio.aiteacher.models.DifficultyLevel.BEGINNER -> R.color.difficulty_beginner
                 com.playstudio.aiteacher.models.DifficultyLevel.INTERMEDIATE -> R.color.difficulty_intermediate
                 com.playstudio.aiteacher.models.DifficultyLevel.ADVANCED -> R.color.difficulty_advanced
