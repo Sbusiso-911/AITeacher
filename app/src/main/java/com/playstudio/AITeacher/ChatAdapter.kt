@@ -21,6 +21,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import com.google.android.material.button.MaterialButton
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter // Import ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -58,6 +59,8 @@ class ChatAdapter(
         private const val VIEW_TYPE_STRUCTURED = 4
         // PAGE_SIZE can be defined in the Fragment or ViewModel if it drives the fetch logic
     }
+
+    private val expandedStructuredMessages = mutableSetOf<String>()
 
     // isLoading state should be managed by the Fragment/ViewModel that handles data fetching
     // private var isLoading = false
@@ -282,6 +285,7 @@ class ChatAdapter(
 
     class StructuredMessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val structuredContentContainer: LinearLayout = view.findViewById(R.id.structuredContentContainer)
+        private val toggleButton: MaterialButton = view.findViewById(R.id.toggleStructuredButton)
         private var currentStructuredView: com.playstudio.aiteacher.ui.StructuredContentView? = null
         private var currentMessageId: String? = null
 
@@ -313,6 +317,22 @@ class ChatAdapter(
                 }
             } else {
                 Log.d("StructuredHolder", "Reusing existing view for message ${chatMessage.id}")
+            }
+
+            val expanded = expandedStructuredMessages.contains(chatMessage.id)
+            structuredContentContainer.visibility = if (expanded) View.VISIBLE else View.GONE
+            toggleButton.text = if (expanded) "Hide Details ▲" else "Show Details ▼"
+
+            toggleButton.setOnClickListener {
+                if (expandedStructuredMessages.contains(chatMessage.id)) {
+                    expandedStructuredMessages.remove(chatMessage.id)
+                    structuredContentContainer.visibility = View.GONE
+                    toggleButton.text = "Show Details ▼"
+                } else {
+                    expandedStructuredMessages.add(chatMessage.id)
+                    structuredContentContainer.visibility = View.VISIBLE
+                    toggleButton.text = "Hide Details ▲"
+                }
             }
         }
     }
