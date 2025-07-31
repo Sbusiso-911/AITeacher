@@ -293,8 +293,13 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
             val jsonResponse = JSONObject(responseBody)
             val choices = jsonResponse.getJSONArray("choices")
             val message = choices.getJSONObject(0).getJSONObject("message")
+
+            if (message.has("refusal") && !message.isNull("refusal")) {
+                val refusal = message.getString("refusal")
+                return Result.failure(Exception("AI refused to respond: $refusal"))
+            }
+
             val content = message.getString("content")
-            
             val quickResponse = gson.fromJson(content, QuickExplanationResponse::class.java)
             Result.success(quickResponse)
         } catch (e: Exception) {
@@ -307,8 +312,13 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
             val jsonResponse = JSONObject(responseBody)
             val choices = jsonResponse.getJSONArray("choices")
             val message = choices.getJSONObject(0).getJSONObject("message")
+
+            if (message.has("refusal") && !message.isNull("refusal")) {
+                val refusal = message.getString("refusal")
+                return Result.failure(Exception("AI refused to respond: $refusal"))
+            }
+
             val content = message.getString("content")
-            
             val mathResponse = gson.fromJson(content, MathSolutionResponse::class.java)
             Result.success(mathResponse)
         } catch (e: Exception) {

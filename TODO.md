@@ -9,4 +9,5 @@
 - [x] Provide "Expand All" quick action for learning steps
 - [x] Hook up "Quiz Me" and "More Examples" buttons to send follow-up requests
 - [x] Enhance system prompt so the AI always includes actual examples and diagrams when referenced
+- [x] Detect and surface AI refusals when parsing structured responses
 
