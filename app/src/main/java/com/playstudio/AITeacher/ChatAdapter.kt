@@ -286,6 +286,9 @@ class ChatAdapter(
     inner class StructuredMessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val structuredContentContainer: LinearLayout = view.findViewById(R.id.structuredContentContainer)
         private val toggleButton: MaterialButton = view.findViewById(R.id.toggleStructuredButton)
+        private val expandAllButton: MaterialButton = view.findViewById(R.id.expandAllButton)
+        private val quizModeButton: MaterialButton = view.findViewById(R.id.quizModeButton)
+        private val moreExamplesButton: MaterialButton = view.findViewById(R.id.moreExamplesButton)
         private var currentStructuredView: com.playstudio.aiteacher.ui.StructuredContentView? = null
         private var currentMessageId: String? = null
 
@@ -333,6 +336,18 @@ class ChatAdapter(
                     structuredContentContainer.visibility = View.VISIBLE
                     toggleButton.text = "Hide Details ▲"
                 }
+            }
+
+            expandAllButton.setOnClickListener {
+                currentStructuredView?.expandAllSteps()
+            }
+
+            quizModeButton.setOnClickListener {
+                onFollowUpQuestionClickedCallback("Quiz me on this topic")
+            }
+
+            moreExamplesButton.setOnClickListener {
+                onFollowUpQuestionClickedCallback("More examples, please")
             }
         }
     }
