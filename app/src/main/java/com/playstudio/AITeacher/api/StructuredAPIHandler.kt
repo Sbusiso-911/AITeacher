@@ -133,6 +133,28 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
         }
     }
 
+    /**
+     * Generate UI structure from a user description
+     */
+    suspend fun generateUi(
+        description: String,
+        model: String = "gpt-4o-2024-08-06"
+    ): Result<UiResponse> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val request = buildUiRequest(description, model)
+            val response = okHttpClient.newCall(request).execute()
+
+            if (response.isSuccessful) {
+                val body = response.body?.string()
+                body?.let { parseUiResponse(it) } ?: Result.failure(Exception("Empty response body"))
+            } else {
+                Result.failure(Exception("API Error: ${response.code} - ${response.message}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     private fun buildStructuredRequest(
         userMessage: String,
         chatHistory: List<Pair<String, String>>,
@@ -258,6 +280,37 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
             .build()
     }
 
+    private fun buildUiRequest(description: String, model: String): Request {
+        val messagesArray = JSONArray()
+
+        messagesArray.put(JSONObject().apply {
+            put("role", "system")
+            put("content", "You are a UI generator AI. Convert the user input into a UI.")
+        })
+
+        messagesArray.put(JSONObject().apply {
+            put("role", "user")
+            put("content", description)
+        })
+
+        val requestBodyJson = JSONObject().apply {
+            put("model", model)
+            put("messages", messagesArray)
+            put("response_format", JSONObject(StructuredOutputSchemas.getUiSchema().toString()))
+            put("temperature", 0.3)
+            put("max_completion_tokens", 1000)
+        }
+
+        val requestBody = requestBodyJson.toString().toRequestBody("application/json".toMediaTypeOrNull())
+
+        return Request.Builder()
+            .url(OPENAI_BASE_URL)
+            .post(requestBody)
+            .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
+            .addHeader("Content-Type", "application/json")
+            .build()
+    }
+
     private fun parseStructuredResponse(responseBody: String): Result<EducationalResponse> {
         return try {
             val jsonResponse = JSONObject(responseBody)
@@ -326,6 +379,24 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
         }
     }
 
+    private fun parseUiResponse(responseBody: String): Result<UiResponse> {
+        return try {
+            val json = JSONObject(responseBody)
+            val message = json.getJSONArray("choices").getJSONObject(0).getJSONObject("message")
+
+            if (message.has("refusal") && !message.isNull("refusal")) {
+                val refusal = message.getString("refusal")
+                return Result.failure(Exception("AI refused to respond: $refusal"))
+            }
+
+            val content = message.getString("content")
+            val result = gson.fromJson(content, UiResponse::class.java)
+            Result.success(result)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     private fun enhanceUserPrompt(userMessage: String, responseType: ResponseType): String {
         val basePrompt = userMessage
         
@@ -378,4 +449,8 @@ data class MathStep(
     val explanation: String,
     val mathematicalExpression: String,
     val reasoning: String
+)
+
+data class UiResponse(
+    val ui: UiElement
 )

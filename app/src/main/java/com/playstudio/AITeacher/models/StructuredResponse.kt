@@ -259,3 +259,30 @@ enum class InteractiveElementType {
     @SerializedName("quiz_widget")
     QUIZ_WIDGET
 }
+
+// --- UI generation models ---
+
+enum class UiType {
+    @SerializedName("div") DIV,
+    @SerializedName("button") BUTTON,
+    @SerializedName("header") HEADER,
+    @SerializedName("section") SECTION,
+    @SerializedName("field") FIELD,
+    @SerializedName("form") FORM
+}
+
+data class UiAttribute(
+    val name: String,
+    val value: String
+)
+
+data class UiElement(
+    val type: UiType,
+    val label: String,
+    val children: List<UiElement>,
+    val attributes: List<UiAttribute>
+)
+
+data class UiResponse(
+    val ui: UiElement
+)

@@ -267,6 +267,62 @@ object StructuredOutputSchemas {
     }
 
     /**
+     * Schema for UI generation responses
+     */
+    fun getUiSchema(): JsonObject {
+        val schemaJson = """
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "ui_response",
+            "description": "Generated UI structure",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "ui": { "$ref": "#/$defs/ui" }
+              },
+              "required": ["ui"],
+              "$defs": {
+                "ui": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["div", "button", "header", "section", "field", "form"]
+                    },
+                    "label": {"type": "string"},
+                    "children": {
+                      "type": "array",
+                      "items": { "$ref": "#/$defs/ui" }
+                    },
+                    "attributes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {"type": "string"},
+                          "value": {"type": "string"}
+                        },
+                        "required": ["name", "value"],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": ["type", "label", "children", "attributes"],
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+        """.trimIndent()
+
+        return JsonParser.parseString(schemaJson).asJsonObject
+    }
+
+    /**
      * Get system prompt for structured educational responses
      */
     fun getEducationalSystemPrompt(): String {
