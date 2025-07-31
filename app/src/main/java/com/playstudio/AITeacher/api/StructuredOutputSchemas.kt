@@ -280,10 +280,10 @@ object StructuredOutputSchemas {
             "schema": {
               "type": "object",
               "properties": {
-                "ui": { "\$ref": "#\/\$defs\/ui" }
+                "ui": { "${'$'}ref": "#/${'$'}defs/ui" }
               },
               "required": ["ui"],
-              "\$defs": {
+              "${'$'}defs": {
                 "ui": {
                   "type": "object",
                   "properties": {
@@ -294,7 +294,7 @@ object StructuredOutputSchemas {
                     "label": {"type": "string"},
                     "children": {
                       "type": "array",
-                      "items": { "\$ref": "#\/\$defs\/ui" }
+                      "items": { "${'$'}ref": "#/${'$'}defs/ui" }
                     },
                     "attributes": {
                       "type": "array",
