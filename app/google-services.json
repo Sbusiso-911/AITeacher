@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "445083727571",
+    "project_id": "aiteacher-75856",
+    "storage_bucket": "aiteacher-75856.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:445083727571:android:13a8e122b1fe53a7484626",
+        "android_client_info": {
+          "package_name": "com.playstudio.aiteacher"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQKyNxGcXnWeMm1w43ETB9b4jYAY7uuIc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

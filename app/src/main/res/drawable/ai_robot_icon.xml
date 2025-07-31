@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    
+    <!-- Background circle -->
+    <path
+        android:pathData="M2,32 A30,30 0 1,1 62,32 A30,30 0 1,1 2,32 Z"
+        android:fillColor="@color/ai_robot_background"
+        android:strokeColor="@color/ai_robot_primary"
+        android:strokeWidth="2" />
+    
+    <!-- Robot head (simplified) -->
+    <path
+        android:pathData="M20,18 L44,18 Q48,18 48,22 L48,34 Q48,38 44,38 L20,38 Q16,38 16,34 L16,22 Q16,18 20,18 Z"
+        android:fillColor="@color/ai_robot_dark_blue"
+        android:strokeColor="@color/ai_robot_primary"
+        android:strokeWidth="1" />
+    
+    <!-- Eyes -->
+    <path android:pathData="M21,26 A3,3 0 1,1 27,26 A3,3 0 1,1 21,26 Z" android:fillColor="@color/ai_robot_primary" />
+    <path android:pathData="M37,26 A3,3 0 1,1 43,26 A3,3 0 1,1 37,26 Z" android:fillColor="@color/ai_robot_primary" />
+    
+    <!-- Brain visualization (simple) -->
+    <path
+        android:pathData="M26,28 A6,6 0 1,1 38,28 A6,6 0 1,1 26,28 Z"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="@color/ai_robot_primary"
+        android:strokeWidth="1"
+        android:strokeAlpha="0.6" />
+    
+    <!-- Mouth -->
+    <path
+        android:pathData="M26,32 L38,32 Q40,32 40,34 Q40,36 38,36 L26,36 Q24,36 24,34 Q24,32 26,32 Z"
+        android:fillColor="@color/ai_robot_primary" />
+    
+    <!-- Body (simplified) -->
+    <path
+        android:pathData="M22,38 L42,38 Q46,38 46,42 L46,54 Q46,58 42,58 L22,58 Q18,58 18,54 L18,42 Q18,38 22,38 Z"
+        android:fillColor="@color/ai_robot_secondary"
+        android:strokeColor="@color/ai_robot_primary"
+        android:strokeWidth="1" />
+    
+    <!-- Chest indicator -->
+    <path
+        android:pathData="M28,48 A4,4 0 1,1 36,48 A4,4 0 1,1 28,48 Z"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="@color/ai_robot_primary"
+        android:strokeWidth="1" />
+    
+    <!-- Status light -->
+    <path android:pathData="M30.5,48 A1.5,1.5 0 1,1 33.5,48 A1.5,1.5 0 1,1 30.5,48 Z" android:fillColor="@color/ai_robot_status_active" />
+    
+    <!-- Antenna -->
+    <path
+        android:pathData="M32,18 L32,12"
+        android:strokeColor="@color/ai_robot_primary"
+        android:strokeWidth="2" />
+    <path android:pathData="M30,10 A2,2 0 1,1 34,10 A2,2 0 1,1 30,10 Z" android:fillColor="@color/ai_robot_primary" />
+    
+</vector>

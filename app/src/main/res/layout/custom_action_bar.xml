@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="?attr/actionBarSize"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:background="@color/ai_robot_background">
+
+    <!-- AI Robot Icon -->
+    <ImageView
+        android:id="@+id/actionBarIcon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/ai_robot_icon"
+        android:layout_gravity="center_vertical"
+        android:contentDescription="AI Teacher Robot" />
+        
+    <!-- Optional: Add a subtle "AI" text next to icon -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AI"
+        android:textColor="@color/ai_robot_primary"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginStart="8dp"
+        android:layout_gravity="center_vertical" />
+
+</LinearLayout>

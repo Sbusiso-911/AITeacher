@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material Design 3 Dark Theme -->
+    <style name="Theme.AITeacher.Material3" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/md_theme_dark_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_dark_on_primary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_dark_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_dark_on_primary_container</item>
+        
+        <item name="colorSecondary">@color/md_theme_dark_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_dark_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/md_theme_dark_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_dark_on_secondary_container</item>
+        
+        <item name="colorTertiary">@color/md_theme_dark_tertiary</item>
+        <item name="colorOnTertiary">@color/md_theme_dark_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/md_theme_dark_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_dark_on_tertiary_container</item>
+        
+        <item name="colorError">@color/md_theme_dark_error</item>
+        <item name="colorOnError">@color/md_theme_dark_on_error</item>
+        <item name="colorErrorContainer">@color/md_theme_dark_error_container</item>
+        <item name="colorOnErrorContainer">@color/md_theme_dark_on_error_container</item>
+        
+        <item name="android:colorBackground">@color/md_theme_dark_background</item>
+        <item name="colorOnBackground">@color/md_theme_dark_on_background</item>
+        <item name="colorSurface">@color/md_theme_dark_surface</item>
+        <item name="colorOnSurface">@color/md_theme_dark_on_surface</item>
+        <item name="colorSurfaceVariant">@color/md_theme_dark_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_dark_on_surface_variant</item>
+        
+        <item name="colorOutline">@color/md_theme_dark_outline</item>
+        <item name="colorOutlineVariant">@color/md_theme_dark_outline_variant</item>
+    </style>
+
+    <!-- Dark Theme Message Styles -->
+    <style name="MessageBubbleUser">
+        <item name="android:background">@drawable/bg_message_user_dark_material3</item>
+    </style>
+
+    <style name="MessageBubbleAI">
+        <item name="android:background">@drawable/bg_message_ai_dark_material3</item>
+    </style>
+
+    <style name="MessageTextUser">
+        <item name="android:textColor">@color/md_theme_dark_on_primary</item>
+    </style>
+
+    <style name="MessageTextAI">
+        <item name="android:textColor">@color/md_theme_dark_on_surface_variant</item>
+    </style>
+
+    <!-- Dark Theme Input Styles -->
+    <style name="InputFieldMaterial3">
+        <item name="android:background">@drawable/bg_input_field_dark_material3</item>
+        <item name="android:textColor">@color/md_theme_dark_on_surface</item>
+        <item name="android:textColorHint">@color/md_theme_dark_on_surface_variant</item>
+    </style>
+
+    <style name="SendButtonMaterial3">
+        <item name="android:background">@drawable/bg_send_button_dark_material3</item>
+        <item name="android:tint">@color/md_theme_dark_on_primary</item>
+    </style>
+
+    <style name="IconButtonMaterial3">
+        <item name="android:background">@drawable/bg_icon_button_dark_material3</item>
+        <item name="android:tint">@color/md_theme_dark_on_surface_variant</item>
+    </style>
+
+    <!-- Dark Theme App Bar Styles -->
+    <style name="AppBarMaterial3">
+        <item name="android:background">@drawable/bg_app_bar_dark_material3</item>
+    </style>
+
+    <style name="AppBarTitleMaterial3">
+        <item name="android:textColor">@color/md_theme_dark_on_surface</item>
+    </style>
+
+    <!-- Dark Theme Chip Styles -->
+    <style name="ChipMaterial3">
+        <item name="android:background">@drawable/bg_chip_dark_material3</item>
+        <item name="android:textColor">@color/md_theme_dark_on_surface_variant</item>
+    </style>
+</resources>

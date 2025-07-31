@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm:*)",
+      "Bash(./gradlew:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(export:*)",
+      "Bash(ls:*)",
+      "Bash(rg:*)",
+      "Bash(xmllint:*)",
+      "Bash(cp:*)",
+      "Bash(firebase --project aiteacher-75856 deploy --only functions --cwd \"/mnt/c/Users/User/AITeacher\")",
+      "Bash(bash -c \"cd ''/mnt/c/Users/User/AITeacher'' && firebase deploy --only functions\")",
+      "Bash(bash -c \"cd ''/mnt/c/Users/User/AITeacher'' && firebase deploy --only hosting\")",
+      "Bash(firebase:*)",
+      "Bash(chmod:*)",
+      "Bash(bash:*)",
+      "Bash(git restore:*)"
+    ],
+    "deny": []
+  }
+}

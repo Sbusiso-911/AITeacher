@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="image_url" type="id"/>
+    <item name="tooltip_title" type="id" />
+    <item name="close_button" type="id" />
+    <item name="colorWhite" type="id" />
+    <item name="hidden_version_item" type="id"/>
+    <item name="tv_available_models" type="id"/>
+    <item name="btn_subscribe" type="id"/>
+    <item name="btn_upgrade" type="id"/>
+    <item name="btn_buy_premium" type="id"/>
+    <item name="btn_get_pro" type="id"/>
+    <item name="subscription_button" type="id"/>
+    <item name="premium_button" type="id"/>
+    <item name="upgrade_button" type="id"/>
+    <item name="banner_ad" type="id"/>
+    <item name="interstitial_ad_container" type="id"/>
+    <item name="rewarded_ad_container" type="id"/>
+    <item name="native_ad_container" type="id"/>
+    <item name="tv_subscription_status" type="id"/>
+    <item name="subscription_status" type="id"/>
+    <item name="plan_status" type="id"/>
+    <item name="user_plan_text" type="id"/>
+</resources>

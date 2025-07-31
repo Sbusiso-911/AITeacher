@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base gradient background -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#354555"
+                android:endColor="#293844"
+                android:angle="135"/>
+            <corners android:radius="16dp"/>
+        </shape>
+    </item>
+    
+    <!-- Brain synapses pattern -->
+    <!-- Central neuron cluster -->
+    <item android:top="20dp" android:left="24dp">
+        <shape android:shape="oval">
+            <solid android:color="#40FFFFFF"/>
+            <size android:width="4dp" android:height="4dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="36dp" android:right="28dp">
+        <shape android:shape="oval">
+            <solid android:color="#35FFFFFF"/>
+            <size android:width="3dp" android:height="3dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="24dp" android:left="32dp">
+        <shape android:shape="oval">
+            <solid android:color="#38FFFFFF"/>
+            <size android:width="3.5dp" android:height="3.5dp"/>
+        </shape>
+    </item>
+    
+    <!-- Synaptic connections -->
+    <item android:top="22dp" android:left="26dp" android:right="30dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#25FFFFFF"/>
+            <size android:height="0.8dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="20dp" android:bottom="26dp" android:left="25dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#20FFFFFF"/>
+            <size android:width="0.8dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="22dp" android:left="34dp" android:right="26dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#22FFFFFF"/>
+            <size android:height="0.8dp"/>
+        </shape>
+    </item>
+    
+    <!-- Secondary neural nodes -->
+    <item android:top="12dp" android:right="16dp">
+        <shape android:shape="oval">
+            <solid android:color="#30FFFFFF"/>
+            <size android:width="2.5dp" android:height="2.5dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="44dp" android:left="16dp">
+        <shape android:shape="oval">
+            <solid android:color="#28FFFFFF"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="16dp" android:right="12dp">
+        <shape android:shape="oval">
+            <solid android:color="#32FFFFFF"/>
+            <size android:width="2.5dp" android:height="2.5dp"/>
+        </shape>
+    </item>
+    
+    <!-- Dendrite-like patterns -->
+    <item android:top="8dp" android:left="8dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#15FFFFFF"/>
+            <corners android:radius="0.5dp"/>
+            <size android:width="3dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="8dp" android:right="8dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#12FFFFFF"/>
+            <corners android:radius="0.5dp"/>
+            <size android:width="1dp" android:height="3dp"/>
+        </shape>
+    </item>
+</layer-list>

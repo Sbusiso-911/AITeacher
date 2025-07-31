@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="300dp"
+    android:height="350dp"
+    android:viewportWidth="300"
+    android:viewportHeight="350">
+    
+    <!-- Data Matrix Background -->
+    <path
+        android:pathData="M0,0 L300,0 L300,350 L0,350 Z"
+        android:fillColor="@color/ai_data_background" />
+    
+    <!-- Matrix Grid Lines -->
+    <group android:alpha="0.3">
+        <!-- Vertical Grid -->
+        <path android:pathData="M30,0 L30,350" android:strokeColor="@color/ai_data_primary" android:strokeWidth="0.5" />
+        <path android:pathData="M60,0 L60,350" android:strokeColor="@color/ai_data_primary" android:strokeWidth="0.5" />
+        <path android:pathData="M90,0 L90,350" android:strokeColor="@color/ai_data_primary" android:strokeWidth="0.5" />
+        <path android:pathData="M120,0 L120,350" android:strokeColor="@color/ai_data_primary" android:strokeWidth="0.5" />
+        <path android:pathData="M150,0 L150,350" android:strokeColor="@color/ai_data_primary" android:strokeWidth="1" />
+        <path android:pathData="M180,0 L180,350" android:strokeColor="@color/ai_data_primary" android:strokeWidth="0.5" />
+        <path android:pathData="M210,0 L210,350" android:strokeColor="@color/ai_data_primary" android:strokeWidth="0.5" />
+        <path android:pathData="M240,0 L240,350" android:strokeColor="@color/ai_data_primary" android:strokeWidth="0.5" />
+        <path android:pathData="M270,0 L270,350" android:strokeColor="@color/ai_data_primary" android:strokeWidth="0.5" />
+        
+        <!-- Horizontal Grid -->
+        <path android:pathData="M0,30 L300,30" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="0.5" />
+        <path android:pathData="M0,60 L300,60" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="0.5" />
+        <path android:pathData="M0,90 L300,90" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="0.5" />
+        <path android:pathData="M0,120 L300,120" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="0.5" />
+        <path android:pathData="M0,150 L300,150" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+        <path android:pathData="M0,180 L300,180" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="0.5" />
+        <path android:pathData="M0,210 L300,210" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="0.5" />
+        <path android:pathData="M0,240 L300,240" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="0.5" />
+        <path android:pathData="M0,270 L300,270" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="0.5" />
+        <path android:pathData="M0,300 L300,300" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="0.5" />
+    </group>
+    
+    <!-- Central Data Processing Core -->
+    <path
+        android:pathData="M110,110 L190,110 Q200,110 200,120 L200,200 Q200,210 190,210 L110,210 Q100,210 100,200 L100,120 Q100,110 110,110 Z"
+        android:fillColor="@color/ai_data_matrix"
+        android:strokeColor="@color/ai_data_primary"
+        android:strokeWidth="2" />
+    
+    <!-- Data Flow Streams (Vertical) -->
+    <group android:alpha="0.8">
+        <!-- Streaming data lines -->
+        <path
+            android:pathData="M40,50 L40,80 M40,100 L40,130 M40,150 L40,180 M40,200 L40,230 M40,250 L40,280"
+            android:strokeColor="@color/ai_data_primary"
+            android:strokeWidth="2" />
+        <path
+            android:pathData="M70,40 L70,70 M70,90 L70,120 M70,140 L70,170 M70,190 L70,220 M70,240 L70,270 M70,290 L70,320"
+            android:strokeColor="@color/ai_data_secondary"
+            android:strokeWidth="1.5" />
+        <path
+            android:pathData="M230,60 L230,90 M230,110 L230,140 M230,160 L230,190 M230,210 L230,240 M230,260 L230,290"
+            android:strokeColor="@color/ai_data_primary"
+            android:strokeWidth="2" />
+        <path
+            android:pathData="M260,30 L260,60 M260,80 L260,110 M260,130 L260,160 M260,180 L260,210 M260,230 L260,260 M260,280 L260,310"
+            android:strokeColor="@color/ai_data_secondary"
+            android:strokeWidth="1.5" />
+    </group>
+    
+    <!-- Data Flow Streams (Horizontal) -->
+    <group android:alpha="0.8">
+        <path
+            android:pathData="M20,50 L50,50 M70,50 L100,50 M120,50 L150,50 M170,50 L200,50 M220,50 L250,50 M270,50 L300,50"
+            android:strokeColor="@color/ai_data_primary"
+            android:strokeWidth="2" />
+        <path
+            android:pathData="M0,100 L30,100 M50,100 L80,100 M100,100 L130,100 M150,100 L180,100 M200,100 L230,100 M250,100 L280,100"
+            android:strokeColor="@color/ai_data_secondary"
+            android:strokeWidth="1.5" />
+        <path
+            android:pathData="M20,200 L50,200 M70,200 L100,200 M120,200 L150,200 M170,200 L200,200 M220,200 L250,200 M270,200 L300,200"
+            android:strokeColor="@color/ai_data_primary"
+            android:strokeWidth="2" />
+        <path
+            android:pathData="M0,250 L30,250 M50,250 L80,250 M100,250 L130,250 M150,250 L180,250 M200,250 L230,250 M250,250 L280,250"
+            android:strokeColor="@color/ai_data_secondary"
+            android:strokeWidth="1.5" />
+    </group>
+    
+    <!-- Data Nodes (Active Processing Points) -->
+    <path android:pathData="M38,50 A4,4 0 1,1 46,50 A4,4 0 1,1 38,50 Z" android:fillColor="@color/ai_data_status_active" />
+    <path android:pathData="M68,100 A4,4 0 1,1 76,100 A4,4 0 1,1 68,100 Z" android:fillColor="@color/ai_data_status_active" />
+    <path android:pathData="M228,200 A4,4 0 1,1 236,200 A4,4 0 1,1 228,200 Z" android:fillColor="@color/ai_data_status_active" />
+    <path android:pathData="M258,250 A4,4 0 1,1 266,250 A4,4 0 1,1 258,250 Z" android:fillColor="@color/ai_data_status_active" />
+    
+    <!-- Data Packets (Moving Elements) -->
+    <group android:alpha="0.9">
+        <!-- Square data packets -->
+        <path android:pathData="M45,85 L50,85 L50,90 L45,90 Z" android:fillColor="@color/ai_data_primary" />
+        <path android:pathData="M65,135 L70,135 L70,140 L65,140 Z" android:fillColor="@color/ai_data_secondary" />
+        <path android:pathData="M235,115 L240,115 L240,120 L235,120 Z" android:fillColor="@color/ai_data_primary" />
+        <path android:pathData="M255,185 L260,185 L260,190 L255,190 Z" android:fillColor="@color/ai_data_secondary" />
+        
+        <!-- Diamond data packets -->
+        <path android:pathData="M42,160 L45,157 L48,160 L45,163 Z" android:fillColor="@color/ai_data_primary" />
+        <path android:pathData="M72,210 L75,207 L78,210 L75,213 Z" android:fillColor="@color/ai_data_secondary" />
+        <path android:pathData="M232,160 L235,157 L238,160 L235,163 Z" android:fillColor="@color/ai_data_primary" />
+        <path android:pathData="M262,210 L265,207 L268,210 L265,213 Z" android:fillColor="@color/ai_data_secondary" />
+    </group>
+    
+    <!-- Central Processing Arrays -->
+    <group android:alpha="0.7">
+        <!-- Processing grid inside core -->
+        <path android:pathData="M120,130 L180,130" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+        <path android:pathData="M120,140 L180,140" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+        <path android:pathData="M120,150 L180,150" android:strokeColor="@color/ai_data_primary" android:strokeWidth="1.5" />
+        <path android:pathData="M120,160 L180,160" android:strokeColor="@color/ai_data_primary" android:strokeWidth="1.5" />
+        <path android:pathData="M120,170 L180,170" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+        <path android:pathData="M120,180 L180,180" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+        <path android:pathData="M120,190 L180,190" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+        
+        <path android:pathData="M130,120 L130,200" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+        <path android:pathData="M140,120 L140,200" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+        <path android:pathData="M150,120 L150,200" android:strokeColor="@color/ai_data_primary" android:strokeWidth="1.5" />
+        <path android:pathData="M160,120 L160,200" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+        <path android:pathData="M170,120 L170,200" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+    </group>
+    
+    <!-- Data Analysis Displays -->
+    <path
+        android:pathData="M30,280 L90,280 Q100,280 100,290 L100,320 Q100,330 90,330 L30,330 Q20,330 20,320 L20,290 Q20,280 30,280 Z"
+        android:fillColor="@color/ai_data_matrix"
+        android:strokeColor="@color/ai_data_primary"
+        android:strokeWidth="1.5" />
+    
+    <path
+        android:pathData="M210,280 L270,280 Q280,280 280,290 L280,320 Q280,330 270,330 L210,330 Q200,330 200,320 L200,290 Q200,280 210,280 Z"
+        android:fillColor="@color/ai_data_matrix"
+        android:strokeColor="@color/ai_data_primary"
+        android:strokeWidth="1.5" />
+    
+    <!-- Analysis screens content -->
+    <group android:alpha="0.8">
+        <!-- Left screen data -->
+        <path android:pathData="M25,295 L95,295" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+        <path android:pathData="M25,300 L85,300" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+        <path android:pathData="M25,305 L90,305" android:strokeColor="@color/ai_data_primary" android:strokeWidth="1" />
+        <path android:pathData="M25,310 L80,310" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+        <path android:pathData="M25,315 L95,315" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+        <path android:pathData="M25,320 L75,320" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+        
+        <!-- Right screen data -->
+        <path android:pathData="M205,295 L275,295" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+        <path android:pathData="M205,300 L265,300" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+        <path android:pathData="M205,305 L270,305" android:strokeColor="@color/ai_data_primary" android:strokeWidth="1" />
+        <path android:pathData="M205,310 L260,310" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+        <path android:pathData="M205,315 L275,315" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+        <path android:pathData="M205,320 L255,320" android:strokeColor="@color/ai_data_secondary" android:strokeWidth="1" />
+    </group>
+    
+    <!-- Status Indicators -->
+    <path android:pathData="M145,145 A5,5 0 1,1 155,145 A5,5 0 1,1 145,145 Z" android:fillColor="@color/ai_data_status_active" />
+    <path android:pathData="M145,165 A5,5 0 1,1 155,165 A5,5 0 1,1 145,165 Z" android:fillColor="@color/ai_data_status_active" />
+    
+    <!-- Data Connection Lines -->
+    <path
+        android:pathData="M100,160 L60,305 M200,160 L240,305"
+        android:strokeColor="@color/ai_data_primary"
+        android:strokeWidth="1.5"
+        android:strokeAlpha="0.6" />
+    
+    <!-- Network Nodes -->
+    <group android:alpha="0.6">
+        <path android:pathData="M30,30 A3,3 0 1,1 36,30 A3,3 0 1,1 30,30 Z" android:fillColor="@color/ai_data_secondary" />
+        <path android:pathData="M270,30 A3,3 0 1,1 276,30 A3,3 0 1,1 270,30 Z" android:fillColor="@color/ai_data_secondary" />
+        <path android:pathData="M30,320 A3,3 0 1,1 36,320 A3,3 0 1,1 30,320 Z" android:fillColor="@color/ai_data_secondary" />
+        <path android:pathData="M270,320 A3,3 0 1,1 276,320 A3,3 0 1,1 270,320 Z" android:fillColor="@color/ai_data_secondary" />
+        <path android:pathData="M150,30 A3,3 0 1,1 156,30 A3,3 0 1,1 150,30 Z" android:fillColor="@color/ai_data_primary" />
+        <path android:pathData="M150,320 A3,3 0 1,1 156,320 A3,3 0 1,1 150,320 Z" android:fillColor="@color/ai_data_primary" />
+    </group>
+    
+</vector>

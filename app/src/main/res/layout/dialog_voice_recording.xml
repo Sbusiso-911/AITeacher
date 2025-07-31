@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/glassmorphism_button_background"
+    android:gravity="center">
+
+    <TextView
+        android:id="@+id/title_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Voice Input"
+        android:textSize="20sp"
+        android:textColor="@color/glass_text_primary"
+        android:fontFamily="sans-serif-medium"
+        android:layout_marginBottom="16dp"
+        android:gravity="center" />
+
+    <TextView
+        android:id="@+id/instruction_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hold the button and speak. Release to transcribe."
+        android:textSize="14sp"
+        android:textColor="@color/glass_text_secondary"
+        android:fontFamily="sans-serif"
+        android:layout_marginBottom="24dp"
+        android:gravity="center" />
+
+    <com.playstudio.aiteacher.AudioControlsView
+        android:id="@+id/audioControlsView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/cancel_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cancel"
+        android:textColor="@color/glass_text_secondary"
+        android:background="@drawable/glassmorphism_button_background"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="12dp"
+        android:layout_marginTop="8dp" />
+
+</LinearLayout>

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="600dp"
+    android:viewportWidth="400"
+    android:viewportHeight="600">
+    
+    <!-- Background -->
+    <path android:pathData="M0,0 L400,0 L400,600 L0,600 Z"
+          android:fillColor="#14532D"/>
+    
+    <!-- Organic Pattern Dots -->
+    <path android:pathData="M59,80 A1,1 0 1,1 61,80 A1,1 0 1,1 59,80" android:fillColor="#4D22C55E"/>
+    <path android:pathData="M118.5,60 A1.5,1.5 0 1,1 121.5,60 A1.5,1.5 0 1,1 118.5,60" android:fillColor="#4D84CC16"/>
+    <path android:pathData="M179,90 A1,1 0 1,1 181,90 A1,1 0 1,1 179,90" android:fillColor="#4DF97316"/>
+    <path android:pathData="M238.5,70 A1.5,1.5 0 1,1 241.5,70 A1.5,1.5 0 1,1 238.5,70" android:fillColor="#4D22C55E"/>
+    <path android:pathData="M299,85 A1,1 0 1,1 301,85 A1,1 0 1,1 299,85" android:fillColor="#4D84CC16"/>
+    <path android:pathData="M358.5,75 A1.5,1.5 0 1,1 361.5,75 A1.5,1.5 0 1,1 358.5,75" android:fillColor="#4DF97316"/>
+    
+    <!-- Bottom Pattern -->
+    <path android:pathData="M79,520 A1,1 0 1,1 81,520 A1,1 0 1,1 79,520" android:fillColor="#4D22C55E"/>
+    <path android:pathData="M138.5,540 A1.5,1.5 0 1,1 141.5,540 A1.5,1.5 0 1,1 138.5,540" android:fillColor="#4D84CC16"/>
+    <path android:pathData="M199,510 A1,1 0 1,1 201,510 A1,1 0 1,1 199,510" android:fillColor="#4DF97316"/>
+    <path android:pathData="M258.5,530 A1.5,1.5 0 1,1 261.5,530 A1.5,1.5 0 1,1 258.5,530" android:fillColor="#4D22C55E"/>
+    <path android:pathData="M319,515 A1,1 0 1,1 321,515 A1,1 0 1,1 319,515" android:fillColor="#4D84CC16"/>
+    
+    <!-- Central Neural Core -->
+    <path android:pathData="M175,300 A25,25 0 1,1 225,300 A25,25 0 1,1 175,300" android:fillColor="#8022C55E"/>
+    
+    <!-- Main Neural Trunk -->
+    <path android:pathData="M200,430 Q195,400 200,370 Q205,340 200,310 Q195,280 200,250 Q205,220 200,190 Q195,160 200,130"
+          android:strokeColor="#22C55E"
+          android:strokeWidth="10"
+          android:fillType="nonZero"/>
+    
+    <!-- Neural Branches -->
+    <path android:pathData="M195,350 Q170,340 140,320 Q110,300 90,270"
+          android:strokeColor="#16A34A"
+          android:strokeWidth="6"
+          android:fillType="nonZero"/>
+    <path android:pathData="M205,350 Q230,340 260,320 Q290,300 310,270"
+          android:strokeColor="#16A34A"
+          android:strokeWidth="6"
+          android:fillType="nonZero"/>
+    <path android:pathData="M195,250 Q160,240 130,220 Q100,200 80,170"
+          android:strokeColor="#F97316"
+          android:strokeWidth="5"
+          android:fillType="nonZero"/>
+    <path android:pathData="M205,250 Q240,240 270,220 Q300,200 320,170"
+          android:strokeColor="#F97316"
+          android:strokeWidth="5"
+          android:fillType="nonZero"/>
+    
+    <!-- Secondary Branches -->
+    <path android:pathData="M140,320 Q120,310 100,290 Q80,270 70,240"
+          android:strokeColor="#84CC16"
+          android:strokeWidth="3"
+          android:fillType="nonZero"/>
+    <path android:pathData="M260,320 Q280,310 300,290 Q320,270 330,240"
+          android:strokeColor="#84CC16"
+          android:strokeWidth="3"
+          android:fillType="nonZero"/>
+    
+    <!-- Bio-luminescent Neural Nodes -->
+    <path android:pathData="M196,200 A4,4 0 1,1 204,200 A4,4 0 1,1 196,200" android:fillColor="#84CC16"/>
+    <path android:pathData="M137,320 A3,3 0 1,1 143,320 A3,3 0 1,1 137,320" android:fillColor="#22C55E"/>
+    <path android:pathData="M257,320 A3,3 0 1,1 263,320 A3,3 0 1,1 257,320" android:fillColor="#F97316"/>
+    <path android:pathData="M127,220 A3,3 0 1,1 133,220 A3,3 0 1,1 127,220" android:fillColor="#84CC16"/>
+    <path android:pathData="M267,220 A3,3 0 1,1 273,220 A3,3 0 1,1 267,220" android:fillColor="#22C55E"/>
+    
+    <!-- Terminal Nodes -->
+    <path android:pathData="M87.5,270 A2.5,2.5 0 1,1 92.5,270 A2.5,2.5 0 1,1 87.5,270" android:fillColor="#84CC16"/>
+    <path android:pathData="M307.5,270 A2.5,2.5 0 1,1 312.5,270 A2.5,2.5 0 1,1 307.5,270" android:fillColor="#F97316"/>
+    <path android:pathData="M77.5,170 A2.5,2.5 0 1,1 82.5,170 A2.5,2.5 0 1,1 77.5,170" android:fillColor="#22C55E"/>
+    <path android:pathData="M317.5,170 A2.5,2.5 0 1,1 322.5,170 A2.5,2.5 0 1,1 317.5,170" android:fillColor="#84CC16"/>
+    
+    <!-- Glowing Synaptic Leaves -->
+    <path android:pathData="M62,240 A8,4 0 1,1 78,240 A8,4 0 1,1 62,240" android:fillColor="#84CC16"/>
+    <path android:pathData="M54,140 A6,3 0 1,1 66,140 A6,3 0 1,1 54,140" android:fillColor="#22C55E"/>
+    <path android:pathData="M93,290 A7,4 0 1,1 107,290 A7,4 0 1,1 93,290" android:fillColor="#F97316"/>
+    <path android:pathData="M322,240 A8,4 0 1,1 338,240 A8,4 0 1,1 322,240" android:fillColor="#22C55E"/>
+    <path android:pathData="M334,140 A6,3 0 1,1 346,140 A6,3 0 1,1 334,140" android:fillColor="#84CC16"/>
+    <path android:pathData="M293,290 A7,4 0 1,1 307,290 A7,4 0 1,1 293,290" android:fillColor="#F97316"/>
+    <path android:pathData="M185,130 A5,3 0 1,1 195,130 A5,3 0 1,1 185,130" android:fillColor="#84CC16"/>
+    <path android:pathData="M205,125 A5,3 0 1,1 215,125 A5,3 0 1,1 205,125" android:fillColor="#22C55E"/>
+    
+    <!-- Data Flow Streams -->
+    <path android:pathData="M80,500 Q150,450 200,430"
+          android:strokeColor="#4D84CC16"
+          android:strokeWidth="1"
+          android:fillType="nonZero"/>
+    <path android:pathData="M310,470 Q250,450 200,430"
+          android:strokeColor="#4D22C55E"
+          android:strokeWidth="1"
+          android:fillType="nonZero"/>
+    <path android:pathData="M200,300 Q170,280 140,320"
+          android:strokeColor="#4DF97316"
+          android:strokeWidth="1"
+          android:fillType="nonZero"/>
+    <path android:pathData="M200,300 Q230,280 260,320"
+          android:strokeColor="#4D84CC16"
+          android:strokeWidth="1"
+          android:fillType="nonZero"/>
+    
+    <!-- Micro-organisms -->
+    <path android:pathData="M48.5,200 A1.5,1.5 0 1,1 51.5,200 A1.5,1.5 0 1,1 48.5,200" android:fillColor="#84CC16"/>
+    <path android:pathData="M348.5,250 A1.5,1.5 0 1,1 351.5,250 A1.5,1.5 0 1,1 348.5,250" android:fillColor="#22C55E"/>
+    <path android:pathData="M99,400 A1,1 0 1,1 101,400 A1,1 0 1,1 99,400" android:fillColor="#F97316"/>
+    <path android:pathData="M299,450 A1,1 0 1,1 301,450 A1,1 0 1,1 299,450" android:fillColor="#84CC16"/>
+    
+    <!-- Root System -->
+    <path android:pathData="M200,600 Q190,580 185,550 Q180,520 190,490 Q200,460 200,430"
+          android:strokeColor="#16A34A"
+          android:strokeWidth="8"
+          android:fillType="nonZero"/>
+    <path android:pathData="M185,550 Q160,540 130,530 Q100,520 80,500"
+          android:strokeColor="#166534"
+          android:strokeWidth="4"
+          android:fillType="nonZero"/>
+    <path android:pathData="M190,520 Q220,510 250,500 Q280,490 310,470"
+          android:strokeColor="#166534"
+          android:strokeWidth="4"
+          android:fillType="nonZero"/>
+</vector>

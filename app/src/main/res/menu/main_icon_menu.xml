@@ -1,0 +1,7 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_view_saved_chats"
+        android:title="View Saved Chats"
+        app:showAsAction="never" />
+</menu>

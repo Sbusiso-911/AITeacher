@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base gradient background -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#2A3B4A"
+                android:endColor="#1F2D3A"
+                android:angle="135"/>
+            <corners android:radius="16dp"/>
+        </shape>
+    </item>
+    
+    <!-- Robot Head (Top Right) -->
+    <item android:top="8dp" android:right="8dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF"/>
+            <corners android:radius="2dp"/>
+            <size android:width="12dp" android:height="10dp"/>
+        </shape>
+    </item>
+    
+    <!-- Robot Eyes -->
+    <item android:top="10dp" android:right="14dp">
+        <shape android:shape="oval">
+            <solid android:color="#000000"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="10dp" android:right="10dp">
+        <shape android:shape="oval">
+            <solid android:color="#000000"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <!-- Robot Antenna -->
+    <item android:top="6dp" android:right="13dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF"/>
+            <size android:width="1dp" android:height="3dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="5dp" android:right="12dp">
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFF"/>
+            <size android:width="3dp" android:height="3dp"/>
+        </shape>
+    </item>
+    
+    <!-- IC Chip (Bottom Left) -->
+    <item android:bottom="8dp" android:left="8dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF"/>
+            <corners android:radius="1dp"/>
+            <size android:width="14dp" android:height="10dp"/>
+        </shape>
+    </item>
+    
+    <!-- IC Chip pins -->
+    <item android:bottom="6dp" android:left="6dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#000000"/>
+            <size android:width="2dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="6dp" android:left="24dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#000000"/>
+            <size android:width="2dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="20dp" android:left="6dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#000000"/>
+            <size android:width="2dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="20dp" android:left="24dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#000000"/>
+            <size android:width="2dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <!-- IC Chip label -->
+    <item android:bottom="10dp" android:left="12dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#000000"/>
+            <size android:width="6dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="13dp" android:left="14dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#000000"/>
+            <size android:width="2dp" android:height="1dp"/>
+        </shape>
+    </item>
+</layer-list>

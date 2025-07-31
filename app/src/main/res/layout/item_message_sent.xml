@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="end|top"
+    android:paddingHorizontal="8dp"
+    android:paddingVertical="4dp"
+    android:layout_marginBottom="8dp"
+    android:layout_marginStart="48dp"
+    android:layout_marginEnd="8dp"> <!-- Left margin for more space -->
+
+    <!-- Message bubble with copy icon overlay -->
+    <RelativeLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+
+        <!-- Message content container -->
+        <LinearLayout
+            android:id="@+id/messageContentContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/glassmorphism_message_sent"
+            android:padding="12dp"
+            android:orientation="vertical">
+
+            <!-- Action buttons row - dedicated first two lines -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="start"
+                android:layout_marginBottom="8dp">
+
+                <!-- Copy icon button -->
+                <ImageView
+                    android:id="@+id/copy_icon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginEnd="8dp"
+                    android:src="@drawable/ic_copy"
+                    android:contentDescription="@string/copy_sent_message"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/circle_white_background"
+                    android:padding="4dp"
+                    app:tint="@color/glass_text_primary"/>
+
+                <!-- Share icon button -->
+                <ImageView
+                    android:id="@+id/share_icon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_share"
+                    android:contentDescription="Share message"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/circle_white_background"
+                    android:padding="4dp"
+                    app:tint="@color/glass_text_primary"/>
+            </LinearLayout>
+
+            <!-- Message text content -->
+            <TextView
+                android:id="@+id/messageTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="16sp"
+                android:lineSpacingExtra="2dp"
+                android:fontFamily="@font/montserrat"
+                android:text="@string/sent_message"
+                android:autoLink="web"
+                android:linksClickable="true"
+                android:textIsSelectable="true"/>
+        </LinearLayout>
+    </RelativeLayout>
+
+    <!-- User Avatar - positioned at top right, smaller and non-intrusive -->
+    <ImageView
+        android:id="@+id/emojiImageView"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="4dp"
+        android:src="@drawable/ic_user_emoji"
+        android:background="@drawable/circle_white_background"
+        android:contentDescription="@string/user_emoji" />
+</LinearLayout>

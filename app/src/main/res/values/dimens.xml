@@ -1,0 +1,8 @@
+<!-- res/values/dimens.xml -->
+<resources>
+    <!-- Button and icon sizes (matching HTML demo) -->
+    <dimen name="icon_button_size">40dp</dimen>
+    
+    <!-- Other existing dimensions -->
+    <dimen name="benefit_item_margin">12dp</dimen>
+</resources>

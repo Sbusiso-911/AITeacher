@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base radial gradient background -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:centerX="0.5"
+                android:centerY="0.3"
+                android:gradientRadius="1000dp"
+                android:startColor="@color/glass_gradient_start"
+                android:centerColor="@color/glass_gradient_middle"
+                android:endColor="@color/glass_gradient_end"/>
+        </shape>
+    </item>
+    
+    <!-- Large decorative circle - top right -->
+    <item android:top="-200dp" android:right="-100dp">
+        <shape android:shape="oval">
+            <solid android:color="@color/glass_circle_large"/>
+            <size android:width="400dp" android:height="400dp"/>
+        </shape>
+    </item>
+    
+    <!-- Medium decorative circle - center left -->
+    <item android:top="300dp" android:left="-150dp">
+        <shape android:shape="oval">
+            <solid android:color="@color/glass_circle_medium"/>
+            <size android:width="300dp" android:height="300dp"/>
+        </shape>
+    </item>
+    
+    <!-- Small decorative circle - bottom right -->
+    <item android:bottom="100dp" android:right="50dp">
+        <shape android:shape="oval">
+            <solid android:color="@color/glass_circle_medium"/>
+            <size android:width="150dp" android:height="150dp"/>
+        </shape>
+    </item>
+</layer-list>

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="600dp"
+    android:viewportWidth="400"
+    android:viewportHeight="600">
+    
+    <!-- Background -->
+    <path android:pathData="M0,0 L400,0 L400,600 L0,600 Z"
+          android:fillColor="@color/quantum_background"/>
+    
+    <!-- Hexagonal grid pattern -->
+    <group android:name="hex_grid">
+        <!-- Hexagon outlines -->
+        <path android:pathData="M70,75 L90,65 L110,75 L115,95 L110,115 L90,125 L70,115 L65,95 Z"
+              android:strokeColor="@color/quantum_primary_30"
+              android:strokeWidth="1"
+              android:fillType="nonZero"/>
+        <path android:pathData="M270,75 L290,65 L310,75 L315,95 L310,115 L290,125 L270,115 L265,95 Z"
+              android:strokeColor="@color/quantum_secondary_30"
+              android:strokeWidth="1"
+              android:fillType="nonZero"/>
+        <path android:pathData="M70,475 L90,465 L110,475 L115,495 L110,515 L90,525 L70,515 L65,495 Z"
+              android:strokeColor="@color/quantum_accent_30"
+              android:strokeWidth="1"
+              android:fillType="nonZero"/>
+        <path android:pathData="M270,475 L290,465 L310,475 L315,495 L310,515 L290,525 L270,515 L265,495 Z"
+              android:strokeColor="@color/quantum_primary_30"
+              android:strokeWidth="1"
+              android:fillType="nonZero"/>
+    </group>
+    
+    <!-- Central Quantum Cube -->
+    <group android:name="quantum_cube">
+        <!-- Front face -->
+        <path android:pathData="M160,260 L240,260 L240,340 L160,340 Z"
+              android:fillColor="@color/quantum_primary_50"
+              android:strokeColor="@color/quantum_primary"
+              android:strokeWidth="2"/>
+        
+        <!-- Top face (3D effect) -->
+        <path android:pathData="M160,260 L180,240 L260,240 L240,260 Z"
+              android:fillColor="@color/quantum_accent_30"
+              android:strokeColor="@color/quantum_accent"
+              android:strokeWidth="1"/>
+        
+        <!-- Right face (3D effect) -->
+        <path android:pathData="M240,260 L260,240 L260,320 L240,340 Z"
+              android:fillColor="@color/quantum_secondary_30"
+              android:strokeColor="@color/quantum_secondary"
+              android:strokeWidth="1"/>
+    </group>
+    
+    <!-- Electron Orbits -->
+    <group android:name="electron_orbits">
+        <!-- Orbit 1 (ellipse using path) -->
+        <path android:pathData="M80,300 A120,60 0 1,1 320,300 A120,60 0 1,1 80,300"
+                 android:fillType="nonZero"
+                 android:strokeColor="@color/quantum_primary_50"
+                 android:strokeWidth="1.5"/>
+        
+        <!-- Orbit 2 (ellipse using path) -->
+        <path android:pathData="M200,160 A90,140 0 1,1 200,440 A90,140 0 1,1 200,160"
+                 android:fillType="nonZero"
+                 android:strokeColor="@color/quantum_secondary_50"
+                 android:strokeWidth="1.5"/>
+        
+        <!-- Orbit 3 (circle using path) -->
+        <path android:pathData="M100,300 A100,100 0 1,1 300,300 A100,100 0 1,1 100,300"
+                 android:fillType="nonZero"
+                 android:strokeColor="@color/quantum_accent_50"
+                 android:strokeWidth="1.5"/>
+    </group>
+    
+    <!-- Electrons -->
+    <group android:name="electrons">
+        <path android:pathData="M316,300 A4,4 0 1,1 324,300 A4,4 0 1,1 316,300"
+                android:fillColor="@color/quantum_primary"/>
+        <path android:pathData="M197,160 A3,3 0 1,1 203,160 A3,3 0 1,1 197,160"
+                android:fillColor="@color/quantum_secondary"/>
+        <path android:pathData="M116.5,350 A3.5,3.5 0 1,1 123.5,350 A3.5,3.5 0 1,1 116.5,350"
+                android:fillColor="@color/quantum_accent"/>
+    </group>
+    
+    <!-- Atomic Particles -->
+    <group android:name="atomic_particles">
+        <!-- Corner particles -->
+        <path android:pathData="M77,120 A3,3 0 1,1 83,120 A3,3 0 1,1 77,120"
+                android:fillColor="@color/quantum_primary"/>
+        <path android:pathData="M317,120 A3,3 0 1,1 323,120 A3,3 0 1,1 317,120"
+                android:fillColor="@color/quantum_secondary"/>
+        <path android:pathData="M77,480 A3,3 0 1,1 83,480 A3,3 0 1,1 77,480"
+                android:fillColor="@color/quantum_accent"/>
+        <path android:pathData="M317,480 A3,3 0 1,1 323,480 A3,3 0 1,1 317,480"
+                android:fillColor="@color/quantum_primary"/>
+        
+        <!-- Floating particles -->
+        <path android:pathData="M148,180 A2,2 0 1,1 152,180 A2,2 0 1,1 148,180"
+                android:fillColor="@color/quantum_secondary"/>
+        <path android:pathData="M248,180 A2,2 0 1,1 252,180 A2,2 0 1,1 248,180"
+                android:fillColor="@color/quantum_accent"/>
+        <path android:pathData="M148,420 A2,2 0 1,1 152,420 A2,2 0 1,1 148,420"
+                android:fillColor="@color/quantum_primary"/>
+        <path android:pathData="M248,420 A2,2 0 1,1 252,420 A2,2 0 1,1 248,420"
+                android:fillColor="@color/quantum_secondary"/>
+    </group>
+    
+    <!-- Quantum Entanglement Lines -->
+    <group android:name="entanglement">
+        <path android:pathData="M80,120 Q200,80 320,120"
+              android:strokeColor="@color/quantum_primary_30"
+              android:strokeWidth="1"
+              android:fillType="nonZero"/>
+        <path android:pathData="M80,480 Q200,520 320,480"
+              android:strokeColor="@color/quantum_secondary_30"
+              android:strokeWidth="1"
+              android:fillType="nonZero"/>
+        <path android:pathData="M80,120 Q120,300 80,480"
+              android:strokeColor="@color/quantum_accent_30"
+              android:strokeWidth="1"
+              android:fillType="nonZero"/>
+        <path android:pathData="M320,120 Q280,300 320,480"
+              android:strokeColor="@color/quantum_primary_30"
+              android:strokeWidth="1"
+              android:fillType="nonZero"/>
+    </group>
+    
+    <!-- Energy Waves -->
+    <group android:name="energy_waves">
+        <path android:pathData="M40,300 A160,160 0 1,1 360,300 A160,160 0 1,1 40,300"
+                android:fillType="nonZero"
+                android:strokeColor="@color/quantum_primary_10"
+                android:strokeWidth="1"/>
+        <path android:pathData="M20,300 A180,180 0 1,1 380,300 A180,180 0 1,1 20,300"
+                android:fillType="nonZero"
+                android:strokeColor="@color/quantum_secondary_10"
+                android:strokeWidth="1"/>
+    </group>
+    
+    <!-- Crystal Structures -->
+    <group android:name="crystals">
+        <path android:pathData="M100,50 L110,30 L120,50 L110,70 Z"
+              android:fillColor="@color/quantum_crystal"
+              android:strokeColor="@color/quantum_primary"
+              android:strokeWidth="1"/>
+        <path android:pathData="M300,50 L310,30 L320,50 L310,70 Z"
+              android:fillColor="@color/quantum_crystal"
+              android:strokeColor="@color/quantum_secondary"
+              android:strokeWidth="1"/>
+        <path android:pathData="M100,550 L110,530 L120,550 L110,570 Z"
+              android:fillColor="@color/quantum_crystal"
+              android:strokeColor="@color/quantum_accent"
+              android:strokeWidth="1"/>
+        <path android:pathData="M300,550 L310,530 L320,550 L310,570 Z"
+              android:fillColor="@color/quantum_crystal"
+              android:strokeColor="@color/quantum_primary"
+              android:strokeWidth="1"/>
+    </group>
+</vector>

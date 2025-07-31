@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base gradient background with glass effect -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#B32A3B4A"/>
+            <corners android:radius="16dp"/>
+        </shape>
+    </item>
+    
+    <!-- Graph Grid Lines -->
+    <!-- Horizontal grid lines -->
+    <item android:top="16dp" android:left="8dp" android:right="8dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#40FFFFFF"/>
+            <size android:height="0.5dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="24dp" android:left="8dp" android:right="8dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#30FFFFFF"/>
+            <size android:height="0.5dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="32dp" android:left="8dp" android:right="8dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#40FFFFFF"/>
+            <size android:height="0.5dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="16dp" android:left="8dp" android:right="8dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#30FFFFFF"/>
+            <size android:height="0.5dp"/>
+        </shape>
+    </item>
+    
+    <!-- Vertical grid lines -->
+    <item android:top="8dp" android:bottom="8dp" android:left="16dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#30FFFFFF"/>
+            <size android:width="0.5dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="8dp" android:bottom="8dp" android:left="24dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#25FFFFFF"/>
+            <size android:width="0.5dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="8dp" android:bottom="8dp" android:right="16dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#30FFFFFF"/>
+            <size android:width="0.5dp"/>
+        </shape>
+    </item>
+    
+    <!-- Main Axes (X and Y) -->
+    <item android:top="20dp" android:left="8dp" android:right="8dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF"/>
+            <size android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="8dp" android:bottom="8dp" android:left="12dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF"/>
+            <size android:width="1dp"/>
+        </shape>
+    </item>
+    
+    <!-- Data Points on Graph -->
+    <item android:top="18dp" android:left="16dp">
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFF"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="14dp" android:left="20dp">
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFF"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="12dp" android:left="24dp">
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFF"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="16dp" android:right="20dp">
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFF"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <!-- Trend Line Segments -->
+    <item android:top="16dp" android:left="17dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF"/>
+            <size android:width="3dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="13dp" android:left="21dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF"/>
+            <size android:width="3dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <!-- Bar Chart Elements -->
+    <item android:bottom="21dp" android:left="28dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF"/>
+            <size android:width="2dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="21dp" android:left="32dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF"/>
+            <size android:width="2dp" android:height="12dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="21dp" android:left="36dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF"/>
+            <size android:width="2dp" android:height="6dp"/>
+        </shape>
+    </item>
+    
+    <!-- Percentage Symbol % -->
+    <item android:bottom="8dp" android:right="8dp">
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFF"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="12dp" android:right="12dp">
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFF"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="8dp" android:right="12dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF"/>
+            <size android:width="1dp" android:height="6dp"/>
+        </shape>
+    </item>
+</layer-list>

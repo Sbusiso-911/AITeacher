@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Header -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Choose AI Model"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/colorPrimary"
+        android:gravity="center"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Current tier indicator -->
+    <TextView
+        android:id="@+id/tv_current_tier"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Current Plan: FREE"
+        android:textSize="14sp"
+        android:textColor="@color/gray_dark"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"
+        android:padding="8dp"
+        android:background="@drawable/rounded_corners_grey" />
+
+    <!-- Models RecyclerView -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_ai_models"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:maxHeight="400dp"
+        android:scrollbars="vertical" />
+
+    <!-- Info text -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="💡 Upgrade your plan to access more powerful AI models"
+        android:textSize="12sp"
+        android:textColor="@color/gray_dark"
+        android:gravity="center"
+        android:layout_marginTop="8dp" />
+
+</LinearLayout>

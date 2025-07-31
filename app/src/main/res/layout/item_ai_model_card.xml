@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/card_model"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Header with Model Name and Tier Badge -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp">
+
+            <!-- Model Name -->
+            <TextView
+                android:id="@+id/tv_model_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:text="GPT-4"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:fontFamily="@font/montserrat_bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <!-- Tier Badge -->
+            <TextView
+                android:id="@+id/tv_tier_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:text="PRO"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:background="@drawable/rounded_corners"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="2dp" />
+
+        </RelativeLayout>
+
+        <!-- Provider -->
+        <TextView
+            android:id="@+id/tv_provider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="OpenAI"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Capabilities -->
+        <TextView
+            android:id="@+id/tv_capabilities"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="⭐⭐⭐⭐⭐ (9/10)"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginBottom="4dp" />
+
+        <!-- Usage Limit -->
+        <TextView
+            android:id="@+id/tv_daily_limit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Unlimited daily"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginBottom="4dp" />
+
+        <!-- Cost per Message -->
+        <TextView
+            android:id="@+id/tv_cost_per_message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="~$0.003/msg"
+            android:textSize="12sp"
+            android:textColor="@color/successColor"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

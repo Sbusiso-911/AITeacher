@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base dark gradient background -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#1A2B3A"
+                android:centerColor="#2A3B4A"
+                android:endColor="#1A2B3A"
+                android:angle="225"/>
+        </shape>
+    </item>
+    
+    <!-- Atom Symbol - Top Left -->
+    <!-- Nucleus -->
+    <item android:top="80dp" android:left="60dp">
+        <shape android:shape="oval">
+            <solid android:color="#80FFD700"/>
+            <size android:width="6dp" android:height="6dp"/>
+        </shape>
+    </item>
+    
+    <!-- Electron orbits -->
+    <item android:top="75dp" android:left="55dp">
+        <shape android:shape="oval">
+            <stroke android:width="1dp" android:color="#334A90E2"/>
+            <size android:width="16dp" android:height="16dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="78dp" android:left="58dp">
+        <shape android:shape="oval">
+            <stroke android:width="1dp" android:color="#334A90E2"/>
+            <size android:width="10dp" android:height="10dp"/>
+        </shape>
+    </item>
+    
+    <!-- Electrons -->
+    <item android:top="73dp" android:left="53dp">
+        <shape android:shape="oval">
+            <solid android:color="#80A0C0FF"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="89dp" android:left="69dp">
+        <shape android:shape="oval">
+            <solid android:color="#80A0C0FF"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <!-- DNA Helix - Top Right -->
+    <item android:top="120dp" android:right="60dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70E6F3FF"/>
+            <size android:width="1dp" android:height="20dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="120dp" android:right="54dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70E6F3FF"/>
+            <size android:width="1dp" android:height="20dp"/>
+        </shape>
+    </item>
+    
+    <!-- DNA base pairs -->
+    <item android:top="124dp" android:right="58dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70E6F3FF"/>
+            <size android:width="6dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="128dp" android:right="58dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70E6F3FF"/>
+            <size android:width="6dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="132dp" android:right="58dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70E6F3FF"/>
+            <size android:width="6dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="136dp" android:right="58dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70E6F3FF"/>
+            <size android:width="6dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <!-- Gear/Cog - Center Left -->
+    <item android:top="250dp" android:left="50dp">
+        <shape android:shape="oval">
+            <stroke android:width="2dp" android:color="#264A90E2"/>
+            <size android:width="16dp" android:height="16dp"/>
+        </shape>
+    </item>
+    
+    <!-- Gear teeth -->
+    <item android:top="248dp" android:left="57dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70A0C0FF"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="266dp" android:left="57dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70A0C0FF"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="257dp" android:left="48dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70A0C0FF"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="257dp" android:left="66dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70A0C0FF"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <!-- Center hole -->
+    <item android:top="255dp" android:left="55dp">
+        <shape android:shape="oval">
+            <solid android:color="#1A2B3A"/>
+            <size android:width="6dp" android:height="6dp"/>
+        </shape>
+    </item>
+    
+    <!-- Molecular Structure - Center Right -->
+    <!-- Central atom -->
+    <item android:top="300dp" android:right="100dp">
+        <shape android:shape="oval">
+            <solid android:color="#80FFD700"/>
+            <size android:width="4dp" android:height="4dp"/>
+        </shape>
+    </item>
+    
+    <!-- Surrounding atoms -->
+    <item android:top="295dp" android:right="85dp">
+        <shape android:shape="oval">
+            <solid android:color="#70E6F3FF"/>
+            <size android:width="3dp" android:height="3dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="305dp" android:right="85dp">
+        <shape android:shape="oval">
+            <solid android:color="#70E6F3FF"/>
+            <size android:width="3dp" android:height="3dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="300dp" android:right="115dp">
+        <shape android:shape="oval">
+            <solid android:color="#70E6F3FF"/>
+            <size android:width="3dp" android:height="3dp"/>
+        </shape>
+    </item>
+    
+    <!-- Bonds -->
+    <item android:top="301dp" android:right="87dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70E6F3FF"/>
+            <size android:width="11dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="306dp" android:right="87dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70E6F3FF"/>
+            <size android:width="11dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="301dp" android:right="102dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70E6F3FF"/>
+            <size android:width="11dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <!-- Circuit Board Elements - Bottom Left -->
+    <item android:bottom="180dp" android:left="40dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70A0C0FF"/>
+            <size android:width="20dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="200dp" android:bottom="160dp" android:left="50dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70A0C0FF"/>
+            <size android:width="1dp"/>
+        </shape>
+    </item>
+    
+    <!-- IC chip -->
+    <item android:bottom="190dp" android:left="45dp">
+        <shape android:shape="rectangle">
+            <stroke android:width="1dp" android:color="#264A90E2"/>
+            <corners android:radius="1dp"/>
+            <size android:width="10dp" android:height="6dp"/>
+        </shape>
+    </item>
+    
+    <!-- Telescope/Observatory - Bottom Right -->
+    <item android:bottom="150dp" android:right="60dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70FFD700"/>
+            <size android:width="16dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="152dp" android:right="68dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70FFD700"/>
+            <size android:width="2dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <!-- Telescope base -->
+    <item android:bottom="144dp" android:right="74dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70FFD700"/>
+            <size android:width="8dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <!-- Additional scattered tech elements -->
+    <!-- Small gears -->
+    <item android:top="400dp" android:left="150dp">
+        <shape android:shape="oval">
+            <stroke android:width="1dp" android:color="#1A4A90E2"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <!-- Small atoms -->
+    <item android:bottom="300dp" android:right="150dp">
+        <shape android:shape="oval">
+            <solid android:color="#60FFD700"/>
+            <size android:width="3dp" android:height="3dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="298dp" android:right="148dp">
+        <shape android:shape="oval">
+            <stroke android:width="1dp" android:color="#1A4A90E2"/>
+            <size android:width="7dp" android:height="7dp"/>
+        </shape>
+    </item>
+    
+    <!-- Small circuit traces -->
+    <item android:top="500dp" android:left="200dp" android:right="100dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#60A0C0FF"/>
+            <size android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="400dp" android:left="120dp">
+        <shape android:shape="oval">
+            <solid android:color="#60E6F3FF"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+</layer-list>

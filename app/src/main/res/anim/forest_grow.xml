@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@android:anim/accelerate_decelerate_interpolator"
+    android:shareInterpolator="true">
+    
+    <!-- Organic growth animation -->
+    <scale
+        android:duration="5000"
+        android:fromXScale="0.9"
+        android:fromYScale="0.9"
+        android:toXScale="1.1"
+        android:toYScale="1.1"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:repeatCount="infinite"
+        android:repeatMode="reverse" />
+    
+    <!-- Bio-luminescent glow -->
+    <alpha
+        android:duration="4000"
+        android:fromAlpha="0.6"
+        android:toAlpha="1.0"
+        android:repeatCount="infinite"
+        android:repeatMode="reverse" />
+    
+    <!-- Subtle branch sway -->
+    <rotate
+        android:duration="8000"
+        android:fromDegrees="-2"
+        android:toDegrees="2"
+        android:pivotX="50%"
+        android:pivotY="100%"
+        android:repeatCount="infinite"
+        android:repeatMode="reverse" />
+    
+    <!-- Organic flowing motion -->
+    <translate
+        android:duration="6000"
+        android:fromXDelta="-1%"
+        android:toXDelta="1%"
+        android:fromYDelta="-0.5%"
+        android:toYDelta="0.5%"
+        android:repeatCount="infinite"
+        android:repeatMode="reverse" />
+    
+    <!-- Micro-organism floating -->
+    <set android:startOffset="2000">
+        <translate
+            android:duration="8000"
+            android:fromXDelta="0%"
+            android:toXDelta="3%"
+            android:fromYDelta="0%"
+            android:toYDelta="-2%"
+            android:repeatCount="infinite"
+            android:repeatMode="reverse"
+            android:interpolator="@android:anim/bounce_interpolator" />
+    </set>
+    
+</set>

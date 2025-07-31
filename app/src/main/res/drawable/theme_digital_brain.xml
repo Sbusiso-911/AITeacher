@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="600dp"
+    android:viewportWidth="400"
+    android:viewportHeight="600">
+    
+    <!-- Background -->
+    <path android:pathData="M0,0 L400,0 L400,600 L0,600 Z"
+          android:fillColor="@color/brain_background"/>
+    
+    <!-- Binary rain pattern -->
+    <group android:name="binary_rain">
+        <!-- Binary particles as small rectangles -->
+        <path android:pathData="M49,42 L51,42 L51,50 L49,50 Z M79,62 L81,62 L81,70 L79,70 Z M119,32 L121,32 L121,40 L119,40 Z M159,72 L161,72 L161,80 L159,80 Z M199,52 L201,52 L201,60 L199,60 Z M239,37 L241,37 L241,45 L239,45 Z M279,67 L281,67 L281,75 L279,75 Z M319,47 L321,47 L321,55 L319,55 Z"
+              android:fillColor="@color/brain_primary_30"/>
+        
+        <!-- More binary at bottom -->
+        <path android:pathData="M69,512 L71,512 L71,520 L69,520 Z M109,532 L111,532 L111,540 L109,540 Z M149,552 L151,552 L151,560 L149,560 Z M189,572 L191,572 L191,580 L189,580 Z M229,542 L231,542 L231,550 L229,550 Z M269,562 L271,562 L271,570 L269,570 Z M309,527 L311,527 L311,535 L309,535 Z"
+              android:fillColor="@color/brain_secondary_30"/>
+    </group>
+    
+    <!-- Central Brain Core -->
+    <group android:name="brain_core">
+        <path android:pathData="M120,300 A80,80 0 1,1 280,300 A80,80 0 1,1 120,300"
+                android:fillColor="@color/brain_primary_50"/>
+        <path android:pathData="M140,300 A60,60 0 1,1 260,300 A60,60 0 1,1 140,300"
+                android:fillColor="@color/brain_secondary_30"/>
+        <path android:pathData="M160,300 A40,40 0 1,1 240,300 A40,40 0 1,1 160,300"
+                android:fillColor="@color/brain_accent"/>
+    </group>
+    
+    <!-- Neural Network Nodes -->
+    <group android:name="neural_nodes">
+        <!-- Main network -->
+        <path android:pathData="M194,250 A6,6 0 1,1 206,250 A6,6 0 1,1 194,250"
+                android:fillColor="@color/brain_secondary"/>
+        <path android:pathData="M155,280 A5,5 0 1,1 165,280 A5,5 0 1,1 155,280"
+                android:fillColor="@color/brain_primary"/>
+        <path android:pathData="M235,280 A5,5 0 1,1 245,280 A5,5 0 1,1 235,280"
+                android:fillColor="@color/brain_accent"/>
+        <path android:pathData="M116,320 A4,4 0 1,1 124,320 A4,4 0 1,1 116,320"
+                android:fillColor="@color/brain_primary"/>
+        <path android:pathData="M276,320 A4,4 0 1,1 284,320 A4,4 0 1,1 276,320"
+                android:fillColor="@color/brain_secondary"/>
+        <path android:pathData="M175,350 A5,5 0 1,1 185,350 A5,5 0 1,1 175,350"
+                android:fillColor="@color/brain_accent"/>
+        <path android:pathData="M215,350 A5,5 0 1,1 225,350 A5,5 0 1,1 215,350"
+                android:fillColor="@color/brain_primary"/>
+        
+        <!-- Outer network -->
+        <path android:pathData="M97,200 A3,3 0 1,1 103,200 A3,3 0 1,1 97,200"
+                android:fillColor="@color/brain_primary"/>
+        <path android:pathData="M297,200 A3,3 0 1,1 303,200 A3,3 0 1,1 297,200"
+                android:fillColor="@color/brain_secondary"/>
+        <path android:pathData="M77,400 A3,3 0 1,1 83,400 A3,3 0 1,1 77,400"
+                android:fillColor="@color/brain_accent"/>
+        <path android:pathData="M317,400 A3,3 0 1,1 323,400 A3,3 0 1,1 317,400"
+                android:fillColor="@color/brain_primary"/>
+    </group>
+    
+    <!-- Synaptic Connections -->
+    <group android:name="synapses">
+        <path android:pathData="M200,250 Q180,265 160,280"
+              android:strokeColor="@color/brain_secondary"
+              android:strokeWidth="2"
+              android:fillType="nonZero"/>
+        <path android:pathData="M200,250 Q220,265 240,280"
+              android:strokeColor="@color/brain_secondary"
+              android:strokeWidth="2"
+              android:fillType="nonZero"/>
+        <path android:pathData="M160,280 Q140,300 120,320"
+              android:strokeColor="@color/brain_primary"
+              android:strokeWidth="1.5"
+              android:fillType="nonZero"/>
+        <path android:pathData="M240,280 Q260,300 280,320"
+              android:strokeColor="@color/brain_primary"
+              android:strokeWidth="1.5"
+              android:fillType="nonZero"/>
+        <path android:pathData="M160,280 Q170,315 180,350"
+              android:strokeColor="@color/brain_accent"
+              android:strokeWidth="2"
+              android:fillType="nonZero"/>
+        <path android:pathData="M240,280 Q230,315 220,350"
+              android:strokeColor="@color/brain_accent"
+              android:strokeWidth="2"
+              android:fillType="nonZero"/>
+        <path android:pathData="M180,350 L220,350"
+              android:strokeColor="@color/brain_primary"
+              android:strokeWidth="1.5"/>
+    </group>
+    
+    <!-- Data Particles -->
+    <group android:name="data_particles">
+        <path android:pathData="M48,150 A2,2 0 1,1 52,150 A2,2 0 1,1 48,150"
+                android:fillColor="@color/brain_secondary"/>
+        <path android:pathData="M348,150 A2,2 0 1,1 352,150 A2,2 0 1,1 348,150"
+                android:fillColor="@color/brain_primary"/>
+        <path android:pathData="M48,450 A2,2 0 1,1 52,450 A2,2 0 1,1 48,450"
+                android:fillColor="@color/brain_accent"/>
+        <path android:pathData="M348,450 A2,2 0 1,1 352,450 A2,2 0 1,1 348,450"
+                android:fillColor="@color/brain_secondary"/>
+    </group>
+    
+    <!-- Energy Waves -->
+    <group android:name="energy_waves">
+        <path android:pathData="M100,300 A100,100 0 1,1 300,300 A100,100 0 1,1 100,300"
+                android:fillType="nonZero"
+                android:strokeColor="@color/brain_secondary_30"
+                android:strokeWidth="1"/>
+        <path android:pathData="M80,300 A120,120 0 1,1 320,300 A120,120 0 1,1 80,300"
+                android:fillType="nonZero"
+                android:strokeColor="@color/brain_primary_30"
+                android:strokeWidth="1"/>
+    </group>
+    
+    <!-- Holographic Data Streams -->
+    <group android:name="data_streams">
+        <path android:pathData="M80,50 L82,50 L82,550 L80,550 Z"
+              android:fillColor="@color/brain_primary_30"/>
+        <path android:pathData="M320,50 L322,50 L322,550 L320,550 Z"
+              android:fillColor="@color/brain_secondary_30"/>
+        <path android:pathData="M50,180 L350,180 L350,182 L50,182 Z"
+              android:fillColor="@color/brain_accent_30"/>
+        <path android:pathData="M50,420 L350,420 L350,422 L50,422 Z"
+              android:fillColor="@color/brain_primary_30"/>
+    </group>
+</vector>

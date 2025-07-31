@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base dark gradient background -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#1A2B3A"
+                android:centerColor="#2A3B4A"
+                android:endColor="#1A2B3A"
+                android:angle="270"/>
+        </shape>
+    </item>
+    
+    <!-- Neural Network Layers -->
+    <!-- Input Layer (Left) -->
+    <item android:top="100dp" android:left="40dp">
+        <shape android:shape="oval">
+            <solid android:color="#80A0C0FF"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="140dp" android:left="40dp">
+        <shape android:shape="oval">
+            <solid android:color="#80A0C0FF"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="180dp" android:left="40dp">
+        <shape android:shape="oval">
+            <solid android:color="#80A0C0FF"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="220dp" android:left="40dp">
+        <shape android:shape="oval">
+            <solid android:color="#80A0C0FF"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <!-- Hidden Layer 1 (Center-Left) -->
+    <item android:top="80dp" android:left="120dp">
+        <shape android:shape="oval">
+            <solid android:color="#80FFD700"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="110dp" android:left="120dp">
+        <shape android:shape="oval">
+            <solid android:color="#80FFD700"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="140dp" android:left="120dp">
+        <shape android:shape="oval">
+            <solid android:color="#80FFD700"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="170dp" android:left="120dp">
+        <shape android:shape="oval">
+            <solid android:color="#80FFD700"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="200dp" android:left="120dp">
+        <shape android:shape="oval">
+            <solid android:color="#80FFD700"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="230dp" android:left="120dp">
+        <shape android:shape="oval">
+            <solid android:color="#80FFD700"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <!-- Hidden Layer 2 (Center-Right) -->
+    <item android:top="90dp" android:left="200dp">
+        <shape android:shape="oval">
+            <solid android:color="#80E6F3FF"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="130dp" android:left="200dp">
+        <shape android:shape="oval">
+            <solid android:color="#80E6F3FF"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="170dp" android:left="200dp">
+        <shape android:shape="oval">
+            <solid android:color="#80E6F3FF"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="210dp" android:left="200dp">
+        <shape android:shape="oval">
+            <solid android:color="#80E6F3FF"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <!-- Output Layer (Right) -->
+    <item android:top="130dp" android:left="280dp">
+        <shape android:shape="oval">
+            <solid android:color="#70FFD700"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="170dp" android:left="280dp">
+        <shape android:shape="oval">
+            <solid android:color="#70FFD700"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <!-- Neural Connections (Input to Hidden Layer 1) -->
+    <item android:top="103dp" android:left="48dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70A0C0FF"/>
+            <size android:width="72dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="143dp" android:left="48dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70A0C0FF"/>
+            <size android:width="72dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="183dp" android:left="48dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70A0C0FF"/>
+            <size android:width="72dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="223dp" android:left="48dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70A0C0FF"/>
+            <size android:width="72dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <!-- Cross connections (diagonal) -->
+    <item android:top="105dp" android:left="50dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#60A0C0FF"/>
+            <size android:width="68dp" android:height="0.5dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="115dp" android:left="50dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#60A0C0FF"/>
+            <size android:width="68dp" android:height="0.5dp"/>
+        </shape>
+    </item>
+    
+    <!-- Hidden Layer 1 to Hidden Layer 2 connections -->
+    <item android:top="93dp" android:left="128dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70FFD700"/>
+            <size android:width="72dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="133dp" android:left="128dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70FFD700"/>
+            <size android:width="72dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="173dp" android:left="128dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70FFD700"/>
+            <size android:width="72dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="213dp" android:left="128dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70FFD700"/>
+            <size android:width="72dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <!-- Hidden Layer 2 to Output connections -->
+    <item android:top="133dp" android:left="208dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70E6F3FF"/>
+            <size android:width="72dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="173dp" android:left="208dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70E6F3FF"/>
+            <size android:width="72dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <!-- Additional scattered neural elements -->
+    <!-- Small neural clusters at bottom -->
+    <item android:bottom="200dp" android:left="80dp">
+        <shape android:shape="oval">
+            <solid android:color="#60A0C0FF"/>
+            <size android:width="4dp" android:height="4dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="180dp" android:left="160dp">
+        <shape android:shape="oval">
+            <solid android:color="#60FFD700"/>
+            <size android:width="4dp" android:height="4dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="160dp" android:left="240dp">
+        <shape android:shape="oval">
+            <solid android:color="#60E6F3FF"/>
+            <size android:width="4dp" android:height="4dp"/>
+        </shape>
+    </item>
+    
+    <!-- Small connection lines -->
+    <item android:bottom="202dp" android:left="84dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#60A0C0FF"/>
+            <size android:width="20dp" android:height="0.5dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="182dp" android:left="164dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#60FFD700"/>
+            <size android:width="20dp" android:height="0.5dp"/>
+        </shape>
+    </item>
+    
+    <!-- Brain-like patterns at top -->
+    <item android:top="40dp" android:left="150dp">
+        <shape android:shape="oval">
+            <stroke android:width="1dp" android:color="#1A4A90E2"/>
+            <size android:width="12dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="42dp" android:left="152dp">
+        <shape android:shape="oval">
+            <solid android:color="#60A0C0FF"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="42dp" android:left="158dp">
+        <shape android:shape="oval">
+            <solid android:color="#60A0C0FF"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <!-- Synaptic connections -->
+    <item android:top="44dp" android:left="154dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#60A0C0FF"/>
+            <size android:width="4dp" android:height="0.5dp"/>
+        </shape>
+    </item>
+</layer-list>

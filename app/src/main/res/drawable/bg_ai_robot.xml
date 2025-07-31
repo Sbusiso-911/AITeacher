@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="600dp"
+    android:viewportWidth="400"
+    android:viewportHeight="600">
+    
+    <!-- Background -->
+    <path android:pathData="M0,0 L400,0 L400,600 L0,600 Z"
+          android:fillColor="#0F0F23"/>
+    
+    <!-- Circuit Grid Pattern -->
+    <path android:pathData="M50,100 L350,100 M50,200 L350,200 M50,400 L350,400 M50,500 L350,500 M100,50 L100,550 M200,50 L200,550 M300,50 L300,550"
+          android:strokeColor="#4D00FFFF"
+          android:strokeWidth="1"/>
+    
+    <!-- Circuit Nodes -->
+    <path android:pathData="M97,100 A3,3 0 1,1 103,100 A3,3 0 1,1 97,100" android:fillColor="#00FFFF"/>
+    <path android:pathData="M197,100 A3,3 0 1,1 203,100 A3,3 0 1,1 197,100" android:fillColor="#00FFFF"/>
+    <path android:pathData="M297,100 A3,3 0 1,1 303,100 A3,3 0 1,1 297,100" android:fillColor="#00FFFF"/>
+    <path android:pathData="M97,200 A3,3 0 1,1 103,200 A3,3 0 1,1 97,200" android:fillColor="#00CCCC"/>
+    <path android:pathData="M197,200 A3,3 0 1,1 203,200 A3,3 0 1,1 197,200" android:fillColor="#00CCCC"/>
+    <path android:pathData="M297,200 A3,3 0 1,1 303,200 A3,3 0 1,1 297,200" android:fillColor="#00CCCC"/>
+    
+    <!-- Robot Head -->
+    <path android:pathData="M160,180 Q200,160 240,180 L240,240 Q200,260 160,240 Z"
+          android:fillColor="#2D3A8C"
+          android:strokeColor="#00FFFF"
+          android:strokeWidth="2"/>
+    
+    <!-- Neural Network Display -->
+    <path android:pathData="M180,200 L220,200 M200,185 L200,215 M190,190 L210,210 M210,190 L190,210"
+          android:strokeColor="#00FFFF"
+          android:strokeWidth="1"/>
+    
+    <!-- Neural Nodes -->
+    <path android:pathData="M178,200 A2,2 0 1,1 182,200 A2,2 0 1,1 178,200" android:fillColor="#00E5FF"/>
+    <path android:pathData="M198,185 A2,2 0 1,1 202,185 A2,2 0 1,1 198,185" android:fillColor="#00E5FF"/>
+    <path android:pathData="M218,200 A2,2 0 1,1 222,200 A2,2 0 1,1 218,200" android:fillColor="#00E5FF"/>
+    <path android:pathData="M198,215 A2,2 0 1,1 202,215 A2,2 0 1,1 198,215" android:fillColor="#00E5FF"/>
+    
+    <!-- Robot Eyes -->
+    <path android:pathData="M178,210 Q175,210 175,213 Q175,216 178,216 L184,216 Q187,216 187,213 Q187,210 184,210 Z" android:fillColor="#00FFFF"/>
+    <path android:pathData="M216,210 Q213,210 213,213 Q213,216 216,216 L222,216 Q225,216 225,213 Q225,210 222,210 Z" android:fillColor="#00FFFF"/>
+    
+    <!-- Antenna -->
+    <path android:pathData="M200,180 L200,160 L195,155 M200,160 L205,155"
+          android:strokeColor="#00FFFF"
+          android:strokeWidth="2"/>
+    <path android:pathData="M197,155 A3,3 0 1,1 203,155 A3,3 0 1,1 197,155" android:fillColor="#00FF41"/>
+    
+    <!-- Robot Body -->
+    <path android:pathData="M180,260 Q170,260 170,270 L170,330 Q170,340 180,340 L220,340 Q230,340 230,330 L230,270 Q230,260 220,260 Z"
+          android:fillColor="#2D3A8C"
+          android:strokeColor="#00FFFF"
+          android:strokeWidth="2"/>
+    
+    <!-- Control Panel -->
+    <path android:pathData="M185,280 Q180,280 180,285 L180,315 Q180,320 185,320 L215,320 Q220,320 220,315 L220,285 Q220,280 215,280 Z"
+          android:fillColor="#0F0F23"
+          android:strokeColor="#00FFFF"
+          android:strokeWidth="1"/>
+    
+    <!-- Status Lights -->
+    <path android:pathData="M187,290 A3,3 0 1,1 193,290 A3,3 0 1,1 187,290" android:fillColor="#00FF41"/>
+    <path android:pathData="M197,290 A3,3 0 1,1 203,290 A3,3 0 1,1 197,290" android:fillColor="#00FFFF"/>
+    <path android:pathData="M207,290 A3,3 0 1,1 213,290 A3,3 0 1,1 207,290" android:fillColor="#FF5722"/>
+    
+    <!-- Data Display -->
+    <path android:pathData="M185,305 L215,305 L215,315 L185,315 Z" android:fillColor="#0F0F23"/>
+    <path android:pathData="M187,307 L195,307 M187,310 L205,310 M187,313 L190,313"
+          android:strokeColor="#00FFFF"
+          android:strokeWidth="0.5"/>
+    
+    <!-- Arms -->
+    <path android:pathData="M144,280 Q140,280 140,284 Q140,288 144,288 L166,288 Q170,288 170,284 Q170,280 166,280 Z"
+          android:fillColor="#2D3A8C"
+          android:strokeColor="#00FFFF"
+          android:strokeWidth="1"/>
+    <path android:pathData="M234,280 Q230,280 230,284 Q230,288 234,288 L256,288 Q260,288 260,284 Q260,280 256,280 Z"
+          android:fillColor="#2D3A8C"
+          android:strokeColor="#00FFFF"
+          android:strokeWidth="1"/>
+    
+    <!-- Data Streams -->
+    <path android:pathData="M100,350 Q150,370 200,360 Q250,350 300,370"
+          android:strokeColor="#8000FFFF"
+          android:strokeWidth="2"
+          android:fillType="nonZero"/>
+    <path android:pathData="M80,450 Q200,430 320,450"
+          android:strokeColor="#00CCCC"
+          android:strokeWidth="1"/>
+</vector>

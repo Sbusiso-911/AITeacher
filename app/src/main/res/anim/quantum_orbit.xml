@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@android:anim/linear_interpolator"
+    android:shareInterpolator="true">
+    
+    <!-- Main orbital rotation -->
+    <rotate
+        android:duration="10000"
+        android:fromDegrees="0"
+        android:toDegrees="360"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:repeatCount="infinite" />
+    
+    <!-- Quantum cube rotation -->
+    <rotate
+        android:duration="20000"
+        android:fromDegrees="0"
+        android:toDegrees="360"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:repeatCount="infinite"
+        android:interpolator="@android:anim/accelerate_decelerate_interpolator" />
+    
+    <!-- Particle wave effect -->
+    <scale
+        android:duration="8000"
+        android:fromXScale="1.0"
+        android:fromYScale="1.0"
+        android:toXScale="1.1"
+        android:toYScale="1.1"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:repeatCount="infinite"
+        android:repeatMode="reverse"
+        android:interpolator="@android:anim/accelerate_decelerate_interpolator" />
+    
+    <!-- Energy wave propagation -->
+    <alpha
+        android:duration="6000"
+        android:fromAlpha="0.8"
+        android:toAlpha="0.2"
+        android:repeatCount="infinite"
+        android:repeatMode="reverse" />
+    
+</set>

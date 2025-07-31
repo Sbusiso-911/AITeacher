@@ -1,0 +1,23 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/action_color_black" android:title="Black" />
+    <item android:id="@+id/action_color_white" android:title="White" />
+    <item android:id="@+id/action_color_light_blue" android:title="Light Blue" />
+    <item android:id="@+id/action_color_light_green" android:title="Light Green" />
+    <item android:id="@+id/action_color_light_yellow" android:title="Light Yellow" />
+    <item android:id="@+id/action_color_light_grey" android:title="Light Grey" />
+    <item android:id="@+id/action_color_dark_grey" android:title="Dark Grey" />
+    <item android:id="@+id/action_color_red" android:title="Red" />
+    <item android:id="@+id/action_color_green" android:title="Green" />
+    <item android:id="@+id/action_color_blue" android:title="Blue" />
+    <item android:id="@+id/action_color_yellow" android:title="Yellow" />
+    <item android:id="@+id/action_color_cyan" android:title="Cyan" />
+    <item android:id="@+id/action_color_magenta" android:title="Magenta" />
+    <item android:id="@+id/action_color_orange" android:title="Orange" />
+    <item android:id="@+id/action_color_purple" android:title="Purple" />
+    <item android:id="@+id/action_color_pink" android:title="Pink" />
+    <item android:id="@+id/action_color_brown" android:title="Brown" />
+    <item android:id="@+id/action_color_teal" android:title="Teal" />
+    <item android:id="@+id/action_color_navy" android:title="Navy" />
+    <item android:id="@+id/action_color_maroon" android:title="Maroon" />
+    <item android:id="@+id/action_color_olive" android:title="Olive" />
+</menu>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Quantum AI Theme Colors -->
+    <color name="quantum_primary">#0EA5E9</color>    <!-- Quantum Blue -->
+    <color name="quantum_secondary">#10B981</color>  <!-- Atomic Green -->
+    <color name="quantum_background">#F8FAFC</color> <!-- Crystal White -->
+    <color name="quantum_accent">#06B6D4</color>     <!-- Cyan -->
+    
+    <!-- Additional quantum colors -->
+    <color name="quantum_electron">#3B82F6</color>   <!-- Electron Blue -->
+    <color name="quantum_orbit">#14B8A6</color>      <!-- Orbital Teal -->
+    <color name="quantum_particle">#8B5CF6</color>   <!-- Particle Purple -->
+    <color name="quantum_wave">#06B6D4</color>       <!-- Wave Cyan -->
+    <color name="quantum_crystal">#E5E7EB</color>    <!-- Crystal Gray -->
+    <color name="quantum_energy">#F59E0B</color>     <!-- Energy Amber -->
+    
+    <!-- Transparency variations -->
+    <color name="quantum_primary_50">#800EA5E9</color>
+    <color name="quantum_primary_30">#4D0EA5E9</color>
+    <color name="quantum_primary_10">#1A0EA5E9</color>
+    <color name="quantum_secondary_50">#8010B981</color>
+    <color name="quantum_secondary_30">#4D10B981</color>
+    <color name="quantum_secondary_10">#1A10B981</color>
+    <color name="quantum_accent_50">#8006B6D4</color>
+    <color name="quantum_accent_30">#4D06B6D4</color>
+    <color name="quantum_accent_10">#1A06B6D4</color>
+    <color name="quantum_background_80">#CCF8FAFC</color>
+    <color name="quantum_background_60">#99F8FAFC</color>
+</resources>

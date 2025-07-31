@@ -1,0 +1,26 @@
+<!-- res/layout/reminder_dialog.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/dialog_background">
+
+    <TextView
+        android:id="@+id/reminder_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="You have not asked anything in the past 72 hours. The teacher is exploding with information. Ask anything?"
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:gravity="center"
+        android:padding="16dp" />
+
+    <Button
+        android:id="@+id/ask_now_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ask Now"
+        android:layout_marginTop="16dp" />
+
+</LinearLayout>

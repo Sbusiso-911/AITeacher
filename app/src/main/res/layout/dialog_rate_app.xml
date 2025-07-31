@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/premium_dialog_background"
+    android:elevation="8dp">
+
+    <!-- Header with excitement and gratitude -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingBottom="16dp">
+
+        <com.airbnb.lottie.LottieAnimationView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            app:lottie_rawRes="@raw/star_animation"
+            app:lottie_autoPlay="true"
+            app:lottie_loop="true"
+            app:tint="@color/premium_gold"/>
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="Love AI Teacher?"
+            android:textColor="@color/premium_gold"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/montserrat_bold"
+            android:letterSpacing="0.02"/>
+    </LinearLayout>
+
+    <!-- Emotional appeal message -->
+    <TextView
+        android:id="@+id/message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Your 5-star rating helps us improve and reach more learners like you!"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:fontFamily="@font/montserrat_medium"
+        android:lineSpacingExtra="4dp"
+        android:gravity="center"
+        android:paddingBottom="24dp"/>
+
+    <!-- Star rating with interactive feedback -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="center"
+        android:paddingBottom="24dp">
+
+        <ImageView
+            android:id="@+id/star1"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_star_outline"
+            android:contentDescription="1 star"
+            app:tint="@color/premium_gold"
+            android:padding="4dp"/>
+
+        <ImageView
+            android:id="@+id/star2"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_star_outline"
+            android:contentDescription="2 stars"
+            app:tint="@color/premium_gold"
+            android:padding="4dp"/>
+
+        <ImageView
+            android:id="@+id/star3"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_star_outline"
+            android:contentDescription="3 stars"
+            app:tint="@color/premium_gold"
+            android:padding="4dp"/>
+
+        <ImageView
+            android:id="@+id/star4"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_star_outline"
+            android:contentDescription="4 stars"
+            app:tint="@color/premium_gold"
+            android:padding="4dp"/>
+
+        <ImageView
+            android:id="@+id/star5"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_star_outline"
+            android:contentDescription="5 stars"
+            app:tint="@color/premium_gold"
+            android:padding="4dp"/>
+    </LinearLayout>
+
+    <!-- Primary CTA - Emotional reward trigger -->
+    <Button
+        android:id="@+id/btnSubmit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="SUBMIT 5-STAR RATING"
+        android:textAllCaps="true"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/montserrat_bold"
+        android:textColor="@color/white"
+        android:background="@drawable/button_premium_gradient"
+        android:paddingVertical="14dp"
+        android:drawableStart="@drawable/ic_star_filled"
+        android:drawablePadding="8dp"
+        android:drawableTint="@color/white"/>
+
+    <!-- Secondary action with less prominence -->
+    <Button
+        android:id="@+id/btnLater"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Remind Me Later"
+        android:textSize="14sp"
+        android:fontFamily="@font/montserrat_medium"
+        android:textColor="@color/premium_gold"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:paddingVertical="12dp"
+        android:layout_marginTop="8dp"/>
+</LinearLayout>

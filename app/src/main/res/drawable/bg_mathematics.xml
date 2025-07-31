@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base dark gradient background -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#1A2B3A"
+                android:centerColor="#2A3B4A"
+                android:endColor="#1A2B3A"
+                android:angle="135"/>
+        </shape>
+    </item>
+    
+    <!-- Pi Symbol (π) - Top Left -->
+    <item android:top="80dp" android:left="50dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80A0C0FF"/>
+            <size android:width="20dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="82dp" android:left="55dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80A0C0FF"/>
+            <size android:width="2dp" android:height="12dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="82dp" android:left="63dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80A0C0FF"/>
+            <size android:width="2dp" android:height="12dp"/>
+        </shape>
+    </item>
+    
+    <!-- Square Root Symbol (√) - Top Right -->
+    <item android:top="120dp" android:right="60dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80FFD700"/>
+            <size android:width="2dp" android:height="6dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="124dp" android:right="58dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80FFD700"/>
+            <size android:width="2dp" android:height="4dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="126dp" android:right="56dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80FFD700"/>
+            <size android:width="2dp" android:height="12dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="120dp" android:right="44dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80FFD700"/>
+            <size android:width="12dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <!-- Infinity Symbol (∞) - Center -->
+    <item android:top="280dp" android:left="140dp">
+        <shape android:shape="oval">
+            <stroke android:width="2dp" android:color="#33E6F3FF"/>
+            <size android:width="12dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="280dp" android:left="150dp">
+        <shape android:shape="oval">
+            <stroke android:width="2dp" android:color="#33E6F3FF"/>
+            <size android:width="12dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <!-- Geometric Shapes -->
+    <!-- Triangle -->
+    <item android:top="200dp" android:right="80dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70A0C0FF"/>
+            <size android:width="2dp" android:height="16dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="214dp" android:right="66dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70A0C0FF"/>
+            <size android:width="16dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <!-- Circle -->
+    <item android:top="350dp" android:left="80dp">
+        <shape android:shape="oval">
+            <stroke android:width="2dp" android:color="#26FFD700"/>
+            <size android:width="16dp" android:height="16dp"/>
+        </shape>
+    </item>
+    
+    <!-- Sigma Symbol (Σ) - Bottom Left -->
+    <item android:bottom="150dp" android:left="40dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80A0C0FF"/>
+            <size android:width="16dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="148dp" android:left="40dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80A0C0FF"/>
+            <size android:width="2dp" android:height="6dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="144dp" android:left="42dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80A0C0FF"/>
+            <size android:width="8dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="142dp" android:left="40dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80A0C0FF"/>
+            <size android:width="2dp" android:height="6dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="136dp" android:left="40dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80A0C0FF"/>
+            <size android:width="16dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <!-- Mathematical Equations -->
+    <!-- E=mc² elements -->
+    <item android:top="400dp" android:right="120dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70E6F3FF"/>
+            <size android:width="12dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="400dp" android:right="118dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70E6F3FF"/>
+            <size android:width="2dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="404dp" android:right="118dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70E6F3FF"/>
+            <size android:width="6dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <!-- Plus/Minus Symbol (±) -->
+    <item android:bottom="300dp" android:right="50dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70FFD700"/>
+            <size android:width="2dp" android:height="12dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="304dp" android:right="56dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70FFD700"/>
+            <size android:width="14dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="298dp" android:right="56dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70FFD700"/>
+            <size android:width="14dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <!-- Additional scattered elements -->
+    <!-- Small triangles -->
+    <item android:top="160dp" android:left="200dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#60A0C0FF"/>
+            <size android:width="1dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="166dp" android:left="194dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#60A0C0FF"/>
+            <size android:width="8dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <!-- Small circles -->
+    <item android:bottom="400dp" android:left="250dp">
+        <shape android:shape="oval">
+            <stroke android:width="1dp" android:color="#1AFFD700"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="500dp" android:right="150dp">
+        <shape android:shape="oval">
+            <solid android:color="#60E6F3FF"/>
+            <size android:width="4dp" android:height="4dp"/>
+        </shape>
+    </item>
+</layer-list>

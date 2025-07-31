@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="8dp"
+    app:cardBackgroundColor="@android:color/transparent">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/glassmorphism_input_background">
+
+        <!-- Theme Preview Image -->
+        <ImageView
+            android:id="@+id/imageViewThemePreview"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="Theme preview" />
+
+        <!-- Premium Badge -->
+        <LinearLayout
+            android:id="@+id/layoutPremiumBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:layout_margin="8dp"
+            android:background="@drawable/premium_badge_background"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:visibility="gone">
+            
+            <ImageView
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:src="@drawable/ic_premium_crown"
+                android:layout_marginEnd="4dp"
+                app:tint="@color/quantum_accent" />
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PRO"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="@color/quantum_accent"
+                android:fontFamily="@font/montserrat" />
+            
+        </LinearLayout>
+
+        <!-- Selection Indicator -->
+        <View
+            android:id="@+id/viewSelectionIndicator"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/glassmorphism_button_primary"
+            android:alpha="0.3"
+            android:visibility="gone" />
+
+        <!-- Selection Check -->
+        <ImageView
+            android:id="@+id/imageViewSelected"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="top|start"
+            android:layout_margin="8dp"
+            android:src="@drawable/ic_check_circle"
+            android:visibility="gone"
+            app:tint="@color/quantum_primary" />
+
+        <!-- Theme Info Overlay -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:orientation="vertical"
+            android:background="@drawable/glassmorphism_chat_background"
+            android:padding="12dp">
+
+            <!-- Theme Name -->
+            <TextView
+                android:id="@+id/textViewThemeName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Theme Name"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                android:fontFamily="@font/montserrat"
+                android:layout_marginBottom="4dp" />
+
+            <!-- Theme Category -->
+            <TextView
+                android:id="@+id/textViewThemeCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Category"
+                android:textSize="11sp"
+                android:textColor="@color/quantum_accent"
+                android:fontFamily="@font/montserrat"
+                android:layout_marginBottom="6dp" />
+
+            <!-- Animation Indicator -->
+            <LinearLayout
+                android:id="@+id/layoutAnimationIndicator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <View
+                    android:id="@+id/viewAnimationDot"
+                    android:layout_width="6dp"
+                    android:layout_height="6dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/circle_white_background"
+                    app:backgroundTint="@color/forest_accent" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Animated"
+                    android:textSize="10sp"
+                    android:textColor="@color/forest_accent"
+                    android:fontFamily="@font/montserrat" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Loading Indicator -->
+        <ProgressBar
+            android:id="@+id/progressBarThemeLoading"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:indeterminateTint="@color/quantum_primary" />
+
+    </FrameLayout>
+
+</androidx.cardview.widget.CardView>

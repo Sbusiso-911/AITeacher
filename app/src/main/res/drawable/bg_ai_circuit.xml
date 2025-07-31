@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="300dp"
+    android:viewportWidth="400"
+    android:viewportHeight="300">
+    
+    <!-- Background -->
+    <path
+        android:pathData="M0,0 L400,0 L400,300 L0,300 Z"
+        android:fillColor="@color/ai_robot_background" />
+    
+    <!-- Circuit pattern -->
+    <group android:alpha="0.4">
+        <!-- Horizontal lines -->
+        <path
+            android:pathData="M0,50 L400,50 M0,100 L400,100 M0,150 L400,150 M0,200 L400,200 M0,250 L400,250"
+            android:strokeColor="@color/ai_robot_primary"
+            android:strokeWidth="1" />
+        
+        <!-- Vertical lines -->
+        <path
+            android:pathData="M50,0 L50,300 M100,0 L100,300 M150,0 L150,300 M200,0 L200,300 M250,0 L250,300 M300,0 L300,300 M350,0 L350,300"
+            android:strokeColor="@color/ai_robot_primary"
+            android:strokeWidth="1" />
+        
+        <!-- Circuit nodes -->
+        <group android:alpha="0.8">
+            <path android:pathData="M47,50 A3,3 0 1,1 53,50 A3,3 0 1,1 47,50 Z" android:fillColor="@color/ai_robot_primary" />
+            <path android:pathData="M147,50 A3,3 0 1,1 153,50 A3,3 0 1,1 147,50 Z" android:fillColor="@color/ai_robot_primary" />
+            <path android:pathData="M247,50 A3,3 0 1,1 253,50 A3,3 0 1,1 247,50 Z" android:fillColor="@color/ai_robot_primary" />
+            <path android:pathData="M347,50 A3,3 0 1,1 353,50 A3,3 0 1,1 347,50 Z" android:fillColor="@color/ai_robot_primary" />
+            
+            <path android:pathData="M97,100 A3,3 0 1,1 103,100 A3,3 0 1,1 97,100 Z" android:fillColor="@color/ai_robot_primary" />
+            <path android:pathData="M197,100 A3,3 0 1,1 203,100 A3,3 0 1,1 197,100 Z" android:fillColor="@color/ai_robot_primary" />
+            <path android:pathData="M297,100 A3,3 0 1,1 303,100 A3,3 0 1,1 297,100 Z" android:fillColor="@color/ai_robot_primary" />
+            
+            <path android:pathData="M47,150 A3,3 0 1,1 53,150 A3,3 0 1,1 47,150 Z" android:fillColor="@color/ai_robot_primary" />
+            <path android:pathData="M147,150 A3,3 0 1,1 153,150 A3,3 0 1,1 147,150 Z" android:fillColor="@color/ai_robot_primary" />
+            <path android:pathData="M247,150 A3,3 0 1,1 253,150 A3,3 0 1,1 247,150 Z" android:fillColor="@color/ai_robot_primary" />
+            <path android:pathData="M347,150 A3,3 0 1,1 353,150 A3,3 0 1,1 347,150 Z" android:fillColor="@color/ai_robot_primary" />
+            
+            <path android:pathData="M97,200 A3,3 0 1,1 103,200 A3,3 0 1,1 97,200 Z" android:fillColor="@color/ai_robot_primary" />
+            <path android:pathData="M197,200 A3,3 0 1,1 203,200 A3,3 0 1,1 197,200 Z" android:fillColor="@color/ai_robot_primary" />
+            <path android:pathData="M297,200 A3,3 0 1,1 303,200 A3,3 0 1,1 297,200 Z" android:fillColor="@color/ai_robot_primary" />
+            
+            <path android:pathData="M47,250 A3,3 0 1,1 53,250 A3,3 0 1,1 47,250 Z" android:fillColor="@color/ai_robot_primary" />
+            <path android:pathData="M147,250 A3,3 0 1,1 153,250 A3,3 0 1,1 147,250 Z" android:fillColor="@color/ai_robot_primary" />
+            <path android:pathData="M247,250 A3,3 0 1,1 253,250 A3,3 0 1,1 247,250 Z" android:fillColor="@color/ai_robot_primary" />
+            <path android:pathData="M347,250 A3,3 0 1,1 353,250 A3,3 0 1,1 347,250 Z" android:fillColor="@color/ai_robot_primary" />
+        </group>
+        
+        <!-- Diagonal connections -->
+        <path
+            android:pathData="M50,50 L100,100 M150,50 L200,100 M250,50 L300,100 M100,100 L150,150 M200,100 L250,150 M300,100 L350,150 M50,150 L100,200 M150,150 L200,200 M250,150 L300,200 M100,200 L150,250 M200,200 L250,250 M300,200 L350,250"
+            android:strokeColor="@color/ai_robot_primary"
+            android:strokeWidth="0.5"
+            android:strokeAlpha="0.6" />
+    </group>
+    
+    <!-- Floating data elements -->
+    <group android:alpha="0.6">
+        <path android:pathData="M74,30 A6,6 0 1,1 86,30 A6,6 0 1,1 74,30 Z" android:fillColor="@color/ai_robot_primary" android:fillAlpha="0.3" />
+        <path android:pathData="M174,80 A6,6 0 1,1 186,80 A6,6 0 1,1 174,80 Z" android:fillColor="@color/ai_robot_primary" android:fillAlpha="0.3" />
+        <path android:pathData="M314,120 A6,6 0 1,1 326,120 A6,6 0 1,1 314,120 Z" android:fillColor="@color/ai_robot_primary" android:fillAlpha="0.3" />
+        <path android:pathData="M114,180 A6,6 0 1,1 126,180 A6,6 0 1,1 114,180 Z" android:fillColor="@color/ai_robot_primary" android:fillAlpha="0.3" />
+        <path android:pathData="M274,220 A6,6 0 1,1 286,220 A6,6 0 1,1 274,220 Z" android:fillColor="@color/ai_robot_primary" android:fillAlpha="0.3" />
+        <path android:pathData="M54,270 A6,6 0 1,1 66,270 A6,6 0 1,1 54,270 Z" android:fillColor="@color/ai_robot_primary" android:fillAlpha="0.3" />
+    </group>
+    
+</vector>

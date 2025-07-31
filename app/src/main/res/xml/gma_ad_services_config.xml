@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ad-services-config
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Configuration for Google Ad Services -->
+    <include-data-collection android:value="true" />
+    <include-view-handling android:value="true" />
+</ad-services-config>

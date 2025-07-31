@@ -1,0 +1,73 @@
+<!-- res/drawable/gradient_blue.xml -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Shadow Layer -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#1A1A1A"/>
+            <corners android:radius="12dp"/>
+            <padding android:bottom="2dp" android:right="2dp"/>
+        </shape>
+    </item>
+    
+    <!-- Main gradient -->
+    <item android:top="1dp" android:left="1dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#2A3B4A"
+                android:endColor="#1F2D3A"
+                android:angle="135"/>
+            <corners android:radius="12dp"/>
+            <stroke
+                android:width="1dp"
+                android:color="#445566"/>
+        </shape>
+    </item>
+    
+    <!-- Robot Head (Top Right) -->
+    <item android:top="8dp" android:right="8dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF"/>
+            <corners android:radius="2dp"/>
+            <size android:width="12dp" android:height="10dp"/>
+        </shape>
+    </item>
+    
+    <!-- Robot Eyes -->
+    <item android:top="10dp" android:right="14dp">
+        <shape android:shape="oval">
+            <solid android:color="#000000"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="10dp" android:right="10dp">
+        <shape android:shape="oval">
+            <solid android:color="#000000"/>
+            <size android:width="2dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <!-- IC Chip (Bottom Left) -->
+    <item android:bottom="8dp" android:left="8dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF"/>
+            <corners android:radius="1dp"/>
+            <size android:width="10dp" android:height="6dp"/>
+        </shape>
+    </item>
+    
+    <!-- IC Chip pins -->
+    <item android:bottom="6dp" android:left="6dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#000000"/>
+            <size android:width="2dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="6dp" android:left="20dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#000000"/>
+            <size android:width="2dp" android:height="1dp"/>
+        </shape>
+    </item>
+</layer-list>

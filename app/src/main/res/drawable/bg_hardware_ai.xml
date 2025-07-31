@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base dark gradient background -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#1A2B3A"
+                android:centerColor="#2A3B4A"
+                android:endColor="#1A2B3A"
+                android:angle="45"/>
+        </shape>
+    </item>
+    
+    <!-- Floating Robot Silhouettes -->
+    <!-- Robot 1 - Top Left -->
+    <item android:top="60dp" android:left="40dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80E6F3FF"/>
+            <corners android:radius="2dp"/>
+            <size android:width="16dp" android:height="20dp"/>
+        </shape>
+    </item>
+    
+    <!-- Robot head -->
+    <item android:top="56dp" android:left="44dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80E6F3FF"/>
+            <corners android:radius="2dp"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+    
+    <!-- Robot 2 - Bottom Right -->
+    <item android:bottom="120dp" android:right="60dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70E6F3FF"/>
+            <corners android:radius="1dp"/>
+            <size android:width="12dp" android:height="16dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="118dp" android:right="62dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70E6F3FF"/>
+            <corners android:radius="1dp"/>
+            <size android:width="8dp" android:height="6dp"/>
+        </shape>
+    </item>
+    
+    <!-- Microchip Outlines -->
+    <!-- Chip 1 - Center Left -->
+    <item android:top="200dp" android:left="20dp">
+        <shape android:shape="rectangle">
+            <stroke android:width="1dp" android:color="#33FFD700"/>
+            <corners android:radius="2dp"/>
+            <size android:width="24dp" android:height="16dp"/>
+        </shape>
+    </item>
+    
+    <!-- Chip pins -->
+    <item android:top="198dp" android:left="18dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80FFD700"/>
+            <size android:width="3dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="210dp" android:left="18dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80FFD700"/>
+            <size android:width="3dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="218dp" android:left="18dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80FFD700"/>
+            <size android:width="3dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="198dp" android:left="45dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80FFD700"/>
+            <size android:width="3dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="210dp" android:left="45dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80FFD700"/>
+            <size android:width="3dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <!-- Chip 2 - Top Right -->
+    <item android:top="140dp" android:right="30dp">
+        <shape android:shape="rectangle">
+            <stroke android:width="1dp" android:color="#26FFD700"/>
+            <corners android:radius="1dp"/>
+            <size android:width="18dp" android:height="12dp"/>
+        </shape>
+    </item>
+    
+    <!-- Circuit Board Patterns -->
+    <!-- Circuit traces -->
+    <item android:top="300dp" android:left="80dp" android:right="100dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80A0C0FF"/>
+            <size android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="280dp" android:bottom="400dp" android:left="120dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#80A0C0FF"/>
+            <size android:width="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="350dp" android:left="150dp" android:right="80dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#70A0C0FF"/>
+            <size android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <!-- Circuit nodes -->
+    <item android:top="299dp" android:left="119dp">
+        <shape android:shape="oval">
+            <solid android:color="#80A0C0FF"/>
+            <size android:width="4dp" android:height="4dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="349dp" android:left="149dp">
+        <shape android:shape="oval">
+            <solid android:color="#70A0C0FF"/>
+            <size android:width="3dp" android:height="3dp"/>
+        </shape>
+    </item>
+    
+    <!-- Additional floating elements -->
+    <!-- Robot 3 - Middle -->
+    <item android:top="450dp" android:left="250dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#60E6F3FF"/>
+            <corners android:radius="1dp"/>
+            <size android:width="10dp" android:height="14dp"/>
+        </shape>
+    </item>
+    
+    <!-- Antenna -->
+    <item android:top="448dp" android:left="253dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#60E6F3FF"/>
+            <size android:width="4dp" android:height="3dp"/>
+        </shape>
+    </item>
+    
+    <!-- More circuit traces -->
+    <item android:bottom="200dp" android:left="60dp" android:right="180dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#60A0C0FF"/>
+            <size android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="250dp" android:bottom="180dp" android:right="120dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#60A0C0FF"/>
+            <size android:width="1dp"/>
+        </shape>
+    </item>
+    
+    <!-- Microchip 3 - Bottom -->
+    <item android:bottom="80dp" android:left="150dp">
+        <shape android:shape="rectangle">
+            <stroke android:width="1dp" android:color="#1AFFD700"/>
+            <corners android:radius="1dp"/>
+            <size android:width="20dp" android:height="14dp"/>
+        </shape>
+    </item>
+</layer-list>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Digital Brain Theme Colors -->
+    <color name="brain_primary">#8B5CF6</color>      <!-- Electric Purple -->
+    <color name="brain_secondary">#EC4899</color>    <!-- Neon Pink -->
+    <color name="brain_background">#1E1B4B</color>   <!-- Deep Purple -->
+    <color name="brain_accent">#C084FC</color>       <!-- Light Purple -->
+    
+    <!-- Additional brain colors -->
+    <color name="brain_neural_pink">#F472B6</color>  <!-- Neural Pink -->
+    <color name="brain_synapse">#A855F7</color>      <!-- Synapse Purple -->
+    <color name="brain_data_flow">#D946EF</color>    <!-- Data Flow Magenta -->
+    <color name="brain_consciousness">#7C3AED</color> <!-- Consciousness Purple -->
+    <color name="brain_binary">#E879F9</color>       <!-- Binary Pink -->
+    <color name="brain_hologram">#C026D3</color>     <!-- Hologram Magenta -->
+    
+    <!-- Transparency variations -->
+    <color name="brain_primary_50">#808B5CF6</color>
+    <color name="brain_primary_30">#4D8B5CF6</color>
+    <color name="brain_primary_10">#1A8B5CF6</color>
+    <color name="brain_secondary_50">#80EC4899</color>
+    <color name="brain_secondary_30">#4DEC4899</color>
+    <color name="brain_secondary_10">#1AEC4899</color>
+    <color name="brain_accent_50">#80C084FC</color>
+    <color name="brain_accent_30">#4DC084FC</color>
+    <color name="brain_accent_10">#1AC084FC</color>
+    <color name="brain_background_80">#CC1E1B4B</color>
+    <color name="brain_background_60">#991E1B4B</color>
+</resources>

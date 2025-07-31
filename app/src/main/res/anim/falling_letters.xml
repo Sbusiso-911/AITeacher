@@ -1,0 +1,10 @@
+<!-- res/anim/falling_letters.xml -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@android:anim/linear_interpolator">
+    <translate
+        android:fromYDelta="-100%"
+        android:toYDelta="100%"
+        android:duration="3000"
+        android:repeatCount="infinite"
+        android:repeatMode="restart" />
+</set>

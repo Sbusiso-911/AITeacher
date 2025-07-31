@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="@drawable/formula_renderer_background"
+    android:layout_marginBottom="8dp">
+
+    <TextView
+        android:id="@+id/formulaName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@color/formula_text"
+        android:fontFamily="@font/montserrat"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/formulaLatex"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:textColor="@color/formula_text"
+        android:fontFamily="monospace"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/code_syntax_background"
+        android:padding="8dp" />
+
+    <TextView
+        android:id="@+id/formulaDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:textColor="@color/glass_text_secondary"
+        android:fontFamily="@font/montserrat" />
+
+</LinearLayout>

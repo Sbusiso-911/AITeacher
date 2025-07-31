@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AI Circuit Theme Colors -->
+    <color name="ai_circuit_primary">#00FF41</color>        <!-- Matrix Green -->
+    <color name="ai_circuit_secondary">#FFD700</color>      <!-- Gold Traces -->
+    <color name="ai_circuit_background">#0D1117</color>     <!-- Circuit Board Black -->
+    <color name="ai_circuit_board">#1C2128</color>          <!-- PCB Dark Green -->
+    <color name="ai_circuit_glow">#8000FF41</color>         <!-- Circuit Glow -->
+    <color name="ai_circuit_dark_green">#003D0A</color>     <!-- Deep Circuit -->
+    <color name="ai_circuit_medium_green">#00661A</color>   <!-- Medium Circuit -->
+    <color name="ai_circuit_status_active">#00FF00</color>  <!-- Power LED -->
+    <color name="ai_circuit_status_warning">#FFA500</color> <!-- Warning LED -->
+    <color name="ai_circuit_status_error">#FF0000</color>   <!-- Error LED -->
+    <color name="ai_circuit_black">#000000</color>
+    <color name="ai_circuit_white">#FFFFFF</color>
+    
+    <!-- Gradient colors for circuit effects -->
+    <color name="ai_circuit_gradient_start">#00FF41</color>
+    <color name="ai_circuit_gradient_end">#FFD700</color>
+    <color name="ai_circuit_trace_start">#32CD32</color>
+    <color name="ai_circuit_trace_end">#00FF00</color>
+</resources>

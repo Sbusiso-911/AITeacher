@@ -1,0 +1,7 @@
+<!-- res/anim/wave_animation.xml -->
+<translate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:fromXDelta="-100%"
+    android:toXDelta="100%"
+    android:duration="3000"
+    android:repeatCount="infinite"
+    android:repeatMode="restart" />

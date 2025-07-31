@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="300dp"
+            android:height="350dp"
+            android:viewportWidth="300"
+            android:viewportHeight="350">
+            
+            <!-- Background -->
+            <path
+                android:pathData="M0,0 L300,0 L300,350 L0,350 Z"
+                android:fillColor="@color/ai_robot_background" />
+            
+            <!-- Robot Body -->
+            <path
+                android:pathData="M90,130 L210,130 Q225,130 225,145 L225,270 Q225,285 210,285 L90,285 Q75,285 75,270 L75,145 Q75,130 90,130 Z"
+                android:fillColor="@color/ai_robot_secondary"
+                android:strokeColor="@color/ai_robot_primary"
+                android:strokeWidth="2" />
+            
+            <!-- Robot Head -->
+            <path
+                android:pathData="M105,60 L195,60 Q240,60 240,105 Q240,150 195,150 L105,150 Q60,150 60,105 Q60,60 105,60 Z"
+                android:fillColor="@color/ai_robot_dark_blue"
+                android:strokeColor="@color/ai_robot_primary"
+                android:strokeWidth="2" />
+            
+            <!-- Antenna line -->
+            <path
+                android:pathData="M150,60 L150,37"
+                android:strokeColor="@color/ai_robot_primary"
+                android:strokeWidth="3" />
+            
+            <!-- Antenna signal (as path) -->
+            <path
+                android:name="antenna_signal"
+                android:pathData="M144,34 A6,6 0 1,1 156,34 A6,6 0 1,1 144,34 Z"
+                android:fillColor="@color/ai_robot_primary" />
+            
+            <!-- Brain circle (as path) -->
+            <path
+                android:name="brain_outer"
+                android:pathData="M125,105 A25,25 0 1,1 175,105 A25,25 0 1,1 125,105 Z"
+                android:fillColor="@android:color/transparent"
+                android:strokeColor="@color/ai_robot_primary"
+                android:strokeWidth="1"
+                android:strokeAlpha="0.6" />
+            
+            <!-- Eyes -->
+            <path
+                android:name="left_eye"
+                android:pathData="M125,90 L140,90 Q144,90 144,94 Q144,98 140,98 L125,98 Q121,98 121,94 Q121,90 125,90 Z"
+                android:fillColor="@color/ai_robot_primary" />
+            <path
+                android:name="right_eye"
+                android:pathData="M160,90 L175,90 Q179,90 179,94 Q179,98 175,98 L160,98 Q156,98 156,94 Q156,90 160,90 Z"
+                android:fillColor="@color/ai_robot_primary" />
+            
+            <!-- Chest panel -->
+            <path
+                android:pathData="M112,165 L188,165 Q195,165 195,172 L195,203 Q195,210 188,210 L112,210 Q105,210 105,203 L105,172 Q105,165 112,165 Z"
+                android:fillColor="@color/ai_robot_circuit"
+                android:strokeColor="@color/ai_robot_primary"
+                android:strokeWidth="1" />
+            
+            <!-- Status light (as path) -->
+            <path
+                android:name="status_light"
+                android:pathData="M147,187 A3,3 0 1,1 153,187 A3,3 0 1,1 147,187 Z"
+                android:fillColor="@color/ai_robot_status_active" />
+            
+            <!-- Arms -->
+            <path
+                android:pathData="M60,150 L97,150 Q105,150 105,158 Q105,166 97,166 L60,166 Q52,166 52,158 Q52,150 60,150 Z"
+                android:fillColor="@color/ai_robot_secondary"
+                android:strokeColor="@color/ai_robot_primary"
+                android:strokeWidth="2" />
+            <path
+                android:pathData="M203,150 L240,150 Q248,150 248,158 Q248,166 240,166 L203,166 Q195,166 195,158 Q195,150 203,150 Z"
+                android:fillColor="@color/ai_robot_secondary"
+                android:strokeColor="@color/ai_robot_primary"
+                android:strokeWidth="2" />
+            
+            <!-- Legs -->
+            <path
+                android:pathData="M105,285 L127,285 Q138,285 138,296 L138,334 Q138,345 127,345 L105,345 Q94,345 94,334 L94,296 Q94,285 105,285 Z"
+                android:fillColor="@color/ai_robot_secondary"
+                android:strokeColor="@color/ai_robot_primary"
+                android:strokeWidth="2" />
+            <path
+                android:pathData="M173,285 L195,285 Q206,285 206,296 L206,334 Q206,345 195,345 L173,345 Q162,345 162,334 L162,296 Q162,285 173,285 Z"
+                android:fillColor="@color/ai_robot_secondary"
+                android:strokeColor="@color/ai_robot_primary"
+                android:strokeWidth="2" />
+            
+        </vector>
+    </aapt:attr>
+    
+    <!-- Antenna pulse animation -->
+    <target android:name="antenna_signal">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:propertyName="fillAlpha"
+                android:duration="2000"
+                android:valueFrom="0.3"
+                android:valueTo="1.0"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse" />
+        </aapt:attr>
+    </target>
+    
+    <!-- Brain pulse -->
+    <target android:name="brain_outer">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:propertyName="strokeAlpha"
+                android:duration="3000"
+                android:valueFrom="0.2"
+                android:valueTo="0.8"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse" />
+        </aapt:attr>
+    </target>
+    
+    <!-- Eye animations -->
+    <target android:name="left_eye">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:propertyName="fillAlpha"
+                android:duration="4000"
+                android:valueFrom="0.5"
+                android:valueTo="1.0"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse" />
+        </aapt:attr>
+    </target>
+    
+    <target android:name="right_eye">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:propertyName="fillAlpha"
+                android:duration="4000"
+                android:valueFrom="0.5"
+                android:valueTo="1.0"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"
+                android:startOffset="200" />
+        </aapt:attr>
+    </target>
+    
+    <!-- Status light blink -->
+    <target android:name="status_light">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:propertyName="fillAlpha"
+                android:duration="1500"
+                android:valueFrom="0.3"
+                android:valueTo="1.0"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse" />
+        </aapt:attr>
+    </target>
+    
+</animated-vector>

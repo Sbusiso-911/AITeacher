@@ -1,0 +1,26 @@
+<!-- res/drawable/chat_background_glow.xml -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <!-- Background gradient -->
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#1e1e5c"
+            android:centerColor="#1e1e5c"
+            android:endColor="#7e005b"
+            android:angle="45" />
+        </shape>
+    </item>
+    <item>
+        <!-- Optional: Glowing effect -->
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#193e91"
+                android:centerColor="#002d62"
+                android:endColor="#02314d"
+
+            android:angle="45" />
+            <corners android:radius="1dp" />
+            <padding android:left="20dp" android:right="20dp" android:top="20dp" android:bottom="20dp" />
+        </shape>
+    </item>
+</layer-list>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Difficulty Level Colors -->
+    <color name="difficulty_beginner">#4CAF50</color>        <!-- Green -->
+    <color name="difficulty_intermediate">#FF9800</color>    <!-- Orange -->
+    <color name="difficulty_advanced">#F44336</color>       <!-- Red -->
+    <color name="difficulty_expert">#9C27B0</color>         <!-- Purple -->
+
+    <!-- Subject Category Colors -->
+    <color name="subject_mathematics">#2196F3</color>       <!-- Blue -->
+    <color name="subject_programming">#4CAF50</color>       <!-- Green -->
+    <color name="subject_science">#FF5722</color>           <!-- Deep Orange -->
+    <color name="subject_language">#9C27B0</color>          <!-- Purple -->
+    <color name="subject_history">#795548</color>           <!-- Brown -->
+    <color name="subject_general">#607D8B</color>           <!-- Blue Grey -->
+
+    <!-- Step Progress Colors -->
+    <color name="step_pending">#E0E0E0</color>              <!-- Light Grey -->
+    <color name="step_in_progress">#FF9800</color>          <!-- Orange -->
+    <color name="step_completed">#4CAF50</color>            <!-- Green -->
+
+    <!-- Quiz Result Colors -->
+    <color name="quiz_correct">#4CAF50</color>              <!-- Green -->
+    <color name="quiz_incorrect">#F44336</color>            <!-- Red -->
+    <color name="quiz_neutral">#9E9E9E</color>              <!-- Grey -->
+
+    <!-- Background Colors for Different Content Types -->
+    <color name="success_background">#E8F5E8</color>        <!-- Light Green -->
+    <color name="error_background">#FFEBEE</color>          <!-- Light Red -->
+    <color name="info_background">#E3F2FD</color>           <!-- Light Blue -->
+    <color name="warning_background">#FFF3E0</color>        <!-- Light Orange -->
+
+    <!-- Interactive Element Colors -->
+    <color name="interactive_primary">#6750A4</color>       <!-- Material 3 Primary -->
+    <color name="interactive_secondary">#625B71</color>     <!-- Material 3 Secondary -->
+    <color name="interactive_surface">#FFFBFE</color>       <!-- Material 3 Surface -->
+
+    <!-- Code Syntax Highlighting -->
+    <color name="code_background">#F5F5F5</color>           <!-- Light Grey -->
+    <color name="code_keyword">#0000FF</color>              <!-- Blue -->
+    <color name="code_string">#008000</color>               <!-- Green -->
+    <color name="code_comment">#808080</color>              <!-- Grey -->
+    <color name="code_number">#FF0000</color>               <!-- Red -->
+
+    <!-- Formula Colors -->
+    <color name="formula_background">#F8F9FA</color>        <!-- Very Light Grey -->
+    <color name="formula_border">#DEE2E6</color>            <!-- Light Grey Border -->
+    <color name="formula_text">#212529</color>              <!-- Dark Grey -->
+
+    <!-- Success and Error States -->
+    <color name="success_green">#28A745</color>
+    <color name="error_red">#DC3545</color>
+    <color name="warning_yellow">#FFC107</color>
+    <color name="info_blue">#17A2B8</color>
+</resources>

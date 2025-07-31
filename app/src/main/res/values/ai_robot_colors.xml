@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AI Robot Theme Colors -->
+    <color name="ai_robot_primary">#00FFFF</color>
+    <color name="ai_robot_secondary">#2D3A8C</color>
+    <color name="ai_robot_background">#0F0F23</color>
+    <color name="ai_robot_circuit">#1A1A2E</color>
+    <color name="ai_robot_glow">#80FFFFFF</color>
+    <color name="ai_robot_dark_blue">#2D3748</color>
+    <color name="ai_robot_medium_blue">#4A5568</color>
+    <color name="ai_robot_status_active">#00FF00</color>
+    <color name="ai_robot_status_warning">#FFFF00</color>
+    <color name="ai_robot_status_error">#FF6600</color>
+    <color name="ai_robot_black">#000000</color>
+    <color name="ai_robot_white">#FFFFFF</color>
+    
+    <!-- Gradient colors for enhanced effects -->
+    <color name="ai_robot_gradient_start">#4A5568</color>
+    <color name="ai_robot_gradient_end">#2D3748</color>
+    <color name="ai_robot_body_gradient_start">#2D3A8C</color>
+    <color name="ai_robot_body_gradient_end">#1A1A2E</color>
+</resources>

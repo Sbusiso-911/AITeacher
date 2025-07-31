@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android">
+    <aapt:attr name="android:drawable" xmlns:aapt="http://schemas.android.com/aapt">
+        <vector android:width="400dp"
+            android:height="600dp"
+            android:viewportWidth="400"
+            android:viewportHeight="600">
+            
+            <!-- Background -->
+            <path android:pathData="M0,0 L400,0 L400,600 L0,600 Z"
+                  android:fillColor="@color/cyber_background"/>
+            
+            <!-- Robot head -->
+            <group android:name="robot_head">
+                <path android:pathData="M160,180 Q200,160 240,180 L240,240 Q200,260 160,240 Z"
+                      android:fillColor="@color/cyber_secondary"
+                      android:strokeColor="@color/cyber_primary"
+                      android:strokeWidth="2"/>
+                
+                <!-- Glowing eyes (using path instead of rect) -->
+                <path android:pathData="M175,210 L187,210 Q189,210 189,213 L189,216 Q189,218 187,218 L175,218 Q173,218 173,216 L173,213 Q173,210 175,210 Z"
+                      android:fillColor="@color/cyber_primary"
+                      android:name="eye_left"/>
+                <path android:pathData="M213,210 L225,210 Q227,210 227,213 L227,216 Q227,218 225,218 L213,218 Q211,218 211,216 L211,213 Q211,210 213,210 Z"
+                      android:fillColor="@color/cyber_primary"
+                      android:name="eye_right"/>
+                
+                <!-- Antenna (using path for circle) -->
+                <path android:pathData="M197,155 A3,3 0 1,1 203,155 A3,3 0 1,1 197,155"
+                      android:fillColor="@color/cyber_status_green"
+                      android:name="antenna_tip"/>
+            </group>
+            
+            <!-- Robot body (using path instead of rect) -->
+            <path android:pathData="M170,260 L230,260 Q240,260 240,270 L240,330 Q240,340 230,340 L170,340 Q160,340 160,330 L160,270 Q160,260 170,260 Z"
+                  android:fillColor="@color/cyber_secondary"
+                  android:strokeColor="@color/cyber_primary"
+                  android:strokeWidth="2"/>
+            
+            <!-- Status lights (using path for circles) -->
+            <path android:pathData="M187,290 A3,3 0 1,1 193,290 A3,3 0 1,1 187,290"
+                  android:fillColor="@color/cyber_status_green"
+                  android:name="status_light1"/>
+            <path android:pathData="M197,290 A3,3 0 1,1 203,290 A3,3 0 1,1 197,290"
+                  android:fillColor="@color/cyber_primary"
+                  android:name="status_light2"/>
+            <path android:pathData="M207,290 A3,3 0 1,1 213,290 A3,3 0 1,1 207,290"
+                  android:fillColor="@color/cyber_warning"
+                  android:name="status_light3"/>
+        </vector>
+    </aapt:attr>
+    
+    <!-- Animations -->
+    <target android:name="antenna_tip">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="alpha"
+                android:duration="1500"
+                android:valueFrom="0.5"
+                android:valueTo="1.0"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="eye_left">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="alpha"
+                android:duration="3000"
+                android:valueFrom="0.7"
+                android:valueTo="1.0"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="eye_right">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="alpha"
+                android:duration="3000"
+                android:valueFrom="0.7"
+                android:valueTo="1.0"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="status_light1">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="alpha"
+                android:duration="1000"
+                android:valueFrom="0.3"
+                android:valueTo="1.0"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="status_light2">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="alpha"
+                android:duration="1200"
+                android:valueFrom="0.4"
+                android:valueTo="1.0"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="status_light3">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="alpha"
+                android:duration="800"
+                android:valueFrom="0.2"
+                android:valueTo="1.0"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"/>
+        </aapt:attr>
+    </target>
+</animated-vector>

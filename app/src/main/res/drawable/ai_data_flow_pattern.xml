@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base gradient background with glass effect -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#B32A3B4A"/>
+            <corners android:radius="16dp"/>
+        </shape>
+    </item>
+    
+    <!-- Data flow streams -->
+    <!-- Horizontal data streams -->
+    <item android:top="16dp" android:left="8dp" android:right="24dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#40FFFFFF"
+                android:endColor="#10FFFFFF"
+                android:angle="0"/>
+            <size android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="32dp" android:left="16dp" android:right="12dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#35FFFFFF"
+                android:endColor="#08FFFFFF"
+                android:angle="0"/>
+            <size android:height="1.5dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="20dp" android:left="12dp" android:right="20dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#30FFFFFF"
+                android:endColor="#05FFFFFF"
+                android:angle="0"/>
+            <size android:height="1.8dp"/>
+        </shape>
+    </item>
+    
+    <!-- Data packets/nodes -->
+    <item android:top="15dp" android:left="6dp">
+        <shape android:shape="oval">
+            <solid android:color="#50FFFFFF"/>
+            <size android:width="4dp" android:height="4dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="31dp" android:left="14dp">
+        <shape android:shape="oval">
+            <solid android:color="#45FFFFFF"/>
+            <size android:width="3dp" android:height="3dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="19dp" android:left="10dp">
+        <shape android:shape="oval">
+            <solid android:color="#40FFFFFF"/>
+            <size android:width="3.5dp" android:height="3.5dp"/>
+        </shape>
+    </item>
+    
+    <!-- Binary code patterns -->
+    <item android:top="8dp" android:right="8dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#25FFFFFF"/>
+            <size android:width="1dp" android:height="3dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="8dp" android:right="12dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#25FFFFFF"/>
+            <size android:width="1dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="8dp" android:right="16dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#25FFFFFF"/>
+            <size android:width="1dp" android:height="3dp"/>
+        </shape>
+    </item>
+    
+    <item android:top="8dp" android:right="20dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#25FFFFFF"/>
+            <size android:width="1dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <!-- Matrix-style elements -->
+    <item android:bottom="8dp" android:left="20dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#20FFFFFF"/>
+            <size android:width="2dp" android:height="1dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="12dp" android:left="24dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#18FFFFFF"/>
+            <size android:width="1dp" android:height="2dp"/>
+        </shape>
+    </item>
+    
+    <!-- Quantum-inspired dots -->
+    <item android:top="24dp" android:right="16dp">
+        <shape android:shape="oval">
+            <solid android:color="#30FFFFFF"/>
+            <size android:width="1.5dp" android:height="1.5dp"/>
+        </shape>
+    </item>
+    
+    <item android:bottom="32dp" android:right="24dp">
+        <shape android:shape="oval">
+            <solid android:color="#25FFFFFF"/>
+            <size android:width="1dp" android:height="1dp"/>
+        </shape>
+    </item>
+</layer-list>

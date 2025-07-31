@@ -1,0 +1,55 @@
+<!-- AI Teacher Hamburger Menu -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_new_conversation"
+        android:icon="@drawable/ic_new_conversation"
+        android:title="New Conversation"
+        app:showAsAction="never" />
+
+    <!-- Voice and Recording Features -->
+    <item
+        android:id="@+id/menu_meeting_record"
+        android:icon="@drawable/ic_mic_gold"
+        android:title="Record Meeting"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_live_voice_chat"
+        android:icon="@drawable/ic_mic_on"
+        android:title="Live Voice Chat"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_settings"
+        android:icon="@drawable/ic_premium_settings"
+        android:title="Settings"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_usage_dashboard"
+        android:icon="@drawable/ic_analytics"
+        android:title="Usage Dashboard"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_help"
+        android:icon="@drawable/ic_help"
+        android:title="Help &amp; Support"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_report"
+        android:icon="@drawable/ic_report"
+        android:title="Report Issue"
+        app:showAsAction="never" />
+
+    <!-- Profile and Account -->
+    <item
+        android:id="@+id/menu_profile"
+        android:icon="@drawable/profile_circle_background"
+        android:title="Profile"
+        app:showAsAction="never" />
+
+</menu>

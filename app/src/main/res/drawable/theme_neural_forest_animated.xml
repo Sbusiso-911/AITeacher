@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android">
+    <aapt:attr name="android:drawable" xmlns:aapt="http://schemas.android.com/aapt">
+        <vector android:width="400dp"
+            android:height="600dp"
+            android:viewportWidth="400"
+            android:viewportHeight="600">
+            
+            <!-- Background -->
+            <path android:pathData="M0,0 L400,0 L400,600 L0,600 Z"
+                  android:fillColor="@color/forest_background"/>
+            
+            <!-- Central Neural Core -->
+            <path android:pathData="M175,300 A25,25 0 1,1 225,300 A25,25 0 1,1 175,300"
+                  android:fillColor="@color/forest_primary_50"
+                  android:name="neural_core"/>
+            
+            <!-- Main Neural Trunk -->
+            <path android:pathData="M200,430 Q195,400 200,370 Q205,340 200,310 Q195,280 200,250 Q205,220 200,190 Q195,160 200,130"
+                  android:strokeColor="@color/forest_primary"
+                  android:strokeWidth="10"
+                  android:fillType="nonZero"
+                  android:name="main_trunk"/>
+            
+            <!-- Neural Branches -->
+            <group android:name="neural_branches">
+                <path android:pathData="M195,350 Q170,340 140,320 Q110,300 90,270"
+                      android:strokeColor="@color/forest_branch"
+                      android:strokeWidth="6"
+                      android:fillType="nonZero"
+                      android:name="left_main_branch"/>
+                
+                <path android:pathData="M205,350 Q230,340 260,320 Q290,300 310,270"
+                      android:strokeColor="@color/forest_branch"
+                      android:strokeWidth="6"
+                      android:fillType="nonZero"
+                      android:name="right_main_branch"/>
+            </group>
+            
+            <!-- Bio-luminescent Neural Nodes -->
+            <group android:name="neural_nodes">
+                <path android:pathData="M196,200 A4,4 0 1,1 204,200 A4,4 0 1,1 196,200"
+                      android:fillColor="@color/forest_accent"
+                      android:name="main_node1"/>
+                <path android:pathData="M137,320 A3,3 0 1,1 143,320 A3,3 0 1,1 137,320"
+                      android:fillColor="@color/forest_primary"
+                      android:name="main_node2"/>
+                <path android:pathData="M257,320 A3,3 0 1,1 263,320 A3,3 0 1,1 257,320"
+                      android:fillColor="@color/forest_secondary"
+                      android:name="main_node3"/>
+            </group>
+            
+            <!-- Glowing Synaptic Leaves -->
+            <group android:name="synaptic_leaves">
+                <path android:pathData="M62,240 Q70,236 78,240 Q70,244 62,240"
+                      android:fillColor="@color/forest_accent"
+                      android:name="leaf1"/>
+                <path android:pathData="M322,240 Q330,236 338,240 Q330,244 322,240"
+                      android:fillColor="@color/forest_primary"
+                      android:name="leaf2"/>
+                <path android:pathData="M185,130 Q190,127 195,130 Q190,133 185,130"
+                      android:fillColor="@color/forest_accent"
+                      android:name="leaf3"/>
+            </group>
+            
+            <!-- Micro-organisms -->
+            <group android:name="micro_organisms">
+                <path android:pathData="M48.5,200 A1.5,1.5 0 1,1 51.5,200 A1.5,1.5 0 1,1 48.5,200"
+                      android:fillColor="@color/forest_accent"
+                      android:name="micro1"/>
+                <path android:pathData="M348.5,250 A1.5,1.5 0 1,1 351.5,250 A1.5,1.5 0 1,1 348.5,250"
+                      android:fillColor="@color/forest_primary"
+                      android:name="micro2"/>
+            </group>
+        </vector>
+    </aapt:attr>
+    
+    <!-- Animations -->
+    <target android:name="neural_core">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="scaleX"
+                android:duration="4000"
+                android:valueFrom="0.9"
+                android:valueTo="1.1"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="left_main_branch">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="alpha"
+                android:duration="5000"
+                android:valueFrom="0.6"
+                android:valueTo="1.0"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="right_main_branch">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="alpha"
+                android:duration="4000"
+                android:valueFrom="0.6"
+                android:valueTo="1.0"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="main_node1">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="alpha"
+                android:duration="3000"
+                android:valueFrom="0.5"
+                android:valueTo="1.0"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="leaf1">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="alpha"
+                android:duration="4000"
+                android:valueFrom="0.4"
+                android:valueTo="0.9"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="micro1">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="translationX"
+                android:duration="8000"
+                android:valueFrom="0"
+                android:valueTo="20"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"/>
+        </aapt:attr>
+    </target>
+</animated-vector>

@@ -1,0 +1,381 @@
+{
+  "version": "1.0",
+  "themes": [
+    {
+      "id": "cyber_robot",
+      "name": "Cyber Robot",
+      "description": "Futuristic AI robot with neural networks and glowing circuits",
+      "category": "CYBERPUNK",
+      "isPremium": false,
+      "isAnimated": true,
+      "colors": {
+        "primary": "#00FFFF",
+        "secondary": "#2D3A8C",
+        "background": "#0F0F23",
+        "accent": "#FFFFFF",
+        "glow": "#00CCCC",
+        "neural": "#536DFE",
+        "statusGreen": "#00FF41",
+        "warning": "#FF5722"
+      },
+      "animations": {
+        "primaryType": "PULSE",
+        "duration": 2000,
+        "interpolator": "ACCELERATE_DECELERATE",
+        "repeatCount": -1,
+        "repeatMode": "REVERSE",
+        "autoStart": true
+      },
+      "elements": [
+        {
+          "type": "HEAD",
+          "position": {"x": 200, "y": 200, "z": 0},
+          "isAnimated": true,
+          "animationType": "GLOW",
+          "scale": 1.0,
+          "rotation": 0,
+          "alpha": 1.0
+        },
+        {
+          "type": "BODY",
+          "position": {"x": 200, "y": 300, "z": 0},
+          "isAnimated": false,
+          "scale": 1.0,
+          "rotation": 0,
+          "alpha": 1.0
+        },
+        {
+          "type": "ANTENNA",
+          "position": {"x": 200, "y": 155, "z": 0},
+          "isAnimated": true,
+          "animationType": "PULSE",
+          "scale": 1.0,
+          "rotation": 0,
+          "alpha": 1.0
+        },
+        {
+          "type": "EYES",
+          "position": {"x": 200, "y": 210, "z": 0},
+          "isAnimated": true,
+          "animationType": "FADE",
+          "scale": 1.0,
+          "rotation": 0,
+          "alpha": 1.0
+        },
+        {
+          "type": "CIRCUIT",
+          "position": {"x": 200, "y": 100, "z": -1},
+          "isAnimated": true,
+          "animationType": "PULSE",
+          "scale": 1.0,
+          "rotation": 0,
+          "alpha": 0.6
+        }
+      ],
+      "performance": {
+        "targetFPS": 60,
+        "maxParticles": 20,
+        "enableGlow": true,
+        "enableShadows": false,
+        "complexity": "MEDIUM"
+      }
+    },
+    {
+      "id": "digital_brain",
+      "name": "Digital Brain",
+      "description": "Abstract AI consciousness with neural networks and data streams",
+      "category": "NEURAL",
+      "isPremium": true,
+      "isAnimated": true,
+      "colors": {
+        "primary": "#8B5CF6",
+        "secondary": "#EC4899",
+        "background": "#1E1B4B",
+        "accent": "#C084FC",
+        "neuralPink": "#F472B6",
+        "synapse": "#A855F7",
+        "dataFlow": "#D946EF",
+        "consciousness": "#7C3AED",
+        "binary": "#E879F9",
+        "hologram": "#C026D3"
+      },
+      "animations": {
+        "primaryType": "WAVE",
+        "duration": 4000,
+        "interpolator": "ACCELERATE_DECELERATE",
+        "repeatCount": -1,
+        "repeatMode": "REVERSE",
+        "autoStart": true
+      },
+      "elements": [
+        {
+          "type": "CORE",
+          "position": {"x": 200, "y": 300, "z": 0},
+          "isAnimated": true,
+          "animationType": "SCALE",
+          "scale": 1.0,
+          "rotation": 0,
+          "alpha": 1.0
+        },
+        {
+          "type": "NEURAL_NODE",
+          "position": {"x": 200, "y": 250, "z": 1},
+          "isAnimated": true,
+          "animationType": "PULSE",
+          "scale": 1.0,
+          "rotation": 0,
+          "alpha": 1.0
+        },
+        {
+          "type": "SYNAPSE",
+          "position": {"x": 180, "y": 265, "z": 0},
+          "isAnimated": true,
+          "animationType": "FADE",
+          "scale": 1.0,
+          "rotation": 0,
+          "alpha": 0.8
+        },
+        {
+          "type": "PARTICLE",
+          "position": {"x": 50, "y": 150, "z": -1},
+          "isAnimated": true,
+          "animationType": "TRANSLATE",
+          "scale": 0.5,
+          "rotation": 0,
+          "alpha": 0.7
+        },
+        {
+          "type": "WAVE",
+          "position": {"x": 200, "y": 300, "z": -2},
+          "isAnimated": true,
+          "animationType": "WAVE",
+          "scale": 1.0,
+          "rotation": 0,
+          "alpha": 0.3
+        }
+      ],
+      "performance": {
+        "targetFPS": 60,
+        "maxParticles": 30,
+        "enableGlow": true,
+        "enableShadows": true,
+        "complexity": "HIGH"
+      }
+    },
+    {
+      "id": "quantum_ai",
+      "name": "Quantum AI",
+      "description": "Quantum computing visualization with atomic particles and energy waves",
+      "category": "QUANTUM",
+      "isPremium": true,
+      "isAnimated": true,
+      "colors": {
+        "primary": "#0EA5E9",
+        "secondary": "#10B981",
+        "background": "#F8FAFC",
+        "accent": "#06B6D4",
+        "electron": "#3B82F6",
+        "orbit": "#14B8A6",
+        "particle": "#8B5CF6",
+        "wave": "#06B6D4",
+        "crystal": "#E5E7EB",
+        "energy": "#F59E0B"
+      },
+      "animations": {
+        "primaryType": "ROTATE",
+        "duration": 10000,
+        "interpolator": "LINEAR",
+        "repeatCount": -1,
+        "repeatMode": "RESTART",
+        "autoStart": true
+      },
+      "elements": [
+        {
+          "type": "CUBE",
+          "position": {"x": 200, "y": 300, "z": 0},
+          "isAnimated": true,
+          "animationType": "ROTATE",
+          "scale": 1.0,
+          "rotation": 0,
+          "alpha": 1.0
+        },
+        {
+          "type": "ORBIT",
+          "position": {"x": 200, "y": 300, "z": -1},
+          "isAnimated": true,
+          "animationType": "ROTATE",
+          "scale": 1.0,
+          "rotation": 0,
+          "alpha": 0.7
+        },
+        {
+          "type": "PARTICLE",
+          "position": {"x": 320, "y": 300, "z": 1},
+          "isAnimated": true,
+          "animationType": "TRANSLATE",
+          "scale": 1.0,
+          "rotation": 0,
+          "alpha": 1.0
+        },
+        {
+          "type": "CRYSTAL",
+          "position": {"x": 100, "y": 50, "z": -2},
+          "isAnimated": false,
+          "scale": 0.8,
+          "rotation": 45,
+          "alpha": 0.8
+        },
+        {
+          "type": "WAVE",
+          "position": {"x": 200, "y": 300, "z": -3},
+          "isAnimated": true,
+          "animationType": "WAVE",
+          "scale": 1.0,
+          "rotation": 0,
+          "alpha": 0.2
+        }
+      ],
+      "performance": {
+        "targetFPS": 60,
+        "maxParticles": 25,
+        "enableGlow": true,
+        "enableShadows": false,
+        "complexity": "HIGH"
+      }
+    },
+    {
+      "id": "neural_forest",
+      "name": "Neural Forest",
+      "description": "Organic AI with bio-tech fusion, tree-like neural networks",
+      "category": "ORGANIC",
+      "isPremium": false,
+      "isAnimated": true,
+      "colors": {
+        "primary": "#22C55E",
+        "secondary": "#F97316",
+        "background": "#14532D",
+        "accent": "#84CC16",
+        "bioGlow": "#65A30D",
+        "branch": "#16A34A",
+        "leaf": "#BFDB38",
+        "root": "#166534",
+        "synapse": "#FB923C",
+        "organic": "#A3E635"
+      },
+      "animations": {
+        "primaryType": "GLOW",
+        "duration": 5000,
+        "interpolator": "ACCELERATE_DECELERATE",
+        "repeatCount": -1,
+        "repeatMode": "REVERSE",
+        "autoStart": true
+      },
+      "elements": [
+        {
+          "type": "CORE",
+          "position": {"x": 200, "y": 300, "z": 0},
+          "isAnimated": true,
+          "animationType": "SCALE",
+          "scale": 1.0,
+          "rotation": 0,
+          "alpha": 1.0
+        },
+        {
+          "type": "BRANCH",
+          "position": {"x": 140, "y": 320, "z": 0},
+          "isAnimated": true,
+          "animationType": "FADE",
+          "scale": 1.0,
+          "rotation": 0,
+          "alpha": 0.8
+        },
+        {
+          "type": "LEAF",
+          "position": {"x": 70, "y": 240, "z": 1},
+          "isAnimated": true,
+          "animationType": "PULSE",
+          "scale": 1.0,
+          "rotation": 0,
+          "alpha": 0.9
+        },
+        {
+          "type": "ROOT",
+          "position": {"x": 200, "y": 500, "z": -1},
+          "isAnimated": false,
+          "scale": 1.0,
+          "rotation": 0,
+          "alpha": 1.0
+        },
+        {
+          "type": "PARTICLE",
+          "position": {"x": 50, "y": 200, "z": 1},
+          "isAnimated": true,
+          "animationType": "TRANSLATE",
+          "scale": 0.3,
+          "rotation": 0,
+          "alpha": 0.6
+        }
+      ],
+      "performance": {
+        "targetFPS": 60,
+        "maxParticles": 15,
+        "enableGlow": true,
+        "enableShadows": true,
+        "complexity": "MEDIUM"
+      }
+    }
+  ],
+  "defaultSettings": {
+    "enableAnimations": true,
+    "enableParticles": true,
+    "animationQuality": "HIGH",
+    "autoPlay": true,
+    "enableGlow": true,
+    "enableShadows": false,
+    "frameRate": 60,
+    "batteryOptimization": false
+  },
+  "performanceProfiles": {
+    "LOW": {
+      "frameRate": 30,
+      "maxParticles": 10,
+      "enableGlow": false,
+      "enableShadows": false,
+      "animationQuality": "LOW"
+    },
+    "MEDIUM": {
+      "frameRate": 45,
+      "maxParticles": 20,
+      "enableGlow": true,
+      "enableShadows": false,
+      "animationQuality": "MEDIUM"
+    },
+    "HIGH": {
+      "frameRate": 60,
+      "maxParticles": 30,
+      "enableGlow": true,
+      "enableShadows": true,
+      "animationQuality": "HIGH"
+    }
+  },
+  "deviceOptimization": {
+    "lowEndDevices": {
+      "ramThreshold": 2048,
+      "profile": "LOW",
+      "disableAnimations": false,
+      "reduceParticles": true
+    },
+    "midRangeDevices": {
+      "ramThreshold": 4096,
+      "profile": "MEDIUM",
+      "disableAnimations": false,
+      "reduceParticles": false
+    },
+    "highEndDevices": {
+      "ramThreshold": 6144,
+      "profile": "HIGH",
+      "disableAnimations": false,
+      "reduceParticles": false
+    }
+  }
+}

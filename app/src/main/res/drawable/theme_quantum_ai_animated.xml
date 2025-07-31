@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android">
+    <aapt:attr name="android:drawable" xmlns:aapt="http://schemas.android.com/aapt">
+        <vector android:width="400dp"
+            android:height="600dp"
+            android:viewportWidth="400"
+            android:viewportHeight="600">
+            
+            <!-- Background -->
+            <path android:pathData="M0,0 L400,0 L400,600 L0,600 Z"
+                  android:fillColor="@color/quantum_background"/>
+            
+            <!-- Central Quantum Cube -->
+            <group android:name="quantum_cube" android:pivotX="200" android:pivotY="300">
+                <!-- Front face (using path) -->
+                <path android:pathData="M160,260 L240,260 L240,340 L160,340 Z"
+                      android:fillColor="@color/quantum_primary_50"
+                      android:strokeColor="@color/quantum_primary"
+                      android:strokeWidth="2"
+                      android:name="cube_front"/>
+            </group>
+            
+            <!-- Electron Orbits -->
+            <group android:name="electron_orbits" android:pivotX="200" android:pivotY="300">
+                <!-- Orbit 1 (ellipse using path) -->
+                <path android:pathData="M80,300 A120,60 0 1,1 320,300 A120,60 0 1,1 80,300"
+                      android:strokeColor="@color/quantum_primary_50"
+                      android:strokeWidth="1.5"
+                      android:fillType="nonZero"
+                      android:name="orbit1"/>
+                
+                <!-- Orbit 2 (circle using path) -->
+                <path android:pathData="M100,300 A100,100 0 1,1 300,300 A100,100 0 1,1 100,300"
+                      android:strokeColor="@color/quantum_accent_50"
+                      android:strokeWidth="1.5"
+                      android:fillType="nonZero"
+                      android:name="orbit2"/>
+            </group>
+            
+            <!-- Electrons -->
+            <group android:name="electrons">
+                <path android:pathData="M316,300 A4,4 0 1,1 324,300 A4,4 0 1,1 316,300"
+                      android:fillColor="@color/quantum_primary"
+                      android:name="electron1"/>
+                <path android:pathData="M116.5,350 A3.5,3.5 0 1,1 123.5,350 A3.5,3.5 0 1,1 116.5,350"
+                      android:fillColor="@color/quantum_accent"
+                      android:name="electron2"/>
+            </group>
+            
+            <!-- Atomic Particles -->
+            <group android:name="atomic_particles">
+                <path android:pathData="M77,120 A3,3 0 1,1 83,120 A3,3 0 1,1 77,120"
+                      android:fillColor="@color/quantum_primary"
+                      android:name="particle1"/>
+                <path android:pathData="M317,480 A3,3 0 1,1 323,480 A3,3 0 1,1 317,480"
+                      android:fillColor="@color/quantum_primary"
+                      android:name="particle2"/>
+            </group>
+        </vector>
+    </aapt:attr>
+    
+    <!-- Animations -->
+    <target android:name="quantum_cube">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="rotation"
+                android:duration="20000"
+                android:valueFrom="0"
+                android:valueTo="360"
+                android:repeatCount="infinite"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="orbit1">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="rotation"
+                android:duration="8000"
+                android:valueFrom="0"
+                android:valueTo="360"
+                android:repeatCount="infinite"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="orbit2">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="rotation"
+                android:duration="10000"
+                android:valueFrom="45"
+                android:valueTo="405"
+                android:repeatCount="infinite"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="particle1">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="alpha"
+                android:duration="3000"
+                android:valueFrom="0.3"
+                android:valueTo="1.0"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="particle2">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="alpha"
+                android:duration="2500"
+                android:valueFrom="0.4"
+                android:valueTo="1.0"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"/>
+        </aapt:attr>
+    </target>
+</animated-vector>

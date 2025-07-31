@@ -1,0 +1,48 @@
+<defaultsMap>
+    <!-- Weekly Plan -->
+    <entry>
+        <key>weekly_price</key>
+        <value>$5.99</value>
+    </entry>
+    <entry>
+        <key>weekly_original_price</key>
+        <value>$11.99</value>
+    </entry>
+    <entry>
+        <key>weekly_discount</key>
+        <value>50% OFF</value>
+    </entry>
+
+    <!-- Monthly Plan -->
+    <entry>
+        <key>monthly_price</key>
+        <value>$12.99</value>
+    </entry>
+    <entry>
+        <key>monthly_original_price</key>
+        <value>$37.99</value>
+    </entry>
+    <entry>
+        <key>monthly_discount</key>
+        <value>65% OFF</value>
+    </entry>
+
+    <!-- Yearly Plan -->
+    <entry>
+        <key>yearly_price</key>
+        <value>$59.99</value>
+    </entry>
+    <entry>
+        <key>yearly_original_price</key>
+        <value>$203.99</value>
+    </entry>
+    <entry>
+        <key>yearly_discount</key>
+        <value>70% OFF</value>
+    </entry>
+
+    <entry>
+        <key>best_value_plan</key>
+        <value>yearly</value>
+    </entry>
+</defaultsMap>

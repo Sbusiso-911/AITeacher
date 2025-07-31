@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Neural Forest Theme Colors -->
+    <color name="forest_primary">#22C55E</color>     <!-- Bio Green -->
+    <color name="forest_secondary">#F97316</color>   <!-- Neural Orange -->
+    <color name="forest_background">#14532D</color>  <!-- Deep Forest -->
+    <color name="forest_accent">#84CC16</color>      <!-- Lime Green -->
+    
+    <!-- Additional forest colors -->
+    <color name="forest_bio_glow">#65A30D</color>    <!-- Bio Glow -->
+    <color name="forest_branch">#16A34A</color>      <!-- Branch Green -->
+    <color name="forest_leaf">#BFDB38</color>        <!-- Leaf Yellow-Green -->
+    <color name="forest_root">#166534</color>        <!-- Root Dark Green -->
+    <color name="forest_synapse">#FB923C</color>     <!-- Synapse Light Orange -->
+    <color name="forest_organic">#A3E635</color>     <!-- Organic Lime -->
+    
+    <!-- Transparency variations -->
+    <color name="forest_primary_50">#8022C55E</color>
+    <color name="forest_primary_30">#4D22C55E</color>
+    <color name="forest_primary_10">#1A22C55E</color>
+    <color name="forest_secondary_50">#80F97316</color>
+    <color name="forest_secondary_30">#4DF97316</color>
+    <color name="forest_secondary_10">#1AF97316</color>
+    <color name="forest_accent_50">#8084CC16</color>
+    <color name="forest_accent_30">#4D84CC16</color>
+    <color name="forest_accent_10">#1A84CC16</color>
+    <color name="forest_background_80">#CC14532D</color>
+    <color name="forest_background_60">#9914532D</color>
+</resources>

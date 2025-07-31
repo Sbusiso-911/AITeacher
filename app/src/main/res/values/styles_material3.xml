@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material Design 3 Base Theme -->
+    <style name="Theme.AITeacher.Material3" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/md_theme_light_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_light_on_primary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_light_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_light_on_primary_container</item>
+        
+        <item name="colorSecondary">@color/md_theme_light_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_light_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/md_theme_light_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_light_on_secondary_container</item>
+        
+        <item name="colorTertiary">@color/md_theme_light_tertiary</item>
+        <item name="colorOnTertiary">@color/md_theme_light_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/md_theme_light_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_light_on_tertiary_container</item>
+        
+        <item name="colorError">@color/md_theme_light_error</item>
+        <item name="colorOnError">@color/md_theme_light_on_error</item>
+        <item name="colorErrorContainer">@color/md_theme_light_error_container</item>
+        <item name="colorOnErrorContainer">@color/md_theme_light_on_error_container</item>
+        
+        <item name="android:colorBackground">@color/md_theme_light_background</item>
+        <item name="colorOnBackground">@color/md_theme_light_on_background</item>
+        <item name="colorSurface">@color/md_theme_light_surface</item>
+        <item name="colorOnSurface">@color/md_theme_light_on_surface</item>
+        <item name="colorSurfaceVariant">@color/md_theme_light_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_light_on_surface_variant</item>
+        
+        <item name="colorOutline">@color/md_theme_light_outline</item>
+        <item name="colorOutlineVariant">@color/md_theme_light_outline_variant</item>
+    </style>
+
+    <!-- Message Styles -->
+    <style name="MessageBubbleUser">
+        <item name="android:background">@drawable/bg_message_user_material3</item>
+        <item name="android:padding">@dimen/message_bubble_padding_horizontal</item>
+        <item name="android:layout_marginStart">@dimen/spacing_xxl</item>
+        <item name="android:layout_marginEnd">@dimen/message_bubble_margin_horizontal</item>
+        <item name="android:layout_marginTop">@dimen/message_bubble_margin_vertical</item>
+        <item name="android:layout_marginBottom">@dimen/message_bubble_margin_vertical</item>
+        <item name="android:maxWidth">@dimen/message_bubble_max_width</item>
+    </style>
+
+    <style name="MessageBubbleAI">
+        <item name="android:background">@drawable/bg_message_ai_material3</item>
+        <item name="android:padding">@dimen/message_bubble_padding_horizontal</item>
+        <item name="android:layout_marginStart">@dimen/message_bubble_margin_horizontal</item>
+        <item name="android:layout_marginEnd">@dimen/spacing_xxl</item>
+        <item name="android:layout_marginTop">@dimen/message_bubble_margin_vertical</item>
+        <item name="android:layout_marginBottom">@dimen/message_bubble_margin_vertical</item>
+        <item name="android:maxWidth">@dimen/message_bubble_max_width</item>
+    </style>
+
+    <style name="MessageTextUser">
+        <item name="android:textColor">@color/md_theme_light_on_primary</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:lineSpacingExtra">2dp</item>
+        <item name="android:fontFamily">@font/montserrat</item>
+    </style>
+
+    <style name="MessageTextAI">
+        <item name="android:textColor">@color/md_theme_light_on_surface_variant</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:lineSpacingExtra">2dp</item>
+        <item name="android:fontFamily">@font/montserrat</item>
+    </style>
+
+    <!-- Input Area Styles -->
+    <style name="InputFieldMaterial3">
+        <item name="android:background">@drawable/bg_input_field_material3</item>
+        <item name="android:padding">@dimen/spacing_md</item>
+        <item name="android:textColor">@color/md_theme_light_on_surface</item>
+        <item name="android:textColorHint">@color/md_theme_light_on_surface_variant</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">@font/montserrat</item>
+        <item name="android:minHeight">@dimen/input_area_height</item>
+    </style>
+
+    <style name="SendButtonMaterial3" parent="Widget.MaterialComponents.Button">
+        <item name="android:layout_width">@dimen/input_button_size</item>
+        <item name="android:layout_height">@dimen/input_button_size</item>
+        <item name="android:minWidth">@dimen/input_button_size</item>
+        <item name="android:minHeight">@dimen/input_button_size</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:insetLeft">0dp</item>
+        <item name="android:insetRight">0dp</item>
+        <item name="cornerRadius">20dp</item>
+        <item name="android:background">@drawable/bg_send_button_material3</item>
+        <item name="backgroundTint">@null</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="elevation">@dimen/elevation_medium</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <style name="IconButtonMaterial3" parent="Widget.MaterialComponents.Button">
+        <item name="android:layout_width">@dimen/input_button_size</item>
+        <item name="android:layout_height">@dimen/input_button_size</item>
+        <item name="android:minWidth">@dimen/input_button_size</item>
+        <item name="android:minHeight">@dimen/input_button_size</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:insetLeft">0dp</item>
+        <item name="android:insetRight">0dp</item>
+        <item name="cornerRadius">20dp</item>
+        <item name="android:background">@drawable/bg_icon_button_material3</item>
+        <item name="backgroundTint">@null</item>
+        <item name="android:textColor">@color/md_theme_light_on_primary_container</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="elevation">@dimen/elevation_low</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <!-- App Bar Styles -->
+    <style name="AppBarMaterial3">
+        <item name="android:background">@drawable/bg_app_bar_material3</item>
+        <item name="android:elevation">@dimen/app_bar_elevation</item>
+        <item name="android:minHeight">@dimen/app_bar_height</item>
+        <item name="android:paddingStart">@dimen/spacing_md</item>
+        <item name="android:paddingEnd">@dimen/spacing_md</item>
+    </style>
+
+    <style name="AppBarTitleMaterial3">
+        <item name="android:textColor">@color/md_theme_light_on_surface</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">@font/montserrat</item>
+    </style>
+
+    <!-- Chip Styles -->
+    <style name="ChipMaterial3">
+        <item name="android:background">@drawable/bg_chip_material3</item>
+        <item name="android:paddingStart">@dimen/chip_padding_horizontal</item>
+        <item name="android:paddingEnd">@dimen/chip_padding_horizontal</item>
+        <item name="android:paddingTop">@dimen/spacing_sm</item>
+        <item name="android:paddingBottom">@dimen/spacing_sm</item>
+        <item name="android:layout_margin">@dimen/chip_margin</item>
+        <item name="android:minHeight">@dimen/chip_height</item>
+        <item name="android:textColor">@color/md_theme_light_on_surface_variant</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">@font/montserrat</item>
+    </style>
+</resources>

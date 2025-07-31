@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="600dp"
+    android:viewportWidth="400"
+    android:viewportHeight="600">
+    
+    <!-- Background -->
+    <path android:pathData="M0,0 L400,0 L400,600 L0,600 Z"
+          android:fillColor="#1E1B4B"/>
+    
+    <!-- Central Brain Core -->
+    <path android:pathData="M120,300 A80,80 0 1,1 280,300 A80,80 0 1,1 120,300"
+            android:fillColor="#808B5CF6"/>
+    <path android:pathData="M140,300 A60,60 0 1,1 260,300 A60,60 0 1,1 140,300"
+            android:fillColor="#4DEC4899"/>
+    <path android:pathData="M160,300 A40,40 0 1,1 240,300 A40,40 0 1,1 160,300"
+            android:fillColor="#C084FC"/>
+    
+    <!-- Neural Network Nodes -->
+    <path android:pathData="M194,250 A6,6 0 1,1 206,250 A6,6 0 1,1 194,250" android:fillColor="#EC4899"/>
+    <path android:pathData="M155,280 A5,5 0 1,1 165,280 A5,5 0 1,1 155,280" android:fillColor="#8B5CF6"/>
+    <path android:pathData="M235,280 A5,5 0 1,1 245,280 A5,5 0 1,1 235,280" android:fillColor="#C084FC"/>
+    <path android:pathData="M116,320 A4,4 0 1,1 124,320 A4,4 0 1,1 116,320" android:fillColor="#8B5CF6"/>
+    <path android:pathData="M276,320 A4,4 0 1,1 284,320 A4,4 0 1,1 276,320" android:fillColor="#EC4899"/>
+    <path android:pathData="M175,350 A5,5 0 1,1 185,350 A5,5 0 1,1 175,350" android:fillColor="#C084FC"/>
+    <path android:pathData="M215,350 A5,5 0 1,1 225,350 A5,5 0 1,1 215,350" android:fillColor="#8B5CF6"/>
+    
+    <!-- Outer Network -->
+    <path android:pathData="M97,200 A3,3 0 1,1 103,200 A3,3 0 1,1 97,200" android:fillColor="#8B5CF6"/>
+    <path android:pathData="M297,200 A3,3 0 1,1 303,200 A3,3 0 1,1 297,200" android:fillColor="#EC4899"/>
+    <path android:pathData="M77,400 A3,3 0 1,1 83,400 A3,3 0 1,1 77,400" android:fillColor="#C084FC"/>
+    <path android:pathData="M317,400 A3,3 0 1,1 323,400 A3,3 0 1,1 317,400" android:fillColor="#8B5CF6"/>
+    
+    <!-- Synaptic Connections -->
+    <path android:pathData="M200,250 Q180,265 160,280"
+          android:strokeColor="#EC4899"
+          android:strokeWidth="2"
+          android:fillType="nonZero"/>
+    <path android:pathData="M200,250 Q220,265 240,280"
+          android:strokeColor="#EC4899"
+          android:strokeWidth="2"
+          android:fillType="nonZero"/>
+    <path android:pathData="M160,280 Q140,300 120,320"
+          android:strokeColor="#8B5CF6"
+          android:strokeWidth="1.5"
+          android:fillType="nonZero"/>
+    <path android:pathData="M240,280 Q260,300 280,320"
+          android:strokeColor="#8B5CF6"
+          android:strokeWidth="1.5"
+          android:fillType="nonZero"/>
+    <path android:pathData="M160,280 Q170,315 180,350"
+          android:strokeColor="#C084FC"
+          android:strokeWidth="2"
+          android:fillType="nonZero"/>
+    <path android:pathData="M240,280 Q230,315 220,350"
+          android:strokeColor="#C084FC"
+          android:strokeWidth="2"
+          android:fillType="nonZero"/>
+    <path android:pathData="M180,350 L220,350"
+          android:strokeColor="#8B5CF6"
+          android:strokeWidth="1.5"/>
+    
+    <!-- Data Particles -->
+    <path android:pathData="M48,150 A2,2 0 1,1 52,150 A2,2 0 1,1 48,150" android:fillColor="#EC4899"/>
+    <path android:pathData="M348,150 A2,2 0 1,1 352,150 A2,2 0 1,1 348,150" android:fillColor="#8B5CF6"/>
+    <path android:pathData="M48,450 A2,2 0 1,1 52,450 A2,2 0 1,1 48,450" android:fillColor="#C084FC"/>
+    <path android:pathData="M348,450 A2,2 0 1,1 352,450 A2,2 0 1,1 348,450" android:fillColor="#EC4899"/>
+    
+    <!-- Energy Waves -->
+    <path android:pathData="M100,300 A100,100 0 1,1 300,300 A100,100 0 1,1 100,300"
+            android:fillType="nonZero"
+            android:strokeColor="#4DEC4899"
+            android:strokeWidth="1"/>
+    <path android:pathData="M80,300 A120,120 0 1,1 320,300 A120,120 0 1,1 80,300"
+            android:fillType="nonZero"
+            android:strokeColor="#4D8B5CF6"
+            android:strokeWidth="1"/>
+    
+    <!-- Data Streams -->
+    <path android:pathData="M80,50 L82,50 L82,550 L80,550 Z" android:fillColor="#4D8B5CF6"/>
+    <path android:pathData="M320,50 L322,50 L322,550 L320,550 Z" android:fillColor="#4DEC4899"/>
+    <path android:pathData="M50,180 L350,180 L350,182 L50,182 Z" android:fillColor="#4DC084FC"/>
+    <path android:pathData="M50,420 L350,420 L350,422 L50,422 Z" android:fillColor="#4D8B5CF6"/>
+</vector>

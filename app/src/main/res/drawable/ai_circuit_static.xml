@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="300dp"
+    android:height="350dp"
+    android:viewportWidth="300"
+    android:viewportHeight="350">
+    
+    <!-- Circuit Board Background -->
+    <path
+        android:pathData="M0,0 L300,0 L300,350 L0,350 Z"
+        android:fillColor="@color/ai_circuit_background" />
+    
+    <!-- PCB Base Layer -->
+    <path
+        android:pathData="M20,20 L280,20 Q290,20 290,30 L290,320 Q290,330 280,330 L20,330 Q10,330 10,320 L10,30 Q10,20 20,20 Z"
+        android:fillColor="@color/ai_circuit_board"
+        android:strokeColor="@color/ai_circuit_primary"
+        android:strokeWidth="1" />
+    
+    <!-- Main Microchip (Central Processing Unit) -->
+    <path
+        android:pathData="M120,120 L180,120 Q190,120 190,130 L190,180 Q190,190 180,190 L120,190 Q110,190 110,180 L110,130 Q110,120 120,120 Z"
+        android:fillColor="@color/ai_circuit_dark_green"
+        android:strokeColor="@color/ai_circuit_primary"
+        android:strokeWidth="2" />
+    
+    <!-- Microchip Pins (Left Side) -->
+    <path android:pathData="M105,135 L110,135 L110,140 L105,140 Z" android:fillColor="@color/ai_circuit_secondary" />
+    <path android:pathData="M105,145 L110,145 L110,150 L105,150 Z" android:fillColor="@color/ai_circuit_secondary" />
+    <path android:pathData="M105,155 L110,155 L110,160 L105,160 Z" android:fillColor="@color/ai_circuit_secondary" />
+    <path android:pathData="M105,165 L110,165 L110,170 L105,170 Z" android:fillColor="@color/ai_circuit_secondary" />
+    <path android:pathData="M105,175 L110,175 L110,180 L105,180 Z" android:fillColor="@color/ai_circuit_secondary" />
+    
+    <!-- Microchip Pins (Right Side) -->
+    <path android:pathData="M190,135 L195,135 L195,140 L190,140 Z" android:fillColor="@color/ai_circuit_secondary" />
+    <path android:pathData="M190,145 L195,145 L195,150 L190,150 Z" android:fillColor="@color/ai_circuit_secondary" />
+    <path android:pathData="M190,155 L195,155 L195,160 L190,160 Z" android:fillColor="@color/ai_circuit_secondary" />
+    <path android:pathData="M190,165 L195,165 L195,170 L190,170 Z" android:fillColor="@color/ai_circuit_secondary" />
+    <path android:pathData="M190,175 L195,175 L195,180 L190,180 Z" android:fillColor="@color/ai_circuit_secondary" />
+    
+    <!-- Microchip Pins (Top Side) -->
+    <path android:pathData="M135,115 L140,115 L140,120 L135,120 Z" android:fillColor="@color/ai_circuit_secondary" />
+    <path android:pathData="M145,115 L150,115 L150,120 L145,120 Z" android:fillColor="@color/ai_circuit_secondary" />
+    <path android:pathData="M155,115 L160,115 L160,120 L155,120 Z" android:fillColor="@color/ai_circuit_secondary" />
+    <path android:pathData="M165,115 L170,115 L170,120 L165,120 Z" android:fillColor="@color/ai_circuit_secondary" />
+    
+    <!-- Microchip Pins (Bottom Side) -->
+    <path android:pathData="M135,190 L140,190 L140,195 L135,195 Z" android:fillColor="@color/ai_circuit_secondary" />
+    <path android:pathData="M145,190 L150,190 L150,195 L145,195 Z" android:fillColor="@color/ai_circuit_secondary" />
+    <path android:pathData="M155,190 L160,190 L160,195 L155,195 Z" android:fillColor="@color/ai_circuit_secondary" />
+    <path android:pathData="M165,190 L170,190 L170,195 L165,195 Z" android:fillColor="@color/ai_circuit_secondary" />
+    
+    <!-- Circuit Traces (Horizontal) -->
+    <path
+        android:pathData="M30,137 L105,137 M195,137 L270,137"
+        android:strokeColor="@color/ai_circuit_primary"
+        android:strokeWidth="2" />
+    <path
+        android:pathData="M30,147 L105,147 M195,147 L270,147"
+        android:strokeColor="@color/ai_circuit_primary"
+        android:strokeWidth="2" />
+    <path
+        android:pathData="M30,157 L105,157 M195,157 L270,157"
+        android:strokeColor="@color/ai_circuit_primary"
+        android:strokeWidth="2" />
+    <path
+        android:pathData="M30,167 L105,167 M195,167 L270,167"
+        android:strokeColor="@color/ai_circuit_primary"
+        android:strokeWidth="2" />
+    
+    <!-- Circuit Traces (Vertical) -->
+    <path
+        android:pathData="M137,40 L137,115 M137,195 L137,310"
+        android:strokeColor="@color/ai_circuit_primary"
+        android:strokeWidth="2" />
+    <path
+        android:pathData="M147,40 L147,115 M147,195 L147,310"
+        android:strokeColor="@color/ai_circuit_primary"
+        android:strokeWidth="2" />
+    <path
+        android:pathData="M157,40 L157,115 M157,195 L157,310"
+        android:strokeColor="@color/ai_circuit_primary"
+        android:strokeWidth="2" />
+    <path
+        android:pathData="M167,40 L167,115 M167,195 L167,310"
+        android:strokeColor="@color/ai_circuit_primary"
+        android:strokeWidth="2" />
+    
+    <!-- Circuit Junctions -->
+    <path android:pathData="M135,137 A3,3 0 1,1 141,137 A3,3 0 1,1 135,137 Z" android:fillColor="@color/ai_circuit_secondary" />
+    <path android:pathData="M155,147 A3,3 0 1,1 161,147 A3,3 0 1,1 155,147 Z" android:fillColor="@color/ai_circuit_secondary" />
+    <path android:pathData="M145,157 A3,3 0 1,1 151,157 A3,3 0 1,1 145,157 Z" android:fillColor="@color/ai_circuit_secondary" />
+    <path android:pathData="M165,167 A3,3 0 1,1 171,167 A3,3 0 1,1 165,167 Z" android:fillColor="@color/ai_circuit_secondary" />
+    
+    <!-- Memory Chips (Left Side) -->
+    <path
+        android:pathData="M40,80 L80,80 Q85,80 85,85 L85,110 Q85,115 80,115 L40,115 Q35,115 35,110 L35,85 Q35,80 40,80 Z"
+        android:fillColor="@color/ai_circuit_dark_green"
+        android:strokeColor="@color/ai_circuit_secondary"
+        android:strokeWidth="1.5" />
+    
+    <path
+        android:pathData="M40,230 L80,230 Q85,230 85,235 L85,260 Q85,265 80,265 L40,265 Q35,265 35,260 L35,235 Q35,230 40,230 Z"
+        android:fillColor="@color/ai_circuit_dark_green"
+        android:strokeColor="@color/ai_circuit_secondary"
+        android:strokeWidth="1.5" />
+    
+    <!-- Memory Chips (Right Side) -->
+    <path
+        android:pathData="M220,80 L260,80 Q265,80 265,85 L265,110 Q265,115 260,115 L220,115 Q215,115 215,110 L215,85 Q215,80 220,80 Z"
+        android:fillColor="@color/ai_circuit_dark_green"
+        android:strokeColor="@color/ai_circuit_secondary"
+        android:strokeWidth="1.5" />
+    
+    <path
+        android:pathData="M220,230 L260,230 Q265,230 265,235 L265,260 Q265,265 260,265 L220,265 Q215,265 215,260 L215,235 Q215,230 220,230 Z"
+        android:fillColor="@color/ai_circuit_dark_green"
+        android:strokeColor="@color/ai_circuit_secondary"
+        android:strokeWidth="1.5" />
+    
+    <!-- Resistors and Capacitors -->
+    <group android:alpha="0.8">
+        <!-- Resistors (small rectangles) -->
+        <path android:pathData="M50,50 L70,50 L70,55 L50,55 Z" android:fillColor="@color/ai_circuit_primary" />
+        <path android:pathData="M230,50 L250,50 L250,55 L230,55 Z" android:fillColor="@color/ai_circuit_primary" />
+        <path android:pathData="M50,300 L70,300 L70,305 L50,305 Z" android:fillColor="@color/ai_circuit_primary" />
+        <path android:pathData="M230,300 L250,300 L250,305 L230,305 Z" android:fillColor="@color/ai_circuit_primary" />
+        
+        <!-- Capacitors (circles) -->
+        <path android:pathData="M100,50 A5,5 0 1,1 110,50 A5,5 0 1,1 100,50 Z" android:fillColor="@color/ai_circuit_secondary" />
+        <path android:pathData="M190,50 A5,5 0 1,1 200,50 A5,5 0 1,1 190,50 Z" android:fillColor="@color/ai_circuit_secondary" />
+        <path android:pathData="M100,300 A5,5 0 1,1 110,300 A5,5 0 1,1 100,300 Z" android:fillColor="@color/ai_circuit_secondary" />
+        <path android:pathData="M190,300 A5,5 0 1,1 200,300 A5,5 0 1,1 190,300 Z" android:fillColor="@color/ai_circuit_secondary" />
+    </group>
+    
+    <!-- Status LEDs -->
+    <path android:pathData="M142,142 A4,4 0 1,1 150,142 A4,4 0 1,1 142,142 Z" android:fillColor="@color/ai_circuit_status_active" />
+    <path android:pathData="M152,152 A3,3 0 1,1 158,152 A3,3 0 1,1 152,152 Z" android:fillColor="@color/ai_circuit_status_warning" />
+    <path android:pathData="M142,162 A3,3 0 1,1 148,162 A3,3 0 1,1 142,162 Z" android:fillColor="@color/ai_circuit_status_active" />
+    <path android:pathData="M152,172 A3,3 0 1,1 158,172 A3,3 0 1,1 152,172 Z" android:fillColor="@color/ai_circuit_status_active" />
+    
+    <!-- Power Rails -->
+    <path
+        android:pathData="M25,25 L275,25"
+        android:strokeColor="@color/ai_circuit_secondary"
+        android:strokeWidth="3"
+        android:strokeAlpha="0.7" />
+    <path
+        android:pathData="M25,325 L275,325"
+        android:strokeColor="@color/ai_circuit_secondary"
+        android:strokeWidth="3"
+        android:strokeAlpha="0.7" />
+    
+    <!-- Via Holes (Small circles for layer connections) -->
+    <group android:alpha="0.6">
+        <path android:pathData="M60,60 A2,2 0 1,1 64,60 A2,2 0 1,1 60,60 Z" android:fillColor="@color/ai_circuit_primary" />
+        <path android:pathData="M240,60 A2,2 0 1,1 244,60 A2,2 0 1,1 240,60 Z" android:fillColor="@color/ai_circuit_primary" />
+        <path android:pathData="M60,290 A2,2 0 1,1 64,290 A2,2 0 1,1 60,290 Z" android:fillColor="@color/ai_circuit_primary" />
+        <path android:pathData="M240,290 A2,2 0 1,1 244,290 A2,2 0 1,1 240,290 Z" android:fillColor="@color/ai_circuit_primary" />
+        <path android:pathData="M120,70 A2,2 0 1,1 124,70 A2,2 0 1,1 120,70 Z" android:fillColor="@color/ai_circuit_primary" />
+        <path android:pathData="M180,70 A2,2 0 1,1 184,70 A2,2 0 1,1 180,70 Z" android:fillColor="@color/ai_circuit_primary" />
+        <path android:pathData="M120,280 A2,2 0 1,1 124,280 A2,2 0 1,1 120,280 Z" android:fillColor="@color/ai_circuit_primary" />
+        <path android:pathData="M180,280 A2,2 0 1,1 184,280 A2,2 0 1,1 180,280 Z" android:fillColor="@color/ai_circuit_primary" />
+    </group>
+    
+</vector>

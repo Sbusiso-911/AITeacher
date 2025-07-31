@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="300dp"
+    android:height="350dp"
+    android:viewportWidth="300"
+    android:viewportHeight="350">
+    
+    <!-- Background -->
+    <path
+        android:pathData="M0,0 L300,0 L300,350 L0,350 Z"
+        android:fillColor="@color/ai_brain_background" />
+    
+    <!-- Central Brain Structure -->
+    <path
+        android:pathData="M100,80 Q150,60 200,80 Q220,100 200,140 Q180,160 150,150 Q120,160 100,140 Q80,100 100,80 Z"
+        android:fillColor="@color/ai_brain_dark_blue"
+        android:strokeColor="@color/ai_brain_primary"
+        android:strokeWidth="2" />
+    
+    <!-- Brain Hemispheres -->
+    <path
+        android:pathData="M105,90 Q140,75 140,110 Q140,130 120,140 Q105,135 105,120 Q105,105 105,90 Z"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="@color/ai_brain_secondary"
+        android:strokeWidth="1.5"
+        android:strokeAlpha="0.8" />
+    
+    <path
+        android:pathData="M160,110 Q195,75 195,90 Q195,105 195,120 Q195,135 180,140 Q160,130 160,110 Z"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="@color/ai_brain_secondary"
+        android:strokeWidth="1.5"
+        android:strokeAlpha="0.8" />
+    
+    <!-- Neural Network Nodes -->
+    <path android:pathData="M115,100 A5,5 0 1,1 125,100 A5,5 0 1,1 115,100 Z" android:fillColor="@color/ai_brain_primary" />
+    <path android:pathData="M170,100 A5,5 0 1,1 180,100 A5,5 0 1,1 170,100 Z" android:fillColor="@color/ai_brain_primary" />
+    <path android:pathData="M140,85 A4,4 0 1,1 148,85 A4,4 0 1,1 140,85 Z" android:fillColor="@color/ai_brain_secondary" />
+    <path android:pathData="M145,115 A4,4 0 1,1 153,115 A4,4 0 1,1 145,115 Z" android:fillColor="@color/ai_brain_secondary" />
+    <path android:pathData="M125,130 A4,4 0 1,1 133,130 A4,4 0 1,1 125,130 Z" android:fillColor="@color/ai_brain_secondary" />
+    <path android:pathData="M167,130 A4,4 0 1,1 175,130 A4,4 0 1,1 167,130 Z" android:fillColor="@color/ai_brain_secondary" />
+    
+    <!-- Neural Connections -->
+    <path
+        android:pathData="M120,100 L144,85 M175,100 L149,115 M120,100 L149,115 M175,100 L144,85 M129,130 L144,85 M171,130 L149,115"
+        android:strokeColor="@color/ai_brain_primary"
+        android:strokeWidth="1"
+        android:strokeAlpha="0.6" />
+    
+    <!-- Extended Neural Networks -->
+    <group android:alpha="0.7">
+        <!-- Left side neurons -->
+        <path android:pathData="M70,60 A3,3 0 1,1 76,60 A3,3 0 1,1 70,60 Z" android:fillColor="@color/ai_brain_secondary" />
+        <path android:pathData="M60,90 A3,3 0 1,1 66,90 A3,3 0 1,1 60,90 Z" android:fillColor="@color/ai_brain_secondary" />
+        <path android:pathData="M75,120 A3,3 0 1,1 81,120 A3,3 0 1,1 75,120 Z" android:fillColor="@color/ai_brain_secondary" />
+        
+        <!-- Right side neurons -->
+        <path android:pathData="M224,60 A3,3 0 1,1 230,60 A3,3 0 1,1 224,60 Z" android:fillColor="@color/ai_brain_secondary" />
+        <path android:pathData="M234,90 A3,3 0 1,1 240,90 A3,3 0 1,1 234,90 Z" android:fillColor="@color/ai_brain_secondary" />
+        <path android:pathData="M219,120 A3,3 0 1,1 225,120 A3,3 0 1,1 219,120 Z" android:fillColor="@color/ai_brain_secondary" />
+        
+        <!-- Neural pathways -->
+        <path
+            android:pathData="M73,60 L115,100 M63,90 L115,100 M78,120 L120,100 M227,60 L175,100 M237,90 L175,100 M222,120 L175,100"
+            android:strokeColor="@color/ai_brain_primary"
+            android:strokeWidth="0.8"
+            android:strokeAlpha="0.4" />
+    </group>
+    
+    <!-- Processing Core -->
+    <path
+        android:pathData="M90,180 L210,180 Q225,180 225,195 L225,270 Q225,285 210,285 L90,285 Q75,285 75,270 L75,195 Q75,180 90,180 Z"
+        android:fillColor="@color/ai_brain_circuit"
+        android:strokeColor="@color/ai_brain_primary"
+        android:strokeWidth="2" />
+    
+    <!-- Processing Units -->
+    <path
+        android:pathData="M100,200 L130,200 Q135,200 135,205 L135,225 Q135,230 130,230 L100,230 Q95,230 95,225 L95,205 Q95,200 100,200 Z"
+        android:fillColor="@color/ai_brain_dark_blue"
+        android:strokeColor="@color/ai_brain_secondary"
+        android:strokeWidth="1" />
+    
+    <path
+        android:pathData="M170,200 L200,200 Q205,200 205,205 L205,225 Q205,230 200,230 L170,230 Q165,230 165,225 L165,205 Q165,200 170,200 Z"
+        android:fillColor="@color/ai_brain_dark_blue"
+        android:strokeColor="@color/ai_brain_secondary"
+        android:strokeWidth="1" />
+    
+    <!-- Data Flow Indicators -->
+    <path android:pathData="M112,215 A3,3 0 1,1 118,215 A3,3 0 1,1 112,215 Z" android:fillColor="@color/ai_brain_status_active" />
+    <path android:pathData="M182,215 A3,3 0 1,1 188,215 A3,3 0 1,1 182,215 Z" android:fillColor="@color/ai_brain_status_active" />
+    
+    <!-- Memory Banks -->
+    <path
+        android:pathData="M110,250 L120,250 L120,270 L110,270 Z"
+        android:fillColor="@color/ai_brain_primary"
+        android:fillAlpha="0.6" />
+    <path
+        android:pathData="M130,250 L140,250 L140,270 L130,270 Z"
+        android:fillColor="@color/ai_brain_secondary"
+        android:fillAlpha="0.6" />
+    <path
+        android:pathData="M160,250 L170,250 L170,270 L160,270 Z"
+        android:fillColor="@color/ai_brain_primary"
+        android:fillAlpha="0.6" />
+    <path
+        android:pathData="M180,250 L190,250 L190,270 L180,270 Z"
+        android:fillColor="@color/ai_brain_secondary"
+        android:fillAlpha="0.6" />
+    
+    <!-- Connection Lines to Brain -->
+    <path
+        android:pathData="M150,150 L150,180"
+        android:strokeColor="@color/ai_brain_primary"
+        android:strokeWidth="2"
+        android:strokeAlpha="0.8" />
+    
+    <!-- Side Processing Units -->
+    <path
+        android:pathData="M30,200 L65,200 Q70,200 70,205 L70,225 Q70,230 65,230 L30,230 Q25,230 25,225 L25,205 Q25,200 30,200 Z"
+        android:fillColor="@color/ai_brain_dark_blue"
+        android:strokeColor="@color/ai_brain_secondary"
+        android:strokeWidth="1" />
+    
+    <path
+        android:pathData="M235,200 L270,200 Q275,200 275,205 L275,225 Q275,230 270,230 L235,230 Q230,230 230,225 L230,205 Q230,200 235,200 Z"
+        android:fillColor="@color/ai_brain_dark_blue"
+        android:strokeColor="@color/ai_brain_secondary"
+        android:strokeWidth="1" />
+    
+    <!-- Status Indicators -->
+    <path android:pathData="M47,215 A2,2 0 1,1 51,215 A2,2 0 1,1 47,215 Z" android:fillColor="@color/ai_brain_status_warning" />
+    <path android:pathData="M252,215 A2,2 0 1,1 256,215 A2,2 0 1,1 252,215 Z" android:fillColor="@color/ai_brain_status_warning" />
+    
+</vector>

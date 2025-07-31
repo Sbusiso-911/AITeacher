@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android">
+    <aapt:attr name="android:drawable" xmlns:aapt="http://schemas.android.com/aapt">
+        <vector android:width="400dp"
+            android:height="600dp"
+            android:viewportWidth="400"
+            android:viewportHeight="600">
+            
+            <!-- Background -->
+            <path android:pathData="M0,0 L400,0 L400,600 L0,600 Z"
+                  android:fillColor="@color/brain_background"/>
+            
+            <!-- Central Brain Core -->
+            <group android:name="brain_core">
+                <path android:pathData="M120,300 A80,80 0 1,1 280,300 A80,80 0 1,1 120,300"
+                      android:fillColor="@color/brain_primary_50"
+                      android:name="core_outer"/>
+                <path android:pathData="M160,300 A40,40 0 1,1 240,300 A40,40 0 1,1 160,300"
+                      android:fillColor="@color/brain_accent"
+                      android:name="core_inner"/>
+            </group>
+            
+            <!-- Neural Network Nodes -->
+            <group android:name="neural_nodes">
+                <path android:pathData="M194,250 A6,6 0 1,1 206,250 A6,6 0 1,1 194,250"
+                      android:fillColor="@color/brain_secondary"
+                      android:name="main_node1"/>
+                <path android:pathData="M155,280 A5,5 0 1,1 165,280 A5,5 0 1,1 155,280"
+                      android:fillColor="@color/brain_primary"
+                      android:name="main_node2"/>
+                <path android:pathData="M235,280 A5,5 0 1,1 245,280 A5,5 0 1,1 235,280"
+                      android:fillColor="@color/brain_accent"
+                      android:name="main_node3"/>
+                <path android:pathData="M116,320 A4,4 0 1,1 124,320 A4,4 0 1,1 116,320"
+                      android:fillColor="@color/brain_primary"
+                      android:name="outer_node1"/>
+                <path android:pathData="M276,320 A4,4 0 1,1 284,320 A4,4 0 1,1 276,320"
+                      android:fillColor="@color/brain_secondary"
+                      android:name="outer_node2"/>
+            </group>
+            
+            <!-- Synaptic Connections -->
+            <group android:name="synapses">
+                <path android:pathData="M200,250 Q180,265 160,280"
+                      android:strokeColor="@color/brain_secondary"
+                      android:strokeWidth="2"
+                      android:fillType="nonZero"
+                      android:name="synapse1"/>
+                <path android:pathData="M200,250 Q220,265 240,280"
+                      android:strokeColor="@color/brain_secondary"
+                      android:strokeWidth="2"
+                      android:fillType="nonZero"
+                      android:name="synapse2"/>
+            </group>
+        </vector>
+    </aapt:attr>
+    
+    <!-- Animations -->
+    <target android:name="core_inner">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="scaleX"
+                android:duration="4000"
+                android:valueFrom="0.9"
+                android:valueTo="1.1"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="main_node1">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="alpha"
+                android:duration="2000"
+                android:valueFrom="0.5"
+                android:valueTo="1.0"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="main_node2">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="alpha"
+                android:duration="2500"
+                android:valueFrom="0.3"
+                android:valueTo="1.0"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="synapse1">
+        <aapt:attr name="android:animation" xmlns:aapt="http://schemas.android.com/aapt">
+            <objectAnimator
+                android:propertyName="alpha"
+                android:duration="3000"
+                android:valueFrom="0.3"
+                android:valueTo="1.0"
+                android:repeatCount="infinite"
+                android:repeatMode="reverse"/>
+        </aapt:attr>
+    </target>
+</animated-vector>

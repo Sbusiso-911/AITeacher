@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material Design 3 Spacing System -->
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_sm">8dp</dimen>
+    <dimen name="spacing_md">16dp</dimen>
+    <dimen name="spacing_lg">24dp</dimen>
+    <dimen name="spacing_xl">32dp</dimen>
+    <dimen name="spacing_xxl">48dp</dimen>
+
+    <!-- Touch Targets -->
+    <dimen name="touch_target_min">48dp</dimen>
+    <dimen name="touch_target_comfortable">56dp</dimen>
+
+    <!-- Corner Radius -->
+    <dimen name="corner_radius_xs">4dp</dimen>
+    <dimen name="corner_radius_sm">8dp</dimen>
+    <dimen name="corner_radius_md">12dp</dimen>
+    <dimen name="corner_radius_lg">16dp</dimen>
+    <dimen name="corner_radius_xl">20dp</dimen>
+    <dimen name="corner_radius_xxl">28dp</dimen>
+
+    <!-- Message Bubbles -->
+    <dimen name="message_bubble_corner_radius">16dp</dimen>
+    <dimen name="message_bubble_corner_radius_small">4dp</dimen>
+    <dimen name="message_bubble_padding_horizontal">16dp</dimen>
+    <dimen name="message_bubble_padding_vertical">12dp</dimen>
+    <dimen name="message_bubble_margin_horizontal">16dp</dimen>
+    <dimen name="message_bubble_margin_vertical">4dp</dimen>
+    <dimen name="message_bubble_max_width">280dp</dimen>
+
+    <!-- Input Area -->
+    <dimen name="input_area_height">56dp</dimen>
+    <dimen name="input_area_padding">16dp</dimen>
+    <dimen name="input_field_corner_radius">28dp</dimen>
+    <dimen name="input_button_size">40dp</dimen>
+    <dimen name="send_button_size">48dp</dimen>
+
+    <!-- App Bar -->
+    <dimen name="app_bar_height">64dp</dimen>
+    <dimen name="app_bar_elevation">8dp</dimen>
+
+    <!-- Chips -->
+    <dimen name="chip_height">32dp</dimen>
+    <dimen name="chip_corner_radius">16dp</dimen>
+    <dimen name="chip_padding_horizontal">16dp</dimen>
+    <dimen name="chip_margin">4dp</dimen>
+
+    <!-- Elevation -->
+    <dimen name="elevation_low">2dp</dimen>
+    <dimen name="elevation_medium">4dp</dimen>
+    <dimen name="elevation_high">8dp</dimen>
+    <dimen name="elevation_very_high">16dp</dimen>
+
+    <!-- Icons -->
+    <dimen name="icon_size_small">16dp</dimen>
+    <dimen name="icon_size_medium">24dp</dimen>
+    <dimen name="icon_size_large">32dp</dimen>
+</resources>

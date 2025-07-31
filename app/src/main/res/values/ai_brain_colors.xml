@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AI Brain Theme Colors -->
+    <color name="ai_brain_primary">#FF6B9D</color>        <!-- Neural Pink -->
+    <color name="ai_brain_secondary">#4ECDC4</color>      <!-- Synapse Cyan -->
+    <color name="ai_brain_background">#0A0A0A</color>     <!-- Deep Neural Black -->
+    <color name="ai_brain_circuit">#1A1A2E</color>        <!-- Neural Circuit -->
+    <color name="ai_brain_glow">#80FF6B9D</color>         <!-- Neural Glow -->
+    <color name="ai_brain_dark_blue">#2D1B3D</color>      <!-- Deep Neural -->
+    <color name="ai_brain_medium_blue">#4A2C4A</color>    <!-- Medium Neural -->
+    <color name="ai_brain_status_active">#00FF7F</color>  <!-- Active Neuron -->
+    <color name="ai_brain_status_warning">#FFD700</color> <!-- Warning Signal -->
+    <color name="ai_brain_status_error">#FF4757</color>   <!-- Error Signal -->
+    <color name="ai_brain_black">#000000</color>
+    <color name="ai_brain_white">#FFFFFF</color>
+    
+    <!-- Gradient colors for neural effects -->
+    <color name="ai_brain_gradient_start">#FF6B9D</color>
+    <color name="ai_brain_gradient_end">#4ECDC4</color>
+    <color name="ai_brain_neural_start">#8A2BE2</color>
+    <color name="ai_brain_neural_end">#FF1493</color>
+</resources>

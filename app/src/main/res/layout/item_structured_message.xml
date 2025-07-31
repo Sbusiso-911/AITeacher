@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="8dp"
+    android:paddingVertical="4dp"
+    android:layout_marginBottom="8dp">
+
+    <!-- Main message row with avatar positioned optimally -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="start|top"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="48dp">
+
+        <!-- AI Avatar - positioned at top left, smaller and non-intrusive -->
+        <ImageView
+            android:id="@+id/aiAvatar"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginEnd="12dp"
+            android:layout_marginTop="8dp"
+            android:src="@drawable/ai_robot_icon"
+            android:background="@drawable/circle_white_background"
+            android:contentDescription="AI Teacher" />
+
+        <!-- Structured Message Content Container -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- Message Header with AI Teacher badge -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🤖 AI Teacher"
+                    android:textColor="@color/glass_text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/montserrat" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <!-- Action buttons row - dedicated first line -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="end">
+
+                    <!-- Copy icon button -->
+                    <ImageView
+                        android:id="@+id/copyIcon"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginEnd="8dp"
+                        android:src="@drawable/ic_copy"
+                        android:contentDescription="Copy content"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="@drawable/circle_white_background"
+                        android:padding="4dp"
+                        app:tint="@color/glass_text_primary"/>
+
+                    <!-- Share icon button -->
+                    <ImageView
+                        android:id="@+id/shareIcon"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_share"
+                        android:contentDescription="Share content"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="@drawable/circle_white_background"
+                        android:padding="4dp"
+                        app:tint="@color/glass_text_primary"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Structured Content Container -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="@color/glass_message_received">
+
+                <LinearLayout
+                    android:id="@+id/structuredContentContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="4dp" />
+            </androidx.cardview.widget.CardView>
+
+            <!-- Learning Progress Indicator (if applicable) -->
+            <LinearLayout
+                android:id="@+id/progressSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="8dp"
+                android:visibility="gone">
+
+                <ProgressBar
+                    android:id="@+id/learningProgress"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="0dp"
+                    android:layout_height="4dp"
+                    android:layout_weight="1"
+                    android:progressTint="@color/ai_robot_primary"
+                    android:backgroundTint="@color/glass_border"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/progressText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/glass_text_secondary"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/montserrat"
+                    android:text="Progress: 3/5" />
+            </LinearLayout>
+
+            <!-- Quick Actions Bar -->
+            <LinearLayout
+                android:id="@+id/quickActionsBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="start"
+                android:layout_marginTop="8dp"
+                android:visibility="gone">
+
+                <!-- Expand All Steps Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/expandAllButton"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:text="Expand All"
+                    android:textSize="12sp"
+                    android:textColor="@color/ai_robot_primary"
+                    android:layout_marginEnd="8dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="12dp"
+                    app:cornerRadius="16dp" />
+
+                <!-- Quiz Mode Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/quizModeButton"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:text="Quiz Me"
+                    android:textSize="12sp"
+                    android:textColor="@color/ai_robot_primary"
+                    android:layout_marginEnd="8dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="12dp"
+                    app:cornerRadius="16dp" />
+
+                <!-- More Examples Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/moreExamplesButton"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:text="More Examples"
+                    android:textSize="12sp"
+                    android:textColor="@color/ai_robot_primary"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="12dp"
+                    app:cornerRadius="16dp" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Follow-up suggestions (similar to the original design) -->
+    <LinearLayout
+        android:id="@+id/followUpSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:layout_marginStart="48dp"
+        android:layout_marginTop="8dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/followUpHeaderButton"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Suggested Follow-ups ▼"
+            android:textAllCaps="false"
+            android:textColor="@color/glass_text_secondary"
+            android:textSize="12sp"
+            android:minHeight="0dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"/>
+
+        <LinearLayout
+            android:id="@+id/followUpButtonsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone" />
+    </LinearLayout>
+</LinearLayout>
