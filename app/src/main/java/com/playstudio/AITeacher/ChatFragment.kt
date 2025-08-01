@@ -423,8 +423,9 @@ class ChatFragment : Fragment() {
         // Setup subscription UI manager for this fragment
         subscriptionUIManager.setupForFragment(this)
         
-        // Update subscription status display
+        // Update subscription status display and credit balance
         updateSubscriptionStatusDisplay()
+        updateCreditBalanceDisplay()
         
         // Check if user should get model recommendations
         lifecycleScope.launch {
@@ -629,8 +630,9 @@ class ChatFragment : Fragment() {
         val conversationId = arguments?.getString("conversation_id")
         initializeChat(selectedModel, conversationId)
         
-        // Update subscription status display after initialization
+        // Update subscription status display and show credit balance after initialization
         updateSubscriptionStatusDisplay()
+        updateCreditBalanceDisplay()
 
         binding.historyButton.setOnClickListener {
             showChatHistoryDialog()
@@ -3673,8 +3675,9 @@ class ChatFragment : Fragment() {
             canSendMessage = false
         }
         
-        // Update the subscription status display
+        // Update the subscription status display and credit balance
         updateSubscriptionStatusDisplay()
+        updateCreditBalanceDisplay()
     }
 
     private fun openDocumentPicker() {
@@ -4018,8 +4021,9 @@ class ChatFragment : Fragment() {
                 val creditCost = creditManager.calculateMessageCost(inputTokens, outputTokens, model.modelId, tier)
                 creditManager.updateUserCredits("default_user", tier, creditCost)
 
-                // Update UI with remaining usage
+                // Update UI with remaining usage and credit balance
                 updateUsageDisplay(model)
+                updateCreditBalanceDisplay()
                 
             } catch (e: Exception) {
                 Log.e("ChatFragment", "Error tracking usage", e)
@@ -4048,6 +4052,20 @@ class ChatFragment : Fragment() {
                 
             } catch (e: Exception) {
                 Log.e("ChatFragment", "Error updating usage display", e)
+            }
+        }
+    }
+
+    private fun updateCreditBalanceDisplay() {
+        lifecycleScope.launch {
+            try {
+                val tier = subscriptionUIManager.getUserSubscriptionTier()
+                val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(requireContext())
+                val remaining = creditManager.getRemainingCredits("default_user", tier)
+                val config = com.playstudio.aiteacher.credits.SubscriptionTiers.getConfig(tier)
+                binding.tvCreditBalance.text = "Credits: ${String.format("%.2f", remaining)} / ${config.dailyCredits}"
+            } catch (e: Exception) {
+                Log.e("ChatFragment", "Error updating credit balance", e)
             }
         }
     }
