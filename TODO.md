@@ -13,3 +13,4 @@
 
 - [x] Integrate Gemini API via OpenAI-compatible endpoint
 - [x] Display new Gemini models in AI model dialog and remove outdated ones
+- [x] Integrate Grok 4 model with xAI API and add to model selection dialog

@@ -135,6 +135,16 @@ enum class AIModel(
             SubscriptionTier.ULTRA_PREMIUM to 300
         )
     ),
+
+    GROK_4("Grok 4", "grok-4-0709", 3.00, 15.00, 0.75, "xAI", 9, 256000, 200, 300,
+        mapOf(
+            SubscriptionTier.FREE to 2,
+            SubscriptionTier.BASIC to 10,
+            SubscriptionTier.PRO to 30,
+            SubscriptionTier.PREMIUM to 80,
+            SubscriptionTier.ULTRA_PREMIUM to 200
+        )
+    ),
     
     
     CLAUDE_SONNET_4("Claude Sonnet 4", "claude-sonnet-4-20250514", 3.00, 15.00, 0.30, "Anthropic", 8, 32000, 200, 300,

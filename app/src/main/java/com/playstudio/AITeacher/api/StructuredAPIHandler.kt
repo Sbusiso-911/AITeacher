@@ -26,6 +26,7 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
         private const val TAG = "StructuredAPIHandler"
         private const val OPENAI_BASE_URL = "https://api.openai.com/v1/chat/completions"
         private const val ANTHROPIC_BASE_URL = "https://api.anthropic.com/v1/messages"
+        private const val XAI_BASE_URL = "https://api.x.ai/v1/chat/completions"
         
         // Supported models for structured outputs
         private val STRUCTURED_MODELS = setOf(
@@ -34,7 +35,8 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
             "gpt-4o-mini",
             "gpt-4o-mini-2024-07-18",
             "claude-sonnet-4-20250514",
-            "claude-opus-4-20250514"
+            "claude-opus-4-20250514",
+            "grok-4-0709"
         )
     }
 
@@ -221,6 +223,9 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
             builder.url(ANTHROPIC_BASE_URL)
                 .addHeader("x-api-key", BuildConfig.ANTHROPIC_API_KEY)
                 .addHeader("anthropic-version", "2023-06-01")
+        } else if (model.startsWith("grok")) {
+            builder.url(XAI_BASE_URL)
+                .addHeader("Authorization", "Bearer ${BuildConfig.GROK_API_KEY}")
         } else {
             builder.url(OPENAI_BASE_URL)
                 .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
@@ -260,6 +265,9 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
             builder.url(ANTHROPIC_BASE_URL)
                 .addHeader("x-api-key", BuildConfig.ANTHROPIC_API_KEY)
                 .addHeader("anthropic-version", "2023-06-01")
+        } else if (model.startsWith("grok")) {
+            builder.url(XAI_BASE_URL)
+                .addHeader("Authorization", "Bearer ${BuildConfig.GROK_API_KEY}")
         } else {
             builder.url(OPENAI_BASE_URL)
                 .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
@@ -299,6 +307,9 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
             builder.url(ANTHROPIC_BASE_URL)
                 .addHeader("x-api-key", BuildConfig.ANTHROPIC_API_KEY)
                 .addHeader("anthropic-version", "2023-06-01")
+        } else if (model.startsWith("grok")) {
+            builder.url(XAI_BASE_URL)
+                .addHeader("Authorization", "Bearer ${BuildConfig.GROK_API_KEY}")
         } else {
             builder.url(OPENAI_BASE_URL)
                 .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
@@ -338,6 +349,9 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
             builder.url(ANTHROPIC_BASE_URL)
                 .addHeader("x-api-key", BuildConfig.ANTHROPIC_API_KEY)
                 .addHeader("anthropic-version", "2023-06-01")
+        } else if (model.startsWith("grok")) {
+            builder.url(XAI_BASE_URL)
+                .addHeader("Authorization", "Bearer ${BuildConfig.GROK_API_KEY}")
         } else {
             builder.url(OPENAI_BASE_URL)
                 .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")

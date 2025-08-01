@@ -53,6 +53,10 @@ android {
         // Read Gemini API key from gradle.properties
         val geminiApiKey: String? = project.findProperty("GEMINI_API_KEY") as String?
         buildConfigField("String", "GEMINI_API_KEY", "\"${geminiApiKey ?: ""}\"")
+
+        // Read Grok API key from gradle.properties
+        val grokApiKey: String? = project.findProperty("GROK_API_KEY") as String?
+        buildConfigField("String", "GROK_API_KEY", "\"${grokApiKey ?: ""}\"")
     }
 
     buildFeatures {

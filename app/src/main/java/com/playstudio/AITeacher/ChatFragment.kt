@@ -244,6 +244,7 @@ class ChatFragment : Fragment() {
     private val apiKey =  BuildConfig.API_KEY
     // Anthropic API key for Claude models
     private val anthropicApiKey = BuildConfig.ANTHROPIC_API_KEY
+    private val grokApiKey = BuildConfig.GROK_API_KEY
     private var currentModel = "gpt-3.5-turbo"
     private var conversationId: String? = null
     private var isTtsEnabled = false
@@ -1433,6 +1434,10 @@ class ChatFragment : Fragment() {
                 .url("https://api.anthropic.com/v1/messages")
                 .addHeader("x-api-key", anthropicApiKey)
                 .addHeader("anthropic-version", "2023-06-01")
+        } else if (currentModel.startsWith("grok")) {
+            requestBuilder
+                .url("https://api.x.ai/v1/chat/completions")
+                .addHeader("Authorization", "Bearer $grokApiKey")
         } else {
             requestBuilder
                 .url("https://api.openai.com/v1/chat/completions")
@@ -4212,6 +4217,7 @@ class ChatFragment : Fragment() {
                         "Anthropic" -> setupAnthropicSpecificFeatures(currentAIModel)
                         "Google" -> setupGoogleSpecificFeatures(currentAIModel)
                         "DeepSeek" -> setupDeepSeekSpecificFeatures(currentAIModel)
+                        "xAI" -> setupXaiSpecificFeatures(currentAIModel)
                     }
                     
                     // Update UI elements based on model costs
@@ -4254,6 +4260,10 @@ class ChatFragment : Fragment() {
                 showModelCapabilityHints("🎭 Maximum capability mode")
             }
         }
+    }
+
+    private fun setupXaiSpecificFeatures(model: com.playstudio.aiteacher.pricing.AIModel) {
+        showModelCapabilityHints("🚀 Grok advanced reasoning")
     }
     
     private fun setupGoogleSpecificFeatures(model: com.playstudio.aiteacher.pricing.AIModel) {
