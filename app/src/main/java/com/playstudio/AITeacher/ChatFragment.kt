@@ -3800,42 +3800,20 @@ class ChatFragment : Fragment() {
 
             dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
-            // Get models from AIModel.kt in the correct order
-            val availableModels = listOf(
-                com.playstudio.aiteacher.pricing.AIModel.GPT_35_TURBO,
-                com.playstudio.aiteacher.pricing.AIModel.DEEPSEEK,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_41_MINI,
-                com.playstudio.aiteacher.pricing.AIModel.GEMINI,
-                com.playstudio.aiteacher.pricing.AIModel.GEMINI_VOICE,
-                // Audio Models
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O_AUDIO,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O_MINI_AUDIO,
-                // Regular Models
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4_TURBO,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O_SEARCH,
-                com.playstudio.aiteacher.pricing.AIModel.CLAUDE_SONNET_4,
-                com.playstudio.aiteacher.pricing.AIModel.O1,
-                com.playstudio.aiteacher.pricing.AIModel.O1_MINI,
-                com.playstudio.aiteacher.pricing.AIModel.O3,
-                com.playstudio.aiteacher.pricing.AIModel.O3_MINI,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O_REALTIME,
-                com.playstudio.aiteacher.pricing.AIModel.OPENAI_REALTIME_VOICE,
-                com.playstudio.aiteacher.pricing.AIModel.DALL_E_3,
-                com.playstudio.aiteacher.pricing.AIModel.CLAUDE_OPUS_4
-            )
+            // Get available models dynamically so newly added ones appear automatically
+            val subscriptionUIManager = SubscriptionUIManager(requireContext())
+            subscriptionUIManager.updateUIForSubscriptionStatus(this@ChatFragment)
+            val userTier = subscriptionUIManager.getUserSubscriptionTier()
+            val availableModels = subscriptionUIManager.getAvailableAIModels()
+
+            Log.d("ChatFragment", "Model dialog - User tier: $userTier")
 
             // Set up RecyclerView with GridLayoutManager (2 columns)
             val recyclerView = dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.modelsRecyclerView)
             recyclerView.layoutManager = androidx.recyclerview.widget.GridLayoutManager(requireContext(), 2)
-            
+
             // Create subscription-aware adapter with fresh subscription data
-            val subscriptionUIManager = SubscriptionUIManager(requireContext())
             val usageTracker = com.playstudio.aiteacher.pricing.UsageTracker(requireContext())
-            
-            // Ensure we get the latest subscription status
-            subscriptionUIManager.updateUIForSubscriptionStatus(this@ChatFragment)
-            val userTier = subscriptionUIManager.getUserSubscriptionTier()
             
             Log.d("ChatFragment", "Model dialog - User tier: $userTier")
             

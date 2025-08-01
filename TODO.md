@@ -12,3 +12,4 @@
 - [x] Detect and surface AI refusals when parsing structured responses
 
 - [x] Integrate Gemini API via OpenAI-compatible endpoint
+- [x] Display new Gemini models in AI model dialog and remove outdated ones
