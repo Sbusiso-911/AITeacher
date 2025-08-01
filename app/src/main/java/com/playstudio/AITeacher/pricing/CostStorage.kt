@@ -31,10 +31,13 @@ class CostStorage(private val context: Context) {
         private const val KEY_USER_TIER = "user_tier_"
         private const val KEY_MONTHLY_COSTS = "monthly_costs_"
         private const val KEY_LAST_CLEANUP = "last_cleanup"
-        
+
         // Cleanup intervals
         private const val CLEANUP_INTERVAL_DAYS = 7
         private const val KEEP_RECORDS_DAYS = 30
+
+        // Baseline cost per token in USD (approx cost of GPT-3.5 Turbo output token)
+        private const val BASE_COST_PER_TOKEN = 0.000001
     }
     
     /**
@@ -143,7 +146,7 @@ class CostStorage(private val context: Context) {
             costByModel = updatedCostByModel,
             costByFeature = updatedCostByFeature,
             messageCount = currentUsage.messageCount + 1,
-            tokenCount = currentUsage.tokenCount + record.inputTokens + record.outputTokens,
+            tokenCount = currentUsage.tokenCount + calculateNormalizedTokens(record),
             imageCount = currentUsage.imageCount + record.features.count { 
                 it in listOf(APIFeature.IMAGE_GEN_LOW, APIFeature.IMAGE_GEN_MEDIUM, APIFeature.IMAGE_GEN_HIGH) 
             },
@@ -155,6 +158,14 @@ class CostStorage(private val context: Context) {
         
         // Save updated usage
         prefs.edit().putString(key, gson.toJson(updatedUsage)).apply()
+    }
+
+    /**
+     * Convert API call cost to normalized tokens based on baseline pricing
+     */
+    private fun calculateNormalizedTokens(record: APICallRecord): Int {
+        val cost = record.model.calculateCost(record.inputTokens, record.outputTokens)
+        return (cost / BASE_COST_PER_TOKEN).toInt()
     }
     
     /**
