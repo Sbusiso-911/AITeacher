@@ -17,6 +17,8 @@ import com.playstudio.aiteacher.pricing.SubscriptionTier
 import com.playstudio.aiteacher.pricing.UsageTracker
 import com.playstudio.aiteacher.pricing.SmartUpgradeManager
 import com.playstudio.aiteacher.pricing.SmartUpgradeRecommendation
+import com.playstudio.aiteacher.credits.CreditManager
+import com.playstudio.aiteacher.credits.SubscriptionTiers
 
 class UsageDashboardActivity : AppCompatActivity() {
     
@@ -132,7 +134,13 @@ class UsageDashboardActivity : AppCompatActivity() {
         
         binding.textViewTotalUsed.text = "Total Used Today: $totalUsed"
         binding.textViewTotalRemaining.text = "Total Remaining: ${if (totalRemaining > 1000) "∞" else totalRemaining.toString()}"
-        
+
+        // Show credit balance using the new credit system
+        val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(this)
+        val tierConfig = com.playstudio.aiteacher.credits.SubscriptionTiers.getConfig(userTier)
+        val remainingCredits = creditManager.getRemainingCredits("default_user", userTier)
+        binding.textViewCreditBalance.text = "Credits: ${String.format("%.2f", remainingCredits)} / ${tierConfig.dailyCredits}"
+
         // Update adapter
         usageAdapter.updateUsageData(usageSummary.values.toList())
     }
