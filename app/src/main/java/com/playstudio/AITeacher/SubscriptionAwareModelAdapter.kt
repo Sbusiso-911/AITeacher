@@ -40,7 +40,6 @@ class SubscriptionAwareModelAdapter(
         private val tvProvider: TextView = itemView.findViewById(R.id.tv_provider)
         private val tvTierBadge: TextView = itemView.findViewById(R.id.tv_tier_badge)
         private val tvCapabilities: TextView = itemView.findViewById(R.id.tv_capabilities)
-        private val tvDailyLimit: TextView = itemView.findViewById(R.id.tv_daily_limit)
         private val tvCostPerMessage: TextView = itemView.findViewById(R.id.tv_cost_per_message)
 
         fun bind(model: AIModel, userTier: SubscriptionTier, usageTracker: com.playstudio.aiteacher.pricing.UsageTracker, onModelSelected: (AIModel) -> Unit) {
@@ -56,17 +55,6 @@ class SubscriptionAwareModelAdapter(
             // Set capabilities (star rating)
             val stars = "⭐".repeat(minOf(model.capabilities, 5))
             tvCapabilities.text = "$stars (${model.capabilities}/10)"
-            
-            // Set daily limit and usage info
-            val usageLimit = model.getUsageLimitForTier(userTier)
-            val currentUsage = usageTracker.getCurrentUsage(model.modelId)
-            val remainingUsage = usageTracker.getRemainingUsage(model.modelId, userTier)
-            
-            tvDailyLimit.text = if (usageLimit == -1) {
-                "Unlimited daily"
-            } else {
-                "$currentUsage/$usageLimit used today"
-            }
             
             // Set cost per message using credit system
             val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(itemView.context)
