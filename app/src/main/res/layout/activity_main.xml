@@ -14,7 +14,7 @@
         android:layout_height="match_parent"
         android:fitsSystemWindows="true"
         tools:context=".MainActivity"
-        android:background="@color/clear">
+        android:background="@color/background_light">
 
         <!-- ScrollView to make the content scrollable -->
         <ScrollView
@@ -33,7 +33,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="16dp"
-                android:background="@color/clear"
+                android:background="@color/background_light"
                 android:fitsSystemWindows="true"
                 tools:context=".MainActivity">
 
@@ -391,15 +391,37 @@
                             android:contentDescription="Create Stunning Images"
                             android:layout_marginEnd="4dp"/>
 
-                        <ImageButton
+                        <!-- Removed Extract Email icon (replaced by dedicated buttons below) -->
+                    </LinearLayout>
+
+                    <!-- Email Tools Row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="4dp">
+
+                        <Button
+                            android:id="@+id/btnOpenEmailApp"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:text="@string/open_email_app"
+                            android:textColor="@android:color/white"
+                            android:textSize="14sp"
+                            android:background="@drawable/premium_dialog_background"
+                            android:layout_marginEnd="4dp" />
+
+                        <Button
                             android:id="@+id/btnExtractEmail"
                             android:layout_width="0dp"
-                            android:layout_height="200dp"
+                            android:layout_height="48dp"
                             android:layout_weight="1"
-                            android:scaleType="fitCenter"
-                            android:src="@drawable/extract_email_icon"
-                            android:background="@android:color/transparent"
-                            android:contentDescription="Extract text from Email"/>
+                            android:text="@string/extract_email_button"
+                            android:textColor="@android:color/white"
+                            android:textSize="14sp"
+                            android:background="@drawable/premium_dialog_background" />
+
                     </LinearLayout>
                 </LinearLayout>
                 <!-- Placeholder View -->

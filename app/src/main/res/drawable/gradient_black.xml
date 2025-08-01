@@ -4,13 +4,13 @@
     <item>
         <shape android:shape="rectangle">
             <gradient
-                android:startColor="#402c3e50"
-            android:endColor="#4000d2ff"
-            android:angle="45"/>
-            <corners android:radius="10dp"/>
+                android:startColor="#33000000"
+                android:endColor="#33000000"
+                android:angle="45"/>
+            <corners android:radius="12dp"/>
             <stroke
                 android:width="1dp"
-                android:color="#502c3e50"/>
+                android:color="#22000000"/>
             <padding android:bottom="5dp" android:right="3dp"/>
         </shape>
     </item>
@@ -19,10 +19,10 @@
     <item android:top="2dp" android:left="2dp">
         <shape android:shape="rectangle">
             <gradient
-                android:startColor="#2c3e50"
-                android:endColor="#00d2ff"
+                android:startColor="#ECEFF1"
+                android:endColor="#CFD8DC"
                 android:angle="45"/>
-            <corners android:radius="8dp"/>
+            <corners android:radius="12dp"/>
             <stroke
                 android:width="2dp"
                 android:color="#909090"/>

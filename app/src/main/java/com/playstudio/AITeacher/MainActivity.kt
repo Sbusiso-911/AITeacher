@@ -38,6 +38,10 @@ import androidx.palette.graphics.Palette
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import com.airbnb.lottie.LottieAnimationView
+import android.view.accessibility.AccessibilityManager
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.provider.Settings
+import com.playstudio.aiteacher.EmailAccessibilityService
 import com.android.billingclient.api.*
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
@@ -618,18 +622,21 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                 false // Don't consume the event
             }
 
-            // Update your email button click listener
-            // Update your email button click listener
-            findViewById<ImageButton>(R.id.btnExtractEmail).setOnClickListener {
+            // Email tools
+            findViewById<Button>(R.id.btnOpenEmailApp).setOnClickListener {
+                openEmailApp()
+            }
+
+            findViewById<Button>(R.id.btnExtractEmail).setOnClickListener {
                 if (emailProviderHelper.hasEmailPermissions()) {
                     val accounts = emailProviderHelper.getAvailableEmailAccounts()
                     if (accounts.isNotEmpty()) {
                         showEmailAccountPicker(accounts)
                     } else {
-                        openGenericEmailPicker() // This will call startActivityForResult
+                        openGenericEmailPicker()
                     }
                 } else {
-                    requestEmailPermissions() // This is MainActivity's existing method, will be adapted
+                    requestEmailPermissions()
                 }
             }
 
@@ -2223,19 +2230,19 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             dialog.dismiss()
         }
         dialogView.findViewById<View>(R.id.colorGreen).setOnClickListener {
-            val drawableResId = R.drawable.gradient_blue
+            val drawableResId = R.drawable.gradient_green
+            setBackgroundColor(drawableResId)
+            saveSelectedColor(drawableResId)
+            dialog.dismiss()
+        }
+        dialogView.findViewById<View>(R.id.colorBlue).setOnClickListener {
+            val drawableResId = R.drawable.gradient_navy
             setBackgroundColor(drawableResId)
             saveSelectedColor(drawableResId)
             dialog.dismiss()
         }
         dialogView.findViewById<View>(R.id.colorCyan).setOnClickListener {
             val drawableResId = R.drawable.gradient_cyan
-            setBackgroundColor(drawableResId)
-            saveSelectedColor(drawableResId)
-            dialog.dismiss()
-        }
-        dialogView.findViewById<View>(R.id.colorMagenta).setOnClickListener {
-            val drawableResId = R.drawable.gradient_magenta
             setBackgroundColor(drawableResId)
             saveSelectedColor(drawableResId)
             dialog.dismiss()
@@ -2733,7 +2740,8 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                             emailMessage?.let { message ->
                                 passEmailToChatFragment(
                                     subject = message.subject,
-                                    body = message.body
+                                    body = message.body,
+                                    sender = message.from
                                 )
                             } ?: run {
                                 Toast.makeText(
@@ -2849,9 +2857,8 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
 
         AlertDialog.Builder(this)
             .setTitle("Select Email Account")
-            .setItems(accountNames) { _, which ->
-                // Call your method to open the email client with the selected account
-                openEmailClient(accounts[which]) // This calls startActivityForResult
+            .setItems(accountNames) { _, _ ->
+                openGenericEmailPicker()
             }
             .setNegativeButton("Cancel", null)
             .show()
@@ -2859,31 +2866,52 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
 
 
     private fun openGenericEmailPicker() {
-        try {
-            val intent = Intent(Intent.ACTION_PICK).apply {
-                type = "message/rfc822"
+        if (!isEmailExtractionServiceEnabled()) {
+            promptEnableEmailExtraction()
+            return
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.share_email_title))
+            .setMessage(getString(R.string.email_extraction_instructions))
+            .setPositiveButton(getString(R.string.open_email_app)) { _, _ ->
+                openEmailApp()
             }
-            startActivityForResult(intent, EmailProviderHelper.EMAIL_PICK_REQUEST) // Use constant from helper
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun openEmailApp() {
+        try {
+            val intent = Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_APP_EMAIL)
+            }
+            startActivity(intent)
         } catch (e: ActivityNotFoundException) {
             Toast.makeText(this, "No email app found", Toast.LENGTH_SHORT).show()
-            // Alternative approach for devices without email picker
             showAlternativeEmailOptions()
         }
     }
+
+    private fun isEmailExtractionServiceEnabled(): Boolean {
+        val am = getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+        val enabled = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_GENERIC)
+        val id = "$packageName/${EmailAccessibilityService::class.java.name}"
+        return enabled.any { it.id == id }
+    }
+
+    private fun promptEnableEmailExtraction() {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.enable_email_extraction_title))
+            .setMessage(getString(R.string.enable_email_extraction_message))
+            .setPositiveButton(getString(R.string.open_accessibility_settings)) { _, _ ->
+                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
     private fun openEmailClient(account: Account? = null) {
-        // The 'account' parameter is often not directly usable with a generic ACTION_PICK intent.
-        // Email clients typically don't filter by a passed Account object for ACTION_PICK.
-        // The main purpose here is to launch an email picker.
-        val intent = Intent(Intent.ACTION_PICK).apply {
-            type = "message/rfc822"
-            // Passing 'account' as an extra is non-standard and likely ignored by most email apps for ACTION_PICK.
-            // if (account != null) { intent.putExtra("account", account) }
-        }
-        try {
-            startActivityForResult(intent, EmailProviderHelper.EMAIL_PICK_REQUEST) // Use constant from helper
-        } catch (e: ActivityNotFoundException) {
-            Toast.makeText(this, "No email app found", Toast.LENGTH_SHORT).show()
-        }
+        openGenericEmailPicker()
     }
     private fun showAlternativeEmailOptions() {
         AlertDialog.Builder(this)
@@ -2968,7 +2996,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             EmailProviderHelper.EMAIL_PERMISSION_REQUEST_CODE -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // Permissions granted, try again
-                    findViewById<ImageButton>(R.id.btnExtractEmail).performClick()
+                    findViewById<Button>(R.id.btnExtractEmail).performClick()
                 } else {
                     Toast.makeText(
                         this, "Permission to access accounts denied. Email feature may not work as expected.", Toast.LENGTH_LONG
@@ -2978,19 +3006,25 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             // Handle other permission request codes if you have them
         }
     }
-    private fun passEmailToChatFragment(subject: String, body: String) {
-        val formattedMessage = "Email Subject: $subject\n\nEmail Content:\n$body"
+    private fun passEmailToChatFragment(subject: String, body: String, sender: String?) {
+        val formattedMessage = buildString {
+            append("I received the following email\n")
+            sender?.let { append("From: $it\n") }
+            append("Subject: $subject\n\n")
+            append(body)
+            append("\n\nPlease draft a concise reply and use the send_email_by_voice tool to compose it.")
+        }
 
         // Check if ChatFragment is currently visible
         val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
 
         if (currentFragment is ChatFragment) {
-            currentFragment.setExtractedText(formattedMessage)
+            currentFragment.setQuestionText(formattedMessage)
         } else {
             // Create new ChatFragment instance and pass the text
             val chatFragment = ChatFragment().apply {
                 arguments = Bundle().apply {
-                    putString("extracted_text", formattedMessage)
+                    putString("prefilled_question", formattedMessage)
                 }
             }
 
