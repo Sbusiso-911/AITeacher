@@ -74,16 +74,25 @@ class CreditManager private constructor(private val context: Context) {
         val remaining = prefs.getFloat(KEY_PREFIX + userId, config.dailyCredits.toFloat())
         var rollover = prefs.getFloat(KEY_ROLLOVER + userId, 0f)
 
-        // If last update was within rollover period, carry over unused credits
         if (lastUpdate != null) {
-            rollover = (rollover + remaining).coerceAtMost(config.maxRollover.toFloat())
+            val lastDate = dateFormat.parse(lastUpdate)
+            val daysDiff = if (lastDate != null) {
+                ((Date().time - lastDate.time) / (1000 * 60 * 60 * 24)).toInt()
+            } else {
+                0
+            }
+
+            // Only carry over if within rollover period
+            if (daysDiff <= config.rolloverDays) {
+                rollover = (rollover + remaining).coerceAtMost(config.maxRollover.toFloat())
+            } else {
+                rollover = 0f
+            }
         }
 
-        // Reset daily credits plus rollover (expire old rollover if days exceeded)
         prefs.edit().apply {
             putString(KEY_LAST_UPDATE + userId, today)
             putFloat(KEY_PREFIX + userId, config.dailyCredits.toFloat() + rollover)
-            // Rollover expires after defined days
             putFloat(KEY_ROLLOVER + userId, rollover)
         }.apply()
     }
