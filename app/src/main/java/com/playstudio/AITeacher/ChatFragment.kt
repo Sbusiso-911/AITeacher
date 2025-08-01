@@ -1321,6 +1321,24 @@ class ChatFragment : Fragment() {
         }
 
         if (checkDailyLimit(limitKey, dailyMax)) {
+            // Check credit balance before sending
+            val tier = subscriptionUIManager.getUserSubscriptionTier().name.lowercase()
+            val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(requireContext())
+            val model = com.playstudio.aiteacher.pricing.AIModel.fromModelId(currentModel)
+            if (model != null) {
+                val estimatedCost = creditManager.calculateMessageCost(
+                    model.averageInputTokens,
+                    model.averageOutputTokens,
+                    model.modelId,
+                    tier
+                )
+                val remaining = creditManager.getRemainingCredits("default_user", tier)
+                if (remaining < estimatedCost) {
+                    showCustomToast("Insufficient credits to send message")
+                    return
+                }
+            }
+
             // Usage will be tracked in trackMessageUsage() after successful response
             handleMessage(userMessage)
         } else {
@@ -4051,14 +4069,20 @@ class ChatFragment : Fragment() {
             try {
                 // Increment usage count
                 usageTracker.incrementUsage(model.modelId)
-                
+
                 // Record actual cost with CostManager
                 costManager.recordActualCost(
                     model = model,
                     inputTokens = inputTokens,
                     outputTokens = outputTokens
                 )
-                
+
+                // Deduct credits using the new credit system
+                val tier = subscriptionUIManager.getUserSubscriptionTier().name.lowercase()
+                val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(requireContext())
+                val creditCost = creditManager.calculateMessageCost(inputTokens, outputTokens, model.modelId, tier)
+                creditManager.updateUserCredits("default_user", tier, creditCost)
+
                 // Update UI with remaining usage
                 updateUsageDisplay(model)
                 
