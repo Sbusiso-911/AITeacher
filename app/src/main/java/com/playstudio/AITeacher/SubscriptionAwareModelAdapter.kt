@@ -68,8 +68,14 @@ class SubscriptionAwareModelAdapter(
                 "$currentUsage/$usageLimit used today"
             }
             
-            // Set cost per message
-            val costPerMessage = model.calculateMessageCost()
+            // Set cost per message using credit system
+            val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(itemView.context)
+            val costPerMessage = creditManager.calculateMessageCost(
+                model.averageInputTokens,
+                model.averageOutputTokens,
+                model.modelId,
+                userTier
+            )
             tvCostPerMessage.text = if (costPerMessage < 0.001) {
                 "~$0.00/msg"
             } else {

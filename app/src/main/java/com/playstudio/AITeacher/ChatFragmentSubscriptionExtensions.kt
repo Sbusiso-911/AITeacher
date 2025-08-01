@@ -57,12 +57,18 @@ private fun Fragment.showModelSelectionDialog(
 ) {
     val context = requireContext()
     val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_ai_model_selection, null)
-    
+
     // Setup RecyclerView with models
     val recyclerView = dialogView.findViewById<RecyclerView>(R.id.rv_ai_models)
     val tierTextView = dialogView.findViewById<TextView>(R.id.tv_current_tier)
-    
+    val creditTextView = dialogView.findViewById<TextView>(R.id.tv_credit_balance)
+
     tierTextView.text = "Current Plan: ${userTier.name.replace("_", " ")}"
+
+    val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(context)
+    val tierConfig = com.playstudio.aiteacher.credits.SubscriptionTiers.getConfig(userTier)
+    val remainingCredits = creditManager.getRemainingCredits("default_user", userTier)
+    creditTextView.text = "Credits: ${String.format("%.2f", remainingCredits)} / ${tierConfig.dailyCredits}"
     
     val usageTracker = com.playstudio.aiteacher.pricing.UsageTracker(context)
     val modelAdapter = SubscriptionAwareModelAdapter(availableModels, userTier, usageTracker) { selectedModel ->
