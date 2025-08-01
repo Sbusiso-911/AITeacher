@@ -4,7 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="@drawable/glassmorphism_input_background">
 
     <!-- Header -->
     <TextView
@@ -24,10 +25,10 @@
         android:layout_height="wrap_content"
         android:text="Current Plan: FREE"
         android:textSize="14sp"
-        android:textColor="@color/gray_dark"
+        android:textColor="@color/glass_text_primary"
         android:gravity="center"
         android:padding="8dp"
-        android:background="@drawable/rounded_corners_grey" />
+        android:background="@drawable/glassmorphism_button_background" />
 
     <!-- Credit balance -->
     <TextView
@@ -36,7 +37,7 @@
         android:layout_height="wrap_content"
         android:text="Credits: 0.00/0.00"
         android:textSize="14sp"
-        android:textColor="@color/gray_dark"
+        android:textColor="@color/glass_text_primary"
         android:gravity="center"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="16dp" />
