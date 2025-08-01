@@ -1322,7 +1322,7 @@ class ChatFragment : Fragment() {
 
         if (checkDailyLimit(limitKey, dailyMax)) {
             // Check credit balance before sending
-            val tier = subscriptionUIManager.getUserSubscriptionTier().name.lowercase()
+            val tier = subscriptionUIManager.getUserSubscriptionTier()
             val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(requireContext())
             val model = com.playstudio.aiteacher.pricing.AIModel.fromModelId(currentModel)
             if (model != null) {
@@ -4078,7 +4078,7 @@ class ChatFragment : Fragment() {
                 )
 
                 // Deduct credits using the new credit system
-                val tier = subscriptionUIManager.getUserSubscriptionTier().name.lowercase()
+                val tier = subscriptionUIManager.getUserSubscriptionTier()
                 val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(requireContext())
                 val creditCost = creditManager.calculateMessageCost(inputTokens, outputTokens, model.modelId, tier)
                 creditManager.updateUserCredits("default_user", tier, creditCost)

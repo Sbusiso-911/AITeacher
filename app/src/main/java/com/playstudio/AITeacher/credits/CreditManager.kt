@@ -2,6 +2,7 @@ package com.playstudio.aiteacher.credits
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.playstudio.aiteacher.pricing.SubscriptionTier
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -30,13 +31,16 @@ class CreditManager private constructor(private val context: Context) {
     }
 
     /** Get remaining credits for the user, processing rollover if needed */
-    fun getRemainingCredits(userId: String, tier: String): Double {
+    fun getRemainingCredits(userId: String, tier: SubscriptionTier): Double {
         processRollover(userId, tier)
-        return prefs.getFloat(KEY_PREFIX + userId, SubscriptionTiers.getConfig(tier).dailyCredits.toFloat()).toDouble()
+        return prefs.getFloat(
+            KEY_PREFIX + userId,
+            SubscriptionTiers.getConfig(tier).dailyCredits.toFloat()
+        ).toDouble()
     }
 
     /** Update user credits after a message */
-    fun updateUserCredits(userId: String, tier: String, creditsCost: Double) {
+    fun updateUserCredits(userId: String, tier: SubscriptionTier, creditsCost: Double) {
         processRollover(userId, tier)
         val current = getRemainingCredits(userId, tier)
         val newBalance = (current - creditsCost).coerceAtLeast(0.0)
@@ -44,7 +48,12 @@ class CreditManager private constructor(private val context: Context) {
     }
 
     /** Calculate message cost using pricing table and tier markup */
-    fun calculateMessageCost(inputTokens: Int, outputTokens: Int, modelName: String, tier: String): Double {
+    fun calculateMessageCost(
+        inputTokens: Int,
+        outputTokens: Int,
+        modelName: String,
+        tier: SubscriptionTier
+    ): Double {
         val pricing = ModelPricing.getPricing(modelName) ?: return 0.0
         val config = SubscriptionTiers.getConfig(tier)
         val inputCost = (inputTokens / 1_000_000.0) * pricing.input
@@ -56,7 +65,7 @@ class CreditManager private constructor(private val context: Context) {
      * Handle rollover credits at start of new day. This is automatically
      * invoked by other methods but can also be called manually.
      */
-    fun processRollover(userId: String, tier: String) {
+    fun processRollover(userId: String, tier: SubscriptionTier) {
         val today = currentDate()
         val lastUpdate = prefs.getString(KEY_LAST_UPDATE + userId, null)
         if (today == lastUpdate) return
