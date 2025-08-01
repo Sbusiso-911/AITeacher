@@ -4527,7 +4527,7 @@ class ChatFragment : Fragment() {
 
 
 
-    private fun handleGeminiCompletion(message: String) {
+    private fun handleGeminiCompletion(message: String, model: String = "gemini-2.5-flash", triedFallback: Boolean = false) {
         val geminiUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
 
         // 1. Define 'contentsArray' (for message history)
@@ -4547,7 +4547,7 @@ class ChatFragment : Fragment() {
         // 2. Define 'json' (the main request body JSON object)
         val json = JSONObject().apply {
             put("messages", contentsArray)
-            put("model", "gemini-2.5-flash")
+            put("model", model)
             put("reasoning_effort", "low")
             put("extra_body", JSONObject().apply {
                 put("google", JSONObject().apply {
@@ -4582,8 +4582,13 @@ class ChatFragment : Fragment() {
                 val responseBody = response.body?.string() // This can be done outside withContext if preferred
                 Log.d("ChatFragment", "Received response from Gemini: $responseBody")
 
-                if (!response.isSuccessful) { // Now 'response' is defined
-                    withContext(Dispatchers.Main) { // Switch to Main for UI
+                if (!response.isSuccessful) {
+                    if (response.code == 404 && !triedFallback) {
+                        Log.w("ChatFragment", "Gemini model not found, falling back to gemini-pro")
+                        handleGeminiCompletion(message, "gemini-pro", true)
+                        return@launch
+                    }
+                    withContext(Dispatchers.Main) {
                         when (response.code) {
                             400 -> showCustomToast("Bad Request: Check your request parameters")
                             401 -> showCustomToast("Unauthorized: Check your API key")
@@ -6023,7 +6028,7 @@ class ChatFragment : Fragment() {
             containsRichContent = messageObject.optBoolean("containsRichContent", false),
             isWebSearchResult = messageObject.optBoolean("isWebSearchResult", false),
             structuredContentJson = if (messageObject.has("structuredContentJson") && !messageObject.isNull("structuredContentJson")) {
-                messageObject.getString("structuredContentJson")
+                messageObject.getString("structuredContentJson").takeIf { it != "null" }
             } else {
                 null
             }
