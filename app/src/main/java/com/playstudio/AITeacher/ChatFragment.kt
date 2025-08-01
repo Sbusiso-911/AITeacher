@@ -4550,46 +4550,43 @@ class ChatFragment : Fragment() {
 
 
     private fun handleGeminiCompletion(message: String) {
-        val geminiApiKey = "YOUR_GEMINI_API_KEY" // Replace with actual key, ideally from secure storage
-        val geminiUrl = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent"
+        val geminiUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
 
         // 1. Define 'contentsArray' (for message history)
         val contentsArray = JSONArray().apply {
             chatMessages.filterNot { it.isTyping }.forEach { chatMsg ->
                 put(JSONObject().apply {
-                    put("role", if (chatMsg.isUser) "user" else "model")
-                    put("parts", JSONArray().apply {
-                        put(JSONObject().apply {
-                            put("text", chatMsg.content)
-                        })
-                    })
+                    put("role", if (chatMsg.isUser) "user" else "assistant")
+                    put("content", chatMsg.content)
                 })
             }
             put(JSONObject().apply {
                 put("role", "user")
-                put("parts", JSONArray().apply {
-                    put(JSONObject().apply {
-                        put("text", message)
+                put("content", message)
+            })
+        }
+
+        // 2. Define 'json' (the main request body JSON object)
+        val json = JSONObject().apply {
+            put("messages", contentsArray)
+            put("model", "gemini-2.5-flash")
+            put("reasoning_effort", "low")
+            put("extra_body", JSONObject().apply {
+                put("google", JSONObject().apply {
+                    put("thinking_config", JSONObject().apply {
+                        put("thinking_budget", 800)
+                        put("include_thoughts", true)
                     })
                 })
             })
         }
 
-        // 2. Define 'json' (the main request body JSON object)
-        val json = JSONObject().apply { // <<<< DEFINITION OF 'json' WAS MISSING IN PREVIOUS SNIPPET
-            put("contents", contentsArray)
-            // You can add generationConfig here if needed by Gemini API
-            // put("generationConfig", JSONObject().apply {
-            //     put("temperature", 0.7)
-            //     put("maxOutputTokens", 2048)
-            // })
-        }
-
         // 3. Define 'body' and 'request'
         val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
-        val request = Request.Builder() // <<<< DEFINITION OF 'request' WAS MISSING IN PREVIOUS SNIPPET
-            .url("$geminiUrl?key=$geminiApiKey")
+        val request = Request.Builder()
+            .url(geminiUrl)
             .post(body)
+            .addHeader("Authorization", "Bearer ${BuildConfig.GEMINI_API_KEY}")
             .addHeader("Content-Type", "application/json")
             .build()
 

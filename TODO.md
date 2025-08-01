@@ -11,3 +11,4 @@
 - [x] Enhance system prompt so the AI always includes actual examples and diagrams when referenced
 - [x] Detect and surface AI refusals when parsing structured responses
 
+- [x] Integrate Gemini API via OpenAI-compatible endpoint
