@@ -122,10 +122,10 @@ data class ChatMessage(
         }
         
         // Try to deserialize from JSON if cached object is null
-        structuredContentJson?.let { json ->
+        structuredContentJson?.takeIf { it != "null" }?.let { json ->
             try {
                 structuredContent = com.google.gson.Gson().fromJson(
-                    json, 
+                    json,
                     com.playstudio.aiteacher.models.EducationalResponse::class.java
                 )
                 return structuredContent
