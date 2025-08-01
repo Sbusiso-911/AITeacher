@@ -61,7 +61,7 @@ class ThemeAdapter(
             holder.preview.setBackgroundResource(theme.drawableRes)
         } catch (e: Exception) {
             // If theme drawable fails to load, show a placeholder
-            holder.preview.setBackgroundColor(holder.itemView.context.getColor(android.R.color.darker_gray))
+            holder.preview.setBackgroundColor(holder.itemView.context.getColor(R.color.navy_primary_dark))
         }
         holder.selectedIndicator.visibility = if (theme == currentTheme) View.VISIBLE else View.GONE
         

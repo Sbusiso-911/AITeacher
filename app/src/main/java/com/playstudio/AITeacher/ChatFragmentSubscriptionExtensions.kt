@@ -16,6 +16,7 @@ import com.playstudio.aiteacher.profile.ProfileActivity
 import kotlinx.coroutines.launch
 import android.content.Intent
 import androidx.appcompat.app.AlertDialog
+import android.view.ContextThemeWrapper
 import com.playstudio.aiteacher.R
 
 /**
@@ -78,7 +79,7 @@ private fun Fragment.showModelSelectionDialog(
     recyclerView.layoutManager = GridLayoutManager(context, 2)
     recyclerView.adapter = modelAdapter
     
-    AlertDialog.Builder(context)
+    AlertDialog.Builder(ContextThemeWrapper(context, R.style.GlassDialogTheme))
         .setTitle("Select AI Model")
         .setView(dialogView)
         .setNegativeButton("Cancel", null)

@@ -3954,7 +3954,7 @@ class ChatFragment : Fragment() {
                 val textColor = if (isSubscribed) {
                     android.R.color.holo_green_light
                 } else {
-                    android.R.color.darker_gray
+                    android.R.color.holo_red_light
                 }
                 binding.subscriptionStatusText.setTextColor(ContextCompat.getColor(requireContext(), textColor))
                 
