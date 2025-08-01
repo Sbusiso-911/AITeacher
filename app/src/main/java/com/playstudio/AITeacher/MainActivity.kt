@@ -2860,10 +2860,12 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
 
     private fun openGenericEmailPicker() {
         try {
-            val intent = Intent(Intent.ACTION_PICK).apply {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
                 type = "message/rfc822"
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            startActivityForResult(intent, EmailProviderHelper.EMAIL_PICK_REQUEST) // Use constant from helper
+            startActivityForResult(intent, EmailProviderHelper.EMAIL_PICK_REQUEST)
         } catch (e: ActivityNotFoundException) {
             Toast.makeText(this, "No email app found", Toast.LENGTH_SHORT).show()
             // Alternative approach for devices without email picker
@@ -2871,16 +2873,15 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
         }
     }
     private fun openEmailClient(account: Account? = null) {
-        // The 'account' parameter is often not directly usable with a generic ACTION_PICK intent.
-        // Email clients typically don't filter by a passed Account object for ACTION_PICK.
-        // The main purpose here is to launch an email picker.
-        val intent = Intent(Intent.ACTION_PICK).apply {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
             type = "message/rfc822"
-            // Passing 'account' as an extra is non-standard and likely ignored by most email apps for ACTION_PICK.
-            // if (account != null) { intent.putExtra("account", account) }
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            // Passing 'account' as an extra is non-standard and likely ignored
+            // by most email apps for ACTION_OPEN_DOCUMENT, so it's omitted.
         }
         try {
-            startActivityForResult(intent, EmailProviderHelper.EMAIL_PICK_REQUEST) // Use constant from helper
+            startActivityForResult(intent, EmailProviderHelper.EMAIL_PICK_REQUEST)
         } catch (e: ActivityNotFoundException) {
             Toast.makeText(this, "No email app found", Toast.LENGTH_SHORT).show()
         }

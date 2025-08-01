@@ -119,10 +119,11 @@ import android.view.accessibility.AccessibilityManager
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.RequestBody.Companion.asRequestBody
 import kotlin.coroutines.resume
+import com.playstudio.aiteacher.VoiceToolHandler
 
 
 
-class ChatFragment : Fragment() {
+class ChatFragment : Fragment(), VoiceToolHandler {
     // Add this data class inside your ChatFragment class
     data class Citation(
         val url: String,
@@ -218,6 +219,8 @@ class ChatFragment : Fragment() {
     private val FIRST_LAUNCH_KEY = "first_launch"
     private val INTERACTION_COUNT_KEY = "interaction_count"
     private val RATING_REMINDER_COUNT_KEY = "rating_reminder_count"
+    private val VOICE_DIALOG_SHOWN_KEY = "voice_feature_shown"
+    private val VOICE_PROMO_LEVEL_KEY = "voice_promo_level"
     private var isLoading = false
     private var _binding: FragmentChatBinding? = null
     private val binding get() = _binding!!
@@ -420,6 +423,9 @@ class ChatFragment : Fragment() {
 
         selectedVoice = loadSelectedVoice()
         binding.voiceSelectionButton.text = "Voice: ${selectedVoice.replaceFirstChar { it.uppercase() }}"
+        openAILiveAudioViewModel.setVoice(selectedVoice)
+        openAILiveAudioViewModel.setTools(getAvailableTools())
+        openAILiveAudioViewModel.toolHandler = this
 
         // Initialize the views
         arguments?.getString("recognized_text")?.let { text ->
@@ -514,17 +520,19 @@ class ChatFragment : Fragment() {
             showChatGptOptionsDialog()
         }
 
-        // Check if it's the first launch
-        /*val isFirstLaunch = sharedPreferences.getBoolean(FIRST_LAUNCH_KEY, true)
-
-        if (isFirstLaunch) {
-            // Show the tooltip dialog
-            val tooltipDialog = TooltipDialog()
-            tooltipDialog.show(parentFragmentManager, "TooltipDialog")
-
-            // Update the shared preferences to indicate that the dialog has been shown
-            sharedPreferences.edit().putBoolean(FIRST_LAUNCH_KEY, false).apply()
-        }*/
+        // Show voice command tips on first launch
+        val sharedPreferences = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        if (sharedPreferences.getBoolean(FIRST_LAUNCH_KEY, true)) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                handleTextToSpeech(getString(R.string.voice_greeting), force = true)
+                delay(4000)
+                showPromotionDialog()
+            }
+            sharedPreferences.edit()
+                .putBoolean(FIRST_LAUNCH_KEY, false)
+                .putBoolean(VOICE_DIALOG_SHOWN_KEY, true)
+                .apply()
+        }
 
         suggestedMessage = arguments?.getString("suggested_message") ?: savedInstanceState?.getString("suggested_message")
         selectedModel = arguments?.getString("selected_model") ?: savedInstanceState?.getString("selected_model")
@@ -1414,8 +1422,12 @@ class ChatFragment : Fragment() {
 
     // In ChatFragment.kt
 
+    override suspend fun executeTool(functionName: String, argumentsJson: String): String {
+        return executeToolFunction(functionName, argumentsJson)
+    }
+
     // --- Tool Execution Router ---
-    private suspend fun executeToolFunction(functionName: String, argumentsJsonString: String): String {
+    suspend fun executeToolFunction(functionName: String, argumentsJsonString: String): String {
         return try {
             val arguments = JSONObject(argumentsJsonString)
             Log.i("ChatFragmentTool", "Executing tool: $functionName with args: $arguments")
@@ -1681,21 +1693,27 @@ class ChatFragment : Fragment() {
 
         val intent = Intent(AlarmClock.ACTION_SET_ALARM).apply {
             putExtra(AlarmClock.EXTRA_HOUR, hour)
-            putExtra(AlarmClock.EXTRA_MINUTES, minute) // Use the same import pattern
+            putExtra(AlarmClock.EXTRA_MINUTES, minute)
             putExtra(AlarmClock.EXTRA_MESSAGE, alarmMessage)
-            putExtra(AlarmClock.EXTRA_SKIP_UI, false) // Let user see the clock app UI to confirm/save
+            putExtra(AlarmClock.EXTRA_SKIP_UI, true) // Avoid leaving the app
 
             if (!daysOfWeek.isNullOrEmpty()) {
-                val calendarDays = ArrayList(daysOfWeek) // Assumes daysOfWeek contains Calendar.MONDAY, etc.
+                val calendarDays = ArrayList(daysOfWeek)
                 putExtra(AlarmClock.EXTRA_DAYS, calendarDays)
             }
         }
 
-        try {
+        return@withContext try {
             startActivity(intent)
-            JSONObject().apply { put("status", "success"); put("message", "Clock app opened to set alarm for ${String.format("%02d:%02d", hour, minute)}. Please confirm and save it there.") }.toString()
+            JSONObject().apply {
+                put("status", "success")
+                put("message", "Alarm set for ${String.format("%02d:%02d", hour, minute)}.")
+            }.toString()
         } catch (e: ActivityNotFoundException) {
-            JSONObject().apply { put("status", "error"); put("message", "No clock app found to set the alarm.") }.toString()
+            JSONObject().apply {
+                put("status", "error")
+                put("message", "No clock app found to set the alarm.")
+            }.toString()
         }
     }
 
@@ -2208,8 +2226,6 @@ class ChatFragment : Fragment() {
                     binding.recyclerView.smoothScrollToPosition(chatMessages.size - 1)
                 }
             }
-            // Force redraw in case DiffUtil misses updates
-            chatAdapter.notifyDataSetChanged()
         }
         if (!chatMessage.isTyping) {
             saveChatHistory()
@@ -2387,13 +2403,16 @@ class ChatFragment : Fragment() {
                 if (hasOpenAICitations && !augmentedByCustomWebSearch) {
                     // Prepend "Web Search Results" only if OpenAI citations exist and no custom search augmented it.
                     val prefix = "🔍 Official Search Results:\n\n"
-                    processedContent = prefix + originalReplyContent // Use originalReplyContent for prefixing
-                    // Adjust indices for openAIProvidedCitations if prefixing 'originalReplyContent'
-                    finalCitations.forEach {
-                        // This needs careful index math if citations refer to 'originalReplyContent'
-                        // it.startIndex += prefix.length
-                        // it.endIndex += prefix.length
+                    processedContent = prefix + originalReplyContent
+                    // Adjust citation indices to account for the prefix so links remain clickable
+                    val adjusted = finalCitations.map {
+                        it.copy(
+                            startIndex = it.startIndex + prefix.length,
+                            endIndex = it.endIndex + prefix.length
+                        )
                     }
+                    finalCitations.clear()
+                    finalCitations.addAll(adjusted)
                 }
                 // If augmentedByCustomWebSearch is true, processedContent already has the enhanced text.
 
@@ -3062,6 +3081,32 @@ class ChatFragment : Fragment() {
         dialog.show()
     }
 
+    private fun showPromotionDialog() {
+        val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_promotion, null)
+        view.findViewById<TextView>(R.id.promotionMessage).text = getString(R.string.voice_features_dialog_message)
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(view)
+            .create()
+        view.findViewById<Button>(R.id.btnClose).setOnClickListener { dialog.dismiss() }
+        dialog.show()
+    }
+
+    private fun checkAndShowVoiceFeaturePrompt() {
+        val prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val chatCount = getChatCount()
+        val shownLevel = prefs.getInt(VOICE_PROMO_LEVEL_KEY, 0)
+        val milestone = when {
+            chatCount >= 9 -> 9
+            chatCount >= 6 -> 6
+            chatCount >= 3 -> 3
+            else -> 0
+        }
+        if (milestone > 0 && milestone > shownLevel) {
+            showPromotionDialog()
+            prefs.edit().putInt(VOICE_PROMO_LEVEL_KEY, milestone).apply()
+        }
+    }
+
     private fun startGeneratingAnimation() {
         val blinkAnimation = AnimationUtils.loadAnimation(requireContext(), R.anim.blink)
         binding.generatingText.startAnimation(blinkAnimation)
@@ -3202,6 +3247,7 @@ class ChatFragment : Fragment() {
                 }
                 incrementChatCount()
                 checkAndShowSubscriptionPrompt()
+                checkAndShowVoiceFeaturePrompt()
             }
         }
     }
@@ -4134,8 +4180,8 @@ class ChatFragment : Fragment() {
         }
     }
 
-    private fun handleTextToSpeech(text: String) {
-        if (isTtsEnabled) {
+    private fun handleTextToSpeech(text: String, force: Boolean = false) {
+        if (isTtsEnabled || force) {
             val json = JSONObject().apply {
                 put("model", "tts-1")
                 put("input", text)
@@ -4188,6 +4234,7 @@ class ChatFragment : Fragment() {
         selectedVoice = voice
         saveSelectedVoice(voice)
         binding.voiceSelectionButton.text = "🎙️ ${voice.replaceFirstChar { it.uppercase() }}"
+        openAILiveAudioViewModel.setVoice(voice)
     }
 
     private fun updateTtsButtonState() {

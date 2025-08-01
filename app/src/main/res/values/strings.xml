@@ -70,6 +70,8 @@
     <string name="openai_status_desc">Current status of OpenAI session</string>
     <string name="openai_response_desc">AI generated response</string>
     <string name="openai_controls_container">OpenAI voice controls</string>
+    <string name="voice_greeting">Welcome to AITeacher! Enable OpenAI Realtime voice in settings to chat naturally with AI and use voice commands for alarms, emails and more. Live smart! 😊</string>
+    <string name="voice_features_dialog_message">Switch to GPT‑4o, Claude 4 or DeepSeek for powerful explanations or DALL\u00b7E to create stunning images. Live smart! \ud83d\ude0a</string>
 
     <!-- Computer Use Strings -->
     <string name="start_computer_use">Start Computer Use</string>
