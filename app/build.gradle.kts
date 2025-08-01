@@ -140,6 +140,7 @@ dependencies {
     implementation(libs.gson.v2101)
     implementation(libs.car.ui.lib)
     implementation(libs.play.services.ads.v2320)
+    implementation(libs.interactivemedia)
     implementation(libs.androidx.preference.ktx)
     implementation(libs.androidx.annotation)
     implementation(libs.billingclient.billing.ktx)

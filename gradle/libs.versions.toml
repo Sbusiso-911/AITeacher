@@ -55,6 +55,7 @@ pdfboxTools = "2.0.24"
 playServicesAds = "23.5.0"
 playServicesAdsVersion = "23.5.0"
 playServicesAuth = "21.2.0"
+interactivemedia = "3.37.0"
 playServicesMlkitTextRecognition = "19.0.1"
 poiOoxml = "5.3.0"
 recyclerview = "1.3.2"
@@ -195,6 +196,7 @@ pdfbox-tools = { module = "org.apache.pdfbox:pdfbox-tools", version.ref = "pdfbo
 play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
 play-services-ads-v2320 = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAdsVersion" }
 play-services-ads-v2330 = { module = "com.google.android.gms:play-services-ads", version.ref = "googlePlayServicesAds" }
+interactivemedia = { module = "com.google.ads.interactivemedia.v3:interactivemedia", version.ref = "interactivemedia" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 play-services-mlkit-text-recognition = { module = "com.google.android.gms:play-services-mlkit-text-recognition", version.ref = "playServicesMlkitTextRecognition" }
 poi = { module = "org.apache.poi:poi", version.ref = "poiOoxml" }
