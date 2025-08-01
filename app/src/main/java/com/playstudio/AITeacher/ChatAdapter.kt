@@ -15,12 +15,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import com.google.android.material.button.MaterialButton
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter // Import ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -58,6 +58,8 @@ class ChatAdapter(
         private const val VIEW_TYPE_STRUCTURED = 4
         // PAGE_SIZE can be defined in the Fragment or ViewModel if it drives the fetch logic
     }
+
+    private val expandedStructuredMessages = mutableSetOf<String>()
 
     // isLoading state should be managed by the Fragment/ViewModel that handles data fetching
     // private var isLoading = false
@@ -150,7 +152,7 @@ class ChatAdapter(
     class ReceivedMessageViewHolder(
         private val binding: ItemMessageReceivedBinding, // Use ViewBinding
         private val onCitationClickedCallback: (citation: com.playstudio.aiteacher.ChatFragment.Citation) -> Unit,
-        private val onFollowUpQuestionClickedCallback: (question: String) -> Unit
+        private val onFollowUpQuestionClicked: (question: String) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
         // The views for follow-up questions (headerButton, questionsContainer)
@@ -220,14 +222,18 @@ class ChatAdapter(
                     // It's better to have a separate layout for follow-up buttons (e.g., item_follow_up_button.xml)
                     // and inflate it, rather than creating Buttons programmatically for styling consistency.
                     // For now, programmatic creation:
-                    val button = Button(itemView.context).apply {
-                        text = question
-                        // Add styling (e.g., from a style resource)
-                        // setTextColor(Color.parseColor("#E1DFDF")) // Example
-                        // background = null // Example
-                        setOnClickListener {
-                            onFollowUpQuestionClickedCallback(question)
+                    val button = MaterialButton(itemView.context, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                        layoutParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        ).apply {
+                            setMargins(0, 4, 0, 4)
                         }
+                        text = question
+                        textSize = 12f
+                        setPadding(16, 8, 16, 8)
+                        minWidth = 0
+                        setOnClickListener { onFollowUpQuestionClicked(question) }
                     }
                     binding.followUpButtonsContainer.addView(button)
                 }
@@ -280,8 +286,12 @@ class ChatAdapter(
         }
     }
 
-    class StructuredMessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    inner class StructuredMessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val structuredContentContainer: LinearLayout = view.findViewById(R.id.structuredContentContainer)
+        private val toggleButton: MaterialButton = view.findViewById(R.id.toggleStructuredButton)
+        private val expandAllButton: MaterialButton = view.findViewById(R.id.expandAllButton)
+        private val quizModeButton: MaterialButton = view.findViewById(R.id.quizModeButton)
+        private val moreExamplesButton: MaterialButton = view.findViewById(R.id.moreExamplesButton)
         private var currentStructuredView: com.playstudio.aiteacher.ui.StructuredContentView? = null
         private var currentMessageId: String? = null
 
@@ -313,6 +323,34 @@ class ChatAdapter(
                 }
             } else {
                 Log.d("StructuredHolder", "Reusing existing view for message ${chatMessage.id}")
+            }
+
+            val expanded = expandedStructuredMessages.contains(chatMessage.id)
+            structuredContentContainer.visibility = if (expanded) View.VISIBLE else View.GONE
+            toggleButton.text = if (expanded) "Hide Details ▲" else "Show Details ▼"
+
+            toggleButton.setOnClickListener {
+                if (expandedStructuredMessages.contains(chatMessage.id)) {
+                    expandedStructuredMessages.remove(chatMessage.id)
+                    structuredContentContainer.visibility = View.GONE
+                    toggleButton.text = "Show Details ▼"
+                } else {
+                    expandedStructuredMessages.add(chatMessage.id)
+                    structuredContentContainer.visibility = View.VISIBLE
+                    toggleButton.text = "Hide Details ▲"
+                }
+            }
+
+            expandAllButton.setOnClickListener {
+                currentStructuredView?.expandAllSteps()
+            }
+
+            quizModeButton.setOnClickListener {
+                onFollowUpQuestionClicked("Quiz me on this topic")
+            }
+
+            moreExamplesButton.setOnClickListener {
+                onFollowUpQuestionClicked("More examples, please")
             }
         }
     }

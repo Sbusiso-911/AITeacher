@@ -41,6 +41,7 @@ class LearningStepsAdapter(
             binding.stepNumber.text = step.stepNumber.toString()
             binding.stepTitle.text = step.title
             binding.stepExplanation.text = step.explanation
+            binding.fullStepExplanation.text = step.explanation
             
             // Output (if available)
             if (!step.output.isNullOrEmpty()) {

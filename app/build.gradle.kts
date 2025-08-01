@@ -53,6 +53,10 @@ android {
         // Read Gemini API key from gradle.properties
         val geminiApiKey: String? = project.findProperty("GEMINI_API_KEY") as String?
         buildConfigField("String", "GEMINI_API_KEY", "\"${geminiApiKey ?: ""}\"")
+
+        // Read Grok API key from gradle.properties
+        val grokApiKey: String? = project.findProperty("GROK_API_KEY") as String?
+        buildConfigField("String", "GROK_API_KEY", "\"${grokApiKey ?: ""}\"")
     }
 
     buildFeatures {
@@ -69,6 +73,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -124,6 +129,7 @@ configurations.all {
 }
 
 dependencies {
+    coreLibraryDesugaring(libs.desugarJdkLibs)
     implementation(libs.kotlin.stdlib)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -138,6 +144,7 @@ dependencies {
     implementation(libs.gson.v2101)
     implementation(libs.car.ui.lib)
     implementation(libs.play.services.ads.v2320)
+    implementation(libs.interactivemedia)
     implementation(libs.androidx.preference.ktx)
     implementation(libs.androidx.annotation)
     implementation(libs.billingclient.billing.ktx)

@@ -25,13 +25,18 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
     companion object {
         private const val TAG = "StructuredAPIHandler"
         private const val OPENAI_BASE_URL = "https://api.openai.com/v1/chat/completions"
+        private const val ANTHROPIC_BASE_URL = "https://api.anthropic.com/v1/messages"
+        private const val XAI_BASE_URL = "https://api.x.ai/v1/chat/completions"
         
         // Supported models for structured outputs
         private val STRUCTURED_MODELS = setOf(
             "gpt-4o",
             "gpt-4o-2024-08-06",
             "gpt-4o-mini",
-            "gpt-4o-mini-2024-07-18"
+            "gpt-4o-mini-2024-07-18",
+            "claude-sonnet-4-20250514",
+            "claude-opus-4-20250514",
+            "grok-4-0709"
         )
     }
 
@@ -133,6 +138,28 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
         }
     }
 
+    /**
+     * Generate UI structure from a user description
+     */
+    suspend fun generateUi(
+        description: String,
+        model: String = "gpt-4o-2024-08-06"
+    ): Result<UiResponse> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val request = buildUiRequest(description, model)
+            val response = okHttpClient.newCall(request).execute()
+
+            if (response.isSuccessful) {
+                val body = response.body?.string()
+                body?.let { parseUiResponse(it) } ?: Result.failure(Exception("Empty response body"))
+            } else {
+                Result.failure(Exception("API Error: ${response.code} - ${response.message}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     private fun buildStructuredRequest(
         userMessage: String,
         chatHistory: List<Pair<String, String>>,
@@ -188,12 +215,23 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
         Log.d(TAG, "Request body: $requestBodyString")
         val requestBody = requestBodyString.toRequestBody("application/json".toMediaTypeOrNull())
         
-        return Request.Builder()
-            .url(OPENAI_BASE_URL)
+        val builder = Request.Builder()
             .post(requestBody)
-            .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
             .addHeader("Content-Type", "application/json")
-            .build()
+
+        if (model.startsWith("claude")) {
+            builder.url(ANTHROPIC_BASE_URL)
+                .addHeader("x-api-key", BuildConfig.ANTHROPIC_API_KEY)
+                .addHeader("anthropic-version", "2023-06-01")
+        } else if (model.startsWith("grok")) {
+            builder.url(XAI_BASE_URL)
+                .addHeader("Authorization", "Bearer ${BuildConfig.GROK_API_KEY}")
+        } else {
+            builder.url(OPENAI_BASE_URL)
+                .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
+        }
+
+        return builder.build()
     }
 
     private fun buildQuickExplanationRequest(userMessage: String, model: String): Request {
@@ -219,12 +257,23 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
 
         val requestBody = requestBodyJson.toString().toRequestBody("application/json".toMediaTypeOrNull())
         
-        return Request.Builder()
-            .url(OPENAI_BASE_URL)
+        val builder = Request.Builder()
             .post(requestBody)
-            .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
             .addHeader("Content-Type", "application/json")
-            .build()
+
+        if (model.startsWith("claude")) {
+            builder.url(ANTHROPIC_BASE_URL)
+                .addHeader("x-api-key", BuildConfig.ANTHROPIC_API_KEY)
+                .addHeader("anthropic-version", "2023-06-01")
+        } else if (model.startsWith("grok")) {
+            builder.url(XAI_BASE_URL)
+                .addHeader("Authorization", "Bearer ${BuildConfig.GROK_API_KEY}")
+        } else {
+            builder.url(OPENAI_BASE_URL)
+                .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
+        }
+
+        return builder.build()
     }
 
     private fun buildMathSolutionRequest(problem: String, model: String): Request {
@@ -250,24 +299,94 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
 
         val requestBody = requestBodyJson.toString().toRequestBody("application/json".toMediaTypeOrNull())
         
-        return Request.Builder()
-            .url(OPENAI_BASE_URL)
+        val builder = Request.Builder()
             .post(requestBody)
-            .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
             .addHeader("Content-Type", "application/json")
-            .build()
+
+        if (model.startsWith("claude")) {
+            builder.url(ANTHROPIC_BASE_URL)
+                .addHeader("x-api-key", BuildConfig.ANTHROPIC_API_KEY)
+                .addHeader("anthropic-version", "2023-06-01")
+        } else if (model.startsWith("grok")) {
+            builder.url(XAI_BASE_URL)
+                .addHeader("Authorization", "Bearer ${BuildConfig.GROK_API_KEY}")
+        } else {
+            builder.url(OPENAI_BASE_URL)
+                .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
+        }
+
+        return builder.build()
+    }
+
+    private fun buildUiRequest(description: String, model: String): Request {
+        val messagesArray = JSONArray()
+
+        messagesArray.put(JSONObject().apply {
+            put("role", "system")
+            put("content", "You are a UI generator AI. Convert the user input into a UI.")
+        })
+
+        messagesArray.put(JSONObject().apply {
+            put("role", "user")
+            put("content", description)
+        })
+
+        val requestBodyJson = JSONObject().apply {
+            put("model", model)
+            put("messages", messagesArray)
+            put("response_format", JSONObject(StructuredOutputSchemas.getUiSchema().toString()))
+            put("temperature", 0.3)
+            put("max_completion_tokens", 1000)
+        }
+
+        val requestBody = requestBodyJson.toString().toRequestBody("application/json".toMediaTypeOrNull())
+
+        val builder = Request.Builder()
+            .post(requestBody)
+            .addHeader("Content-Type", "application/json")
+
+        if (model.startsWith("claude")) {
+            builder.url(ANTHROPIC_BASE_URL)
+                .addHeader("x-api-key", BuildConfig.ANTHROPIC_API_KEY)
+                .addHeader("anthropic-version", "2023-06-01")
+        } else if (model.startsWith("grok")) {
+            builder.url(XAI_BASE_URL)
+                .addHeader("Authorization", "Bearer ${BuildConfig.GROK_API_KEY}")
+        } else {
+            builder.url(OPENAI_BASE_URL)
+                .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
+        }
+
+        return builder.build()
     }
 
     private fun parseStructuredResponse(responseBody: String): Result<EducationalResponse> {
         return try {
             val jsonResponse = JSONObject(responseBody)
-            val choices = jsonResponse.getJSONArray("choices")
-            
-            if (choices.length() == 0) {
-                return Result.failure(Exception("No choices in response"))
+            val message = if (jsonResponse.has("choices")) {
+                val choices = jsonResponse.getJSONArray("choices")
+                if (choices.length() == 0) {
+                    return Result.failure(Exception("No choices in response"))
+                }
+                choices.getJSONObject(0).getJSONObject("message")
+            } else {
+                // Anthropic format
+                val textBuilder = StringBuilder()
+                val contentArray = jsonResponse.getJSONArray("content")
+                for (i in 0 until contentArray.length()) {
+                    val block = contentArray.getJSONObject(i)
+                    if (block.optString("type") == "text") {
+                        textBuilder.append(block.optString("text"))
+                    }
+                }
+                JSONObject().apply {
+                    put("content", textBuilder.toString())
+                    put("role", jsonResponse.optString("role", "assistant"))
+                    if (jsonResponse.has("refusal")) {
+                        put("refusal", jsonResponse.getString("refusal"))
+                    }
+                }
             }
-
-            val message = choices.getJSONObject(0).getJSONObject("message")
             
             // Check for refusal
             if (message.has("refusal") && !message.isNull("refusal")) {
@@ -291,10 +410,24 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
     private fun parseQuickExplanationResponse(responseBody: String): Result<QuickExplanationResponse> {
         return try {
             val jsonResponse = JSONObject(responseBody)
-            val choices = jsonResponse.getJSONArray("choices")
-            val message = choices.getJSONObject(0).getJSONObject("message")
+            val message = if (jsonResponse.has("choices")) {
+                jsonResponse.getJSONArray("choices").getJSONObject(0).getJSONObject("message")
+            } else {
+                val textBuilder = StringBuilder()
+                val contentArray = jsonResponse.getJSONArray("content")
+                for (i in 0 until contentArray.length()) {
+                    val block = contentArray.getJSONObject(i)
+                    if (block.optString("type") == "text") textBuilder.append(block.optString("text"))
+                }
+                JSONObject().apply { put("content", textBuilder.toString()) }
+            }
+
+            if (message.has("refusal") && !message.isNull("refusal")) {
+                val refusal = message.getString("refusal")
+                return Result.failure(Exception("AI refused to respond: $refusal"))
+            }
+
             val content = message.getString("content")
-            
             val quickResponse = gson.fromJson(content, QuickExplanationResponse::class.java)
             Result.success(quickResponse)
         } catch (e: Exception) {
@@ -305,12 +438,54 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
     private fun parseMathSolutionResponse(responseBody: String): Result<MathSolutionResponse> {
         return try {
             val jsonResponse = JSONObject(responseBody)
-            val choices = jsonResponse.getJSONArray("choices")
-            val message = choices.getJSONObject(0).getJSONObject("message")
+            val message = if (jsonResponse.has("choices")) {
+                jsonResponse.getJSONArray("choices").getJSONObject(0).getJSONObject("message")
+            } else {
+                val textBuilder = StringBuilder()
+                val contentArray = jsonResponse.getJSONArray("content")
+                for (i in 0 until contentArray.length()) {
+                    val block = contentArray.getJSONObject(i)
+                    if (block.optString("type") == "text") textBuilder.append(block.optString("text"))
+                }
+                JSONObject().apply { put("content", textBuilder.toString()) }
+            }
+
+            if (message.has("refusal") && !message.isNull("refusal")) {
+                val refusal = message.getString("refusal")
+                return Result.failure(Exception("AI refused to respond: $refusal"))
+            }
+
             val content = message.getString("content")
-            
             val mathResponse = gson.fromJson(content, MathSolutionResponse::class.java)
             Result.success(mathResponse)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    private fun parseUiResponse(responseBody: String): Result<UiResponse> {
+        return try {
+            val json = JSONObject(responseBody)
+            val message = if (json.has("choices")) {
+                json.getJSONArray("choices").getJSONObject(0).getJSONObject("message")
+            } else {
+                val textBuilder = StringBuilder()
+                val contentArray = json.getJSONArray("content")
+                for (i in 0 until contentArray.length()) {
+                    val block = contentArray.getJSONObject(i)
+                    if (block.optString("type") == "text") textBuilder.append(block.optString("text"))
+                }
+                JSONObject().apply { put("content", textBuilder.toString()) }
+            }
+
+            if (message.has("refusal") && !message.isNull("refusal")) {
+                val refusal = message.getString("refusal")
+                return Result.failure(Exception("AI refused to respond: $refusal"))
+            }
+
+            val content = message.getString("content")
+            val result = gson.fromJson(content, UiResponse::class.java)
+            Result.success(result)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -322,8 +497,8 @@ class StructuredAPIHandler(private val okHttpClient: OkHttpClient) {
         return when (responseType) {
             ResponseType.STEP_BY_STEP -> "$basePrompt\n\nPlease provide a detailed step-by-step solution with clear explanations for each step."
             ResponseType.QUIZ -> "$basePrompt\n\nPlease include practice questions to test understanding of this topic."
-            ResponseType.CODE_TUTORIAL -> "$basePrompt\n\nPlease include working code examples with explanations."
-            ResponseType.LESSON -> "$basePrompt\n\nPlease provide a comprehensive lesson with examples, practice questions, and clear learning objectives."
+            ResponseType.CODE_TUTORIAL -> "$basePrompt\n\nPlease include complete, runnable code examples with thorough explanations. If you mention diagrams or graphs, provide a simple ASCII or textual representation so the user can visualize it."
+            ResponseType.LESSON -> "$basePrompt\n\nPlease provide a comprehensive lesson with detailed examples, practice questions, and clear learning objectives. Avoid referencing any example, graph, or diagram unless you actually include it."
             else -> basePrompt
         }
     }
@@ -368,4 +543,8 @@ data class MathStep(
     val explanation: String,
     val mathematicalExpression: String,
     val reasoning: String
+)
+
+data class UiResponse(
+    val ui: UiElement
 )

@@ -244,6 +244,7 @@ class ChatFragment : Fragment() {
     private val apiKey =  BuildConfig.API_KEY
     // Anthropic API key for Claude models
     private val anthropicApiKey = BuildConfig.ANTHROPIC_API_KEY
+    private val grokApiKey = BuildConfig.GROK_API_KEY
     private var currentModel = "gpt-3.5-turbo"
     private var conversationId: String? = null
     private var isTtsEnabled = false
@@ -1433,6 +1434,10 @@ class ChatFragment : Fragment() {
                 .url("https://api.anthropic.com/v1/messages")
                 .addHeader("x-api-key", anthropicApiKey)
                 .addHeader("anthropic-version", "2023-06-01")
+        } else if (currentModel.startsWith("grok")) {
+            requestBuilder
+                .url("https://api.x.ai/v1/chat/completions")
+                .addHeader("Authorization", "Bearer $grokApiKey")
         } else {
             requestBuilder
                 .url("https://api.openai.com/v1/chat/completions")
@@ -3800,42 +3805,20 @@ class ChatFragment : Fragment() {
 
             dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
-            // Get models from AIModel.kt in the correct order
-            val availableModels = listOf(
-                com.playstudio.aiteacher.pricing.AIModel.GPT_35_TURBO,
-                com.playstudio.aiteacher.pricing.AIModel.DEEPSEEK,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_41_MINI,
-                com.playstudio.aiteacher.pricing.AIModel.GEMINI,
-                com.playstudio.aiteacher.pricing.AIModel.GEMINI_VOICE,
-                // Audio Models
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O_AUDIO,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O_MINI_AUDIO,
-                // Regular Models
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4_TURBO,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O_SEARCH,
-                com.playstudio.aiteacher.pricing.AIModel.CLAUDE_SONNET_4,
-                com.playstudio.aiteacher.pricing.AIModel.O1,
-                com.playstudio.aiteacher.pricing.AIModel.O1_MINI,
-                com.playstudio.aiteacher.pricing.AIModel.O3,
-                com.playstudio.aiteacher.pricing.AIModel.O3_MINI,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O_REALTIME,
-                com.playstudio.aiteacher.pricing.AIModel.OPENAI_REALTIME_VOICE,
-                com.playstudio.aiteacher.pricing.AIModel.DALL_E_3,
-                com.playstudio.aiteacher.pricing.AIModel.CLAUDE_OPUS_4
-            )
+            // Get available models dynamically so newly added ones appear automatically
+            val subscriptionUIManager = SubscriptionUIManager(requireContext())
+            subscriptionUIManager.updateUIForSubscriptionStatus(this@ChatFragment)
+            val userTier = subscriptionUIManager.getUserSubscriptionTier()
+            val availableModels = subscriptionUIManager.getAvailableAIModels()
+
+            Log.d("ChatFragment", "Model dialog - User tier: $userTier")
 
             // Set up RecyclerView with GridLayoutManager (2 columns)
             val recyclerView = dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.modelsRecyclerView)
             recyclerView.layoutManager = androidx.recyclerview.widget.GridLayoutManager(requireContext(), 2)
-            
+
             // Create subscription-aware adapter with fresh subscription data
-            val subscriptionUIManager = SubscriptionUIManager(requireContext())
             val usageTracker = com.playstudio.aiteacher.pricing.UsageTracker(requireContext())
-            
-            // Ensure we get the latest subscription status
-            subscriptionUIManager.updateUIForSubscriptionStatus(this@ChatFragment)
-            val userTier = subscriptionUIManager.getUserSubscriptionTier()
             
             Log.d("ChatFragment", "Model dialog - User tier: $userTier")
             
@@ -4234,6 +4217,7 @@ class ChatFragment : Fragment() {
                         "Anthropic" -> setupAnthropicSpecificFeatures(currentAIModel)
                         "Google" -> setupGoogleSpecificFeatures(currentAIModel)
                         "DeepSeek" -> setupDeepSeekSpecificFeatures(currentAIModel)
+                        "xAI" -> setupXaiSpecificFeatures(currentAIModel)
                     }
                     
                     // Update UI elements based on model costs
@@ -4276,6 +4260,10 @@ class ChatFragment : Fragment() {
                 showModelCapabilityHints("🎭 Maximum capability mode")
             }
         }
+    }
+
+    private fun setupXaiSpecificFeatures(model: com.playstudio.aiteacher.pricing.AIModel) {
+        showModelCapabilityHints("🚀 Grok advanced reasoning")
     }
     
     private fun setupGoogleSpecificFeatures(model: com.playstudio.aiteacher.pricing.AIModel) {
@@ -4549,47 +4537,44 @@ class ChatFragment : Fragment() {
 
 
 
-    private fun handleGeminiCompletion(message: String) {
-        val geminiApiKey = "YOUR_GEMINI_API_KEY" // Replace with actual key, ideally from secure storage
-        val geminiUrl = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent"
+    private fun handleGeminiCompletion(message: String, model: String = "gemini-2.5-flash", triedFallback: Boolean = false) {
+        val geminiUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
 
         // 1. Define 'contentsArray' (for message history)
         val contentsArray = JSONArray().apply {
             chatMessages.filterNot { it.isTyping }.forEach { chatMsg ->
                 put(JSONObject().apply {
-                    put("role", if (chatMsg.isUser) "user" else "model")
-                    put("parts", JSONArray().apply {
-                        put(JSONObject().apply {
-                            put("text", chatMsg.content)
-                        })
-                    })
+                    put("role", if (chatMsg.isUser) "user" else "assistant")
+                    put("content", chatMsg.content)
                 })
             }
             put(JSONObject().apply {
                 put("role", "user")
-                put("parts", JSONArray().apply {
-                    put(JSONObject().apply {
-                        put("text", message)
+                put("content", message)
+            })
+        }
+
+        // 2. Define 'json' (the main request body JSON object)
+        val json = JSONObject().apply {
+            put("messages", contentsArray)
+            put("model", model)
+            put("reasoning_effort", "low")
+            put("extra_body", JSONObject().apply {
+                put("google", JSONObject().apply {
+                    put("thinking_config", JSONObject().apply {
+                        put("thinking_budget", 800)
+                        put("include_thoughts", true)
                     })
                 })
             })
         }
 
-        // 2. Define 'json' (the main request body JSON object)
-        val json = JSONObject().apply { // <<<< DEFINITION OF 'json' WAS MISSING IN PREVIOUS SNIPPET
-            put("contents", contentsArray)
-            // You can add generationConfig here if needed by Gemini API
-            // put("generationConfig", JSONObject().apply {
-            //     put("temperature", 0.7)
-            //     put("maxOutputTokens", 2048)
-            // })
-        }
-
         // 3. Define 'body' and 'request'
         val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
-        val request = Request.Builder() // <<<< DEFINITION OF 'request' WAS MISSING IN PREVIOUS SNIPPET
-            .url("$geminiUrl?key=$geminiApiKey")
+        val request = Request.Builder()
+            .url(geminiUrl)
             .post(body)
+            .addHeader("Authorization", "Bearer ${BuildConfig.GEMINI_API_KEY}")
             .addHeader("Content-Type", "application/json")
             .build()
 
@@ -4607,8 +4592,13 @@ class ChatFragment : Fragment() {
                 val responseBody = response.body?.string() // This can be done outside withContext if preferred
                 Log.d("ChatFragment", "Received response from Gemini: $responseBody")
 
-                if (!response.isSuccessful) { // Now 'response' is defined
-                    withContext(Dispatchers.Main) { // Switch to Main for UI
+                if (!response.isSuccessful) {
+                    if (response.code == 404 && !triedFallback) {
+                        Log.w("ChatFragment", "Gemini model not found, falling back to gemini-pro")
+                        handleGeminiCompletion(message, "gemini-pro", true)
+                        return@launch
+                    }
+                    withContext(Dispatchers.Main) {
                         when (response.code) {
                             400 -> showCustomToast("Bad Request: Check your request parameters")
                             401 -> showCustomToast("Unauthorized: Check your API key")
@@ -5978,7 +5968,11 @@ class ChatFragment : Fragment() {
                 put("citations", citationsArray)
                 put("timestamp", chatMsg.timestamp)
                 put("containsRichContent", chatMsg.containsRichContent)
-                put("structuredContentJson", chatMsg.structuredContentJson)
+                if (chatMsg.structuredContentJson != null) {
+                    put("structuredContentJson", chatMsg.structuredContentJson)
+                } else {
+                    put("structuredContentJson", JSONObject.NULL)
+                }
             })
         }
 
@@ -6043,7 +6037,11 @@ class ChatFragment : Fragment() {
             timestamp = messageObject.optLong("timestamp", System.currentTimeMillis()),
             containsRichContent = messageObject.optBoolean("containsRichContent", false),
             isWebSearchResult = messageObject.optBoolean("isWebSearchResult", false),
-            structuredContentJson = messageObject.optString("structuredContentJson", null)
+            structuredContentJson = if (messageObject.has("structuredContentJson") && !messageObject.isNull("structuredContentJson")) {
+                messageObject.getString("structuredContentJson").takeIf { it != "null" }
+            } else {
+                null
+            }
         )
     }
 

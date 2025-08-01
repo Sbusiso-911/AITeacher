@@ -53,7 +53,8 @@ class QuestionsAdapter(
             binding.questionPoints.text = "${question.points} pt${if (question.points != 1) "s" else ""}"
             
             // Difficulty indicator
-            val difficultyColor = when (question.difficulty) {
+            val difficultyLevel = question.difficulty ?: com.playstudio.aiteacher.models.DifficultyLevel.BEGINNER
+            val difficultyColor = when (difficultyLevel) {
                 com.playstudio.aiteacher.models.DifficultyLevel.BEGINNER -> R.color.difficulty_beginner
                 com.playstudio.aiteacher.models.DifficultyLevel.INTERMEDIATE -> R.color.difficulty_intermediate
                 com.playstudio.aiteacher.models.DifficultyLevel.ADVANCED -> R.color.difficulty_advanced
@@ -63,8 +64,9 @@ class QuestionsAdapter(
                 ContextCompat.getColor(itemView.context, difficultyColor)
             )
 
-            // Setup question based on type
-            when (question.questionType) {
+            // Setup question based on type; fall back to multiple choice if missing
+            val type = question.questionType ?: QuestionType.MULTIPLE_CHOICE
+            when (type) {
                 QuestionType.MULTIPLE_CHOICE -> setupMultipleChoice(question)
                 QuestionType.TRUE_FALSE -> setupTrueFalse(question)
                 QuestionType.SHORT_ANSWER -> setupShortAnswer(question)
@@ -94,18 +96,21 @@ class QuestionsAdapter(
                     textSize = 14f
                     setTextColor(ContextCompat.getColor(context, R.color.glass_text_primary))
                     setPadding(16, 12, 16, 12)
-                    id = index
+                    id = View.generateViewId()
+                    tag = index
                 }
                 binding.optionsRadioGroup.addView(radioButton)
             }
 
             // Handle selection
-            binding.optionsRadioGroup.setOnCheckedChangeListener { _, checkedId ->
+            binding.optionsRadioGroup.setOnCheckedChangeListener { group, checkedId ->
                 if (checkedId != -1) {
-                    val selectedOption = question.options?.get(checkedId) ?: ""
+                    val radio = group.findViewById<RadioButton>(checkedId)
+                    val index = radio.tag as Int
+                    val selectedOption = question.options?.get(index) ?: ""
                     val isCorrect = selectedOption == question.correctAnswer
                     answeredQuestions[question.id] = Pair(selectedOption, isCorrect)
-                    
+
                     showAnswerResult(question, selectedOption, isCorrect)
                     onAnswerSelected(question, selectedOption)
                 }
@@ -125,7 +130,8 @@ class QuestionsAdapter(
                 textSize = 14f
                 setTextColor(ContextCompat.getColor(context, R.color.glass_text_primary))
                 setPadding(16, 12, 16, 12)
-                id = 0
+                id = View.generateViewId()
+                tag = "True"
             }
 
             val falseButton = RadioButton(itemView.context).apply {
@@ -133,19 +139,21 @@ class QuestionsAdapter(
                 textSize = 14f
                 setTextColor(ContextCompat.getColor(context, R.color.glass_text_primary))
                 setPadding(16, 12, 16, 12)
-                id = 1
+                id = View.generateViewId()
+                tag = "False"
             }
 
             binding.optionsRadioGroup.addView(trueButton)
             binding.optionsRadioGroup.addView(falseButton)
 
             // Handle selection
-            binding.optionsRadioGroup.setOnCheckedChangeListener { _, checkedId ->
+            binding.optionsRadioGroup.setOnCheckedChangeListener { group, checkedId ->
                 if (checkedId != -1) {
-                    val selectedAnswer = if (checkedId == 0) "True" else "False"
+                    val radio = group.findViewById<RadioButton>(checkedId)
+                    val selectedAnswer = radio.tag as String
                     val isCorrect = selectedAnswer.equals(question.correctAnswer, ignoreCase = true)
                     answeredQuestions[question.id] = Pair(selectedAnswer, isCorrect)
-                    
+
                     showAnswerResult(question, selectedAnswer, isCorrect)
                     onAnswerSelected(question, selectedAnswer)
                 }

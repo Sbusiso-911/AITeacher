@@ -26,6 +26,7 @@ class StructuredContentView @JvmOverloads constructor(
 
     private val binding: ViewStructuredContentBinding
     private var currentResponse: EducationalResponse? = null
+    private var stepsAdapter: LearningStepsAdapter? = null
 
     init {
         orientation = VERTICAL
@@ -184,9 +185,9 @@ class StructuredContentView @JvmOverloads constructor(
             if (steps.isNotEmpty()) {
                 binding.stepsSection.visibility = View.VISIBLE
                 val adapter = LearningStepsAdapter(steps) { step ->
-                    // Handle step click (expand/collapse)
                     onStepClicked(step)
                 }
+                stepsAdapter = adapter
                 binding.stepsRecyclerView.adapter = adapter
             }
         }
@@ -442,5 +443,13 @@ class StructuredContentView @JvmOverloads constructor(
 
     fun setOnContentInteractionListener(listener: OnContentInteractionListener) {
         this.contentInteractionListener = listener
+    }
+
+    fun expandAllSteps() {
+        stepsAdapter?.expandAllSteps()
+    }
+
+    fun collapseAllSteps() {
+        stepsAdapter?.collapseAllSteps()
     }
 }
