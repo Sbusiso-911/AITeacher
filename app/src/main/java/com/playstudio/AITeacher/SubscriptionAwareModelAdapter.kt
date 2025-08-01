@@ -12,7 +12,11 @@ import com.playstudio.aiteacher.pricing.AIModel
 import com.playstudio.aiteacher.pricing.SubscriptionTier
 
 /**
- * RecyclerView adapter for AI model selection with usage-based subscription system
+ * RecyclerView adapter for AI model selection with usage-based subscription system.
+ *
+ * The previous implementation displayed a "daily limit" TextView on each model
+ * card. That view has been removed in favor of a unified credit system, so this
+ * adapter no longer references `tv_daily_limit`.
  */
 class SubscriptionAwareModelAdapter(
     private val models: List<AIModel>,
