@@ -2,6 +2,7 @@ package com.playstudio.aiteacher.pricing
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.playstudio.aiteacher.credits.CreditManager
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -43,16 +44,27 @@ class UsageTracker(private val context: Context) {
     fun canUseModel(modelId: String, userTier: SubscriptionTier): Boolean {
         val model = AIModel.fromModelId(modelId) ?: return false
         val usageLimit = model.getUsageLimitForTier(userTier)
-        
-        // -1 means unlimited
-        if (usageLimit == -1) return true
-        
-        val currentUsage = getCurrentUsage(modelId)
-        val canUse = currentUsage < usageLimit
-        
+
+        // Check message count limit
+        if (usageLimit != -1 && getCurrentUsage(modelId) >= usageLimit) {
+            return false
+        }
+
+        // Also ensure sufficient credits remain for the estimated cost
+        val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(context)
+        val estimatedCost = creditManager.calculateMessageCost(
+            model.averageInputTokens,
+            model.averageOutputTokens,
+            model.modelId,
+            userTier
+        )
+        val remainingCredits = creditManager.getRemainingCredits("default_user", userTier)
+
+        val canUse = remainingCredits >= estimatedCost
+
         android.util.Log.d("UsageTracker", "canUseModel: modelId=$modelId, userTier=$userTier")
-        android.util.Log.d("UsageTracker", "canUseModel: usageLimit=$usageLimit, currentUsage=$currentUsage, canUse=$canUse")
-        
+        android.util.Log.d("UsageTracker", "canUseModel: usageLimit=$usageLimit, currentUsage=${getCurrentUsage(modelId)}, remainingCredits=$remainingCredits, estimatedCost=$estimatedCost, canUse=$canUse")
+
         return canUse
     }
     

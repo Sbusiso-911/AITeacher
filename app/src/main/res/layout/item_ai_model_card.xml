@@ -76,15 +76,6 @@
             android:textColor="@color/text_secondary"
             android:layout_marginBottom="4dp" />
 
-        <!-- Usage Limit -->
-        <TextView
-            android:id="@+id/tv_daily_limit"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Unlimited daily"
-            android:textSize="12sp"
-            android:textColor="@color/text_secondary"
-            android:layout_marginBottom="4dp" />
 
         <!-- Cost per Message -->
         <TextView

@@ -423,8 +423,9 @@ class ChatFragment : Fragment() {
         // Setup subscription UI manager for this fragment
         subscriptionUIManager.setupForFragment(this)
         
-        // Update subscription status display
+        // Update subscription status display and credit balance
         updateSubscriptionStatusDisplay()
+        updateCreditBalanceDisplay()
         
         // Check if user should get model recommendations
         lifecycleScope.launch {
@@ -629,8 +630,9 @@ class ChatFragment : Fragment() {
         val conversationId = arguments?.getString("conversation_id")
         initializeChat(selectedModel, conversationId)
         
-        // Update subscription status display after initialization
+        // Update subscription status display and show credit balance after initialization
         updateSubscriptionStatusDisplay()
+        updateCreditBalanceDisplay()
 
         binding.historyButton.setOnClickListener {
             showChatHistoryDialog()
@@ -1321,8 +1323,30 @@ class ChatFragment : Fragment() {
         }
 
         if (checkDailyLimit(limitKey, dailyMax)) {
-            // Usage will be tracked in trackMessageUsage() after successful response
-            handleMessage(userMessage)
+            // Check credit balance before sending - must call suspend function in coroutine
+            lifecycleScope.launch {
+                val tier = subscriptionUIManager.getUserSubscriptionTier()
+                val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(requireContext())
+                val model = com.playstudio.aiteacher.pricing.AIModel.fromModelId(currentModel)
+                if (model != null) {
+                    val estimatedCost = creditManager.calculateMessageCost(
+                        model.averageInputTokens,
+                        model.averageOutputTokens,
+                        model.modelId,
+                        tier
+                    )
+                    val remaining = creditManager.getRemainingCredits("default_user", tier)
+                    if (remaining < estimatedCost) {
+                        withContext(Dispatchers.Main) {
+                            showCustomToast("Insufficient credits to send message")
+                        }
+                        return@launch
+                    }
+                }
+
+                // Usage will be tracked in trackMessageUsage() after successful response
+                withContext(Dispatchers.Main) { handleMessage(userMessage) }
+            }
         } else {
             showCustomToast("Daily limit for $currentModel reached.")
             showRewardedAd() // Offer ad to continue
@@ -3651,8 +3675,9 @@ class ChatFragment : Fragment() {
             canSendMessage = false
         }
         
-        // Update the subscription status display
+        // Update the subscription status display and credit balance
         updateSubscriptionStatusDisplay()
+        updateCreditBalanceDisplay()
     }
 
     private fun openDocumentPicker() {
@@ -3791,78 +3816,9 @@ class ChatFragment : Fragment() {
     }
 
     private fun showChatGptOptionsDialog() {
-        lifecycleScope.launch {
-            val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_with_overlay, null)
-            val dialog = AlertDialog.Builder(requireContext())
-                .setView(dialogView)
-                .setCancelable(true)
-                .create()
-
-            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-
-            // Get models from AIModel.kt in the correct order
-            val availableModels = listOf(
-                com.playstudio.aiteacher.pricing.AIModel.GPT_35_TURBO,
-                com.playstudio.aiteacher.pricing.AIModel.DEEPSEEK,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_41_MINI,
-                com.playstudio.aiteacher.pricing.AIModel.GEMINI,
-                com.playstudio.aiteacher.pricing.AIModel.GEMINI_VOICE,
-                // Audio Models
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O_AUDIO,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O_MINI_AUDIO,
-                // Regular Models
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4_TURBO,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O_SEARCH,
-                com.playstudio.aiteacher.pricing.AIModel.CLAUDE_SONNET_4,
-                com.playstudio.aiteacher.pricing.AIModel.O1,
-                com.playstudio.aiteacher.pricing.AIModel.O1_MINI,
-                com.playstudio.aiteacher.pricing.AIModel.O3,
-                com.playstudio.aiteacher.pricing.AIModel.O3_MINI,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O_REALTIME,
-                com.playstudio.aiteacher.pricing.AIModel.OPENAI_REALTIME_VOICE,
-                com.playstudio.aiteacher.pricing.AIModel.DALL_E_3,
-                com.playstudio.aiteacher.pricing.AIModel.CLAUDE_OPUS_4
-            )
-
-            // Set up RecyclerView with GridLayoutManager (2 columns)
-            val recyclerView = dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.modelsRecyclerView)
-            recyclerView.layoutManager = androidx.recyclerview.widget.GridLayoutManager(requireContext(), 2)
-            
-            // Create subscription-aware adapter with fresh subscription data
-            val subscriptionUIManager = SubscriptionUIManager(requireContext())
-            val usageTracker = com.playstudio.aiteacher.pricing.UsageTracker(requireContext())
-            
-            // Ensure we get the latest subscription status
-            subscriptionUIManager.updateUIForSubscriptionStatus(this@ChatFragment)
-            val userTier = subscriptionUIManager.getUserSubscriptionTier()
-            
-            Log.d("ChatFragment", "Model dialog - User tier: $userTier")
-            
-            val modelAdapter = SubscriptionAwareModelAdapter(
-                availableModels,
-                userTier,
-                usageTracker
-            ) { selectedModel ->
-                handleModelSelection(selectedModel)
-                dialog.dismiss()
-            }
-            
-            recyclerView.adapter = modelAdapter
-
-            // Handle close button
-            val closeButton = dialogView.findViewById<ImageButton>(R.id.closeButton)
-            closeButton?.setOnClickListener {
-                dialog.dismiss()
-            }
-
-            dialog.setOnDismissListener {
-                hideOverlay()
-            }
-            
-
-            showOverlay()
-            dialog.show()
+        val subscriptionUIManager = SubscriptionUIManager(requireContext())
+        showSubscriptionAwareModelDialog(subscriptionUIManager) { selectedModel ->
+            handleModelSelection(selectedModel)
         }
     }
     
@@ -3998,7 +3954,7 @@ class ChatFragment : Fragment() {
                 val textColor = if (isSubscribed) {
                     android.R.color.holo_green_light
                 } else {
-                    android.R.color.darker_gray
+                    android.R.color.holo_red_light
                 }
                 binding.subscriptionStatusText.setTextColor(ContextCompat.getColor(requireContext(), textColor))
                 
@@ -4051,16 +4007,23 @@ class ChatFragment : Fragment() {
             try {
                 // Increment usage count
                 usageTracker.incrementUsage(model.modelId)
-                
+
                 // Record actual cost with CostManager
                 costManager.recordActualCost(
                     model = model,
                     inputTokens = inputTokens,
                     outputTokens = outputTokens
                 )
-                
-                // Update UI with remaining usage
+
+                // Deduct credits using the new credit system
+                val tier = subscriptionUIManager.getUserSubscriptionTier()
+                val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(requireContext())
+                val creditCost = creditManager.calculateMessageCost(inputTokens, outputTokens, model.modelId, tier)
+                creditManager.updateUserCredits("default_user", tier, creditCost)
+
+                // Update UI with remaining usage and credit balance
                 updateUsageDisplay(model)
+                updateCreditBalanceDisplay()
                 
             } catch (e: Exception) {
                 Log.e("ChatFragment", "Error tracking usage", e)
@@ -4089,6 +4052,20 @@ class ChatFragment : Fragment() {
                 
             } catch (e: Exception) {
                 Log.e("ChatFragment", "Error updating usage display", e)
+            }
+        }
+    }
+
+    private fun updateCreditBalanceDisplay() {
+        lifecycleScope.launch {
+            try {
+                val tier = subscriptionUIManager.getUserSubscriptionTier()
+                val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(requireContext())
+                val remaining = creditManager.getRemainingCredits("default_user", tier)
+                val config = com.playstudio.aiteacher.credits.SubscriptionTiers.getConfig(tier)
+                binding.tvCreditBalance.text = "Credits: ${String.format("%.2f", remaining)} / ${config.dailyCredits}"
+            } catch (e: Exception) {
+                Log.e("ChatFragment", "Error updating credit balance", e)
             }
         }
     }

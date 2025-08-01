@@ -33,7 +33,6 @@ class AIModelAdapter(
         val providerName: TextView = view.findViewById(R.id.tv_provider)
         val tierBadge: TextView = view.findViewById(R.id.tv_tier_badge)
         val capabilities: TextView = view.findViewById(R.id.tv_capabilities)
-        val dailyLimit: TextView = view.findViewById(R.id.tv_daily_limit)
         val costPerMessage: TextView = view.findViewById(R.id.tv_cost_per_message)
         val cardView: CardView = view as CardView
     }
@@ -56,9 +55,6 @@ class AIModelAdapter(
         
         // Set capabilities (simplified for basic model)
         holder.capabilities.text = "Basic AI Model"
-        
-        // Set daily limit
-        holder.dailyLimit.text = "Limited daily usage"
         
         // Set cost per message
         holder.costPerMessage.text = "Free tier"

@@ -5,7 +5,7 @@
     <color name="light_green">#90EE90</color>
     <color name="light_yellow">#FFFFE0</color>
     <color name="light_grey">#D3D3D3</color>
-    <color name="dark_grey">#333333</color>
+    <color name="dark_grey">#0F2257</color>
 
 
 
@@ -157,7 +157,7 @@
     <color name="gold_main">#FFD700</color>
     <color name="free_tier_text">#9E9E9E</color>
     <color name="free_tier_hint">#BDBDBD</color>
-    <color name="premium_badge_bg">#2A2A2A</color>
+    <color name="premium_badge_bg">#0F2257</color>
     <color name="premium_gold_30p">#4DFFD700</color>
 
 

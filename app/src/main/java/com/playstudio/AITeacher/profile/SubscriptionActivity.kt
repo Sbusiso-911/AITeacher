@@ -65,10 +65,6 @@ class SubscriptionActivity : AppCompatActivity() {
                 Toast.makeText(this@SubscriptionActivity, "Navigate to subscription plans", Toast.LENGTH_SHORT).show()
             }
             
-            cancelButton.setOnClickListener {
-                showCancelSubscriptionDialog()
-            }
-            
             renewButton.setOnClickListener {
                 renewSubscription()
             }
@@ -132,7 +128,6 @@ class SubscriptionActivity : AppCompatActivity() {
                 
                 // Show management buttons
                 upgradeButton.text = "Upgrade Plan"
-                cancelButton.visibility = android.view.View.VISIBLE
                 renewButton.visibility = android.view.View.GONE
                 
             } else if (status.isExpired) {
@@ -150,7 +145,6 @@ class SubscriptionActivity : AppCompatActivity() {
                 
                 // Show renewal options
                 upgradeButton.text = "Renew Subscription"
-                cancelButton.visibility = android.view.View.GONE
                 renewButton.visibility = android.view.View.VISIBLE
                 
             } else {
@@ -168,41 +162,11 @@ class SubscriptionActivity : AppCompatActivity() {
                 
                 // Show upgrade options
                 upgradeButton.text = "Upgrade to Premium"
-                cancelButton.visibility = android.view.View.GONE
                 renewButton.visibility = android.view.View.GONE
             }
         }
     }
     
-    private fun showCancelSubscriptionDialog() {
-        val dialog = androidx.appcompat.app.AlertDialog.Builder(this, R.style.BlueDialogTheme)
-            .setTitle("Cancel Subscription")
-            .setMessage("Are you sure you want to cancel your subscription? You'll lose access to premium features at the end of your current billing period.")
-            .setPositiveButton("Cancel Subscription") { _, _ ->
-                cancelSubscription()
-            }
-            .setNegativeButton("Keep Subscription", null)
-            .create()
-        
-        dialog.show()
-    }
-    
-    private fun cancelSubscription() {
-        lifecycleScope.launch {
-            try {
-                val success = firestoreSubscriptionManager.cancelSubscription()
-                if (success) {
-                    Toast.makeText(this@SubscriptionActivity, "Subscription cancelled successfully", Toast.LENGTH_SHORT).show()
-                    loadSubscriptionData() // Refresh UI
-                } else {
-                    Toast.makeText(this@SubscriptionActivity, "Failed to cancel subscription", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                Log.e("SubscriptionActivity", "Error cancelling subscription", e)
-                Toast.makeText(this@SubscriptionActivity, "Error cancelling subscription: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
     
     private fun renewSubscription() {
         lifecycleScope.launch {
