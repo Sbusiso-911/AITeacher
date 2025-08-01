@@ -1321,26 +1321,30 @@ class ChatFragment : Fragment() {
         }
 
         if (checkDailyLimit(limitKey, dailyMax)) {
-            // Check credit balance before sending
-            val tier = subscriptionUIManager.getUserSubscriptionTier()
-            val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(requireContext())
-            val model = com.playstudio.aiteacher.pricing.AIModel.fromModelId(currentModel)
-            if (model != null) {
-                val estimatedCost = creditManager.calculateMessageCost(
-                    model.averageInputTokens,
-                    model.averageOutputTokens,
-                    model.modelId,
-                    tier
-                )
-                val remaining = creditManager.getRemainingCredits("default_user", tier)
-                if (remaining < estimatedCost) {
-                    showCustomToast("Insufficient credits to send message")
-                    return
+            // Check credit balance before sending - must call suspend function in coroutine
+            lifecycleScope.launch {
+                val tier = subscriptionUIManager.getUserSubscriptionTier()
+                val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(requireContext())
+                val model = com.playstudio.aiteacher.pricing.AIModel.fromModelId(currentModel)
+                if (model != null) {
+                    val estimatedCost = creditManager.calculateMessageCost(
+                        model.averageInputTokens,
+                        model.averageOutputTokens,
+                        model.modelId,
+                        tier
+                    )
+                    val remaining = creditManager.getRemainingCredits("default_user", tier)
+                    if (remaining < estimatedCost) {
+                        withContext(Dispatchers.Main) {
+                            showCustomToast("Insufficient credits to send message")
+                        }
+                        return@launch
+                    }
                 }
-            }
 
-            // Usage will be tracked in trackMessageUsage() after successful response
-            handleMessage(userMessage)
+                // Usage will be tracked in trackMessageUsage() after successful response
+                withContext(Dispatchers.Main) { handleMessage(userMessage) }
+            }
         } else {
             showCustomToast("Daily limit for $currentModel reached.")
             showRewardedAd() // Offer ad to continue
