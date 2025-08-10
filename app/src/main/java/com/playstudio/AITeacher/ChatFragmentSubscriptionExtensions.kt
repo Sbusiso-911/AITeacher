@@ -16,6 +16,7 @@ import com.playstudio.aiteacher.profile.ProfileActivity
 import kotlinx.coroutines.launch
 import android.content.Intent
 import androidx.appcompat.app.AlertDialog
+import android.view.ContextThemeWrapper
 import com.playstudio.aiteacher.R
 
 /**
@@ -33,14 +34,14 @@ fun Fragment.showSubscriptionAwareModelDialog(
         try {
             val availableModels = subscriptionUIManager.getAvailableAIModels()
             val userTier = subscriptionUIManager.getUserSubscriptionTier()
-            
+
             if (availableModels.isEmpty()) {
                 showNoModelsAvailableDialog()
                 return@launch
             }
-            
+
             showModelSelectionDialog(availableModels, userTier, onModelSelected)
-            
+
         } catch (e: Exception) {
             Log.e("ChatFragment", "Error showing model dialog", e)
         }
@@ -57,22 +58,28 @@ private fun Fragment.showModelSelectionDialog(
 ) {
     val context = requireContext()
     val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_ai_model_selection, null)
-    
+
     // Setup RecyclerView with models
     val recyclerView = dialogView.findViewById<RecyclerView>(R.id.rv_ai_models)
     val tierTextView = dialogView.findViewById<TextView>(R.id.tv_current_tier)
-    
+    val creditTextView = dialogView.findViewById<TextView>(R.id.tv_credit_balance)
+
     tierTextView.text = "Current Plan: ${userTier.name.replace("_", " ")}"
-    
+
+    val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(context)
+    val tierConfig = com.playstudio.aiteacher.credits.SubscriptionTiers.getConfig(userTier)
+    val remainingCredits = creditManager.getRemainingCredits("default_user", userTier)
+    creditTextView.text = "Credits: ${String.format("%.2f", remainingCredits)} / ${tierConfig.dailyCredits}"
+
     val usageTracker = com.playstudio.aiteacher.pricing.UsageTracker(context)
     val modelAdapter = SubscriptionAwareModelAdapter(availableModels, userTier, usageTracker) { selectedModel ->
         onModelSelected(selectedModel)
     }
-    
+
     recyclerView.layoutManager = GridLayoutManager(context, 2)
     recyclerView.adapter = modelAdapter
-    
-    AlertDialog.Builder(context)
+
+    AlertDialog.Builder(ContextThemeWrapper(context, R.style.GlassDialogTheme))
         .setTitle("Select AI Model")
         .setView(dialogView)
         .setNegativeButton("Cancel", null)
@@ -101,14 +108,14 @@ private fun Fragment.showNoModelsAvailableDialog() {
  */
 private fun showUpgradeDialog(context: Context) {
     val firebaseAuthService = FirebaseAuthenticationService(context)
-    
+
     // Check authentication before showing subscription
     if (!firebaseAuthService.isSignedIn()) {
         Log.w("ChatFragment", "User not authenticated, showing authentication required dialog")
         showAuthenticationRequiredDialog(context)
         return
     }
-    
+
     // User is authenticated, proceed with subscription activity
     try {
         val intent = android.content.Intent(context, com.playstudio.aiteacher.profile.SubscriptionActivity::class.java)
@@ -127,13 +134,13 @@ suspend fun Fragment.canUserSendMessage(
 ): Boolean {
     return try {
         if (selectedModel == null) return false
-        
+
         val canAccess = subscriptionUIManager.canAccessModel(selectedModel)
         if (!canAccess) {
             showModelNotAvailableDialog(selectedModel)
         }
         canAccess
-        
+
     } catch (e: Exception) {
         Log.e("ChatFragment", "Error checking if user can send message", e)
         false
@@ -161,7 +168,7 @@ private fun Fragment.showModelNotAvailableDialog(model: AIModel) {
  */
 private fun showAuthenticationRequiredDialog(context: Context) {
     val authDialog = android.app.AlertDialog.Builder(context, R.style.BlueDialogTheme)
-        .setTitle("Account Required") 
+        .setTitle("Account Required")
         .setMessage("You need to create an account before purchasing a subscription. This helps us secure your subscription and sync it across devices.")
         .setPositiveButton("Create Account") { _, _ ->
             // Navigate to profile/login screen
@@ -173,7 +180,7 @@ private fun showAuthenticationRequiredDialog(context: Context) {
             // Stay in current view
         }
         .create()
-    
+
     authDialog.show()
 }
 
@@ -195,7 +202,7 @@ fun AIModel.getDescriptionWithPricing(): String {
     } else {
         "~$${String.format("%.3f", costPerMessage)}"
     }
-    
+
     return buildString {
         append("$provider • ")
         append("$costText/msg")
@@ -211,14 +218,14 @@ fun Fragment.updateChatUIForSubscription(subscriptionUIManager: SubscriptionUIMa
         try {
             // Update UI through the subscription manager
             subscriptionUIManager.updateUIForSubscriptionStatus(this@updateChatUIForSubscription)
-            
+
             // Update model selection button text based on available models
             val availableModels = subscriptionUIManager.getAvailableAIModels()
             val userTier = subscriptionUIManager.getUserSubscriptionTier()
-            
-            view?.findViewById<TextView>(R.id.tv_available_models)?.text = 
+
+            view?.findViewById<TextView>(R.id.tv_available_models)?.text =
                 "${availableModels.size} models available (${userTier.name.replace("_", " ")} plan)"
-                
+
         } catch (e: Exception) {
             Log.e("ChatFragment", "Error updating chat UI for subscription", e)
         }

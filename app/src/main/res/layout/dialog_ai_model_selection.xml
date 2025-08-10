@@ -4,7 +4,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="@drawable/modern_dialog_background"
+    android:elevation="12dp">
 
     <!-- Header -->
     <TextView
@@ -13,9 +15,10 @@
         android:text="Choose AI Model"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:textColor="@color/colorPrimary"
+        android:textColor="#FFFFFF"
         android:gravity="center"
-        android:layout_marginBottom="8dp" />
+        android:layout_marginBottom="8dp"
+        android:fontFamily="@font/montserrat_bold" />
 
     <!-- Current tier indicator -->
     <TextView
@@ -24,11 +27,22 @@
         android:layout_height="wrap_content"
         android:text="Current Plan: FREE"
         android:textSize="14sp"
-        android:textColor="@color/gray_dark"
+        android:textColor="@color/glass_text_primary"
         android:gravity="center"
-        android:layout_marginBottom="16dp"
         android:padding="8dp"
-        android:background="@drawable/rounded_corners_grey" />
+        android:background="@drawable/glassmorphism_button_background" />
+
+    <!-- Credit balance -->
+    <TextView
+        android:id="@+id/tv_credit_balance"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Credits: 0.00/0.00"
+        android:textSize="14sp"
+        android:textColor="@color/glass_text_primary"
+        android:gravity="center"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp" />
 
     <!-- Models RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView

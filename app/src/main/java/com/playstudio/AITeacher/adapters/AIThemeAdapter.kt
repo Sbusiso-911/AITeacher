@@ -1,4 +1,4 @@
-package com.playstudio.AITeacher.adapters
+package com.playstudio.aiteacher.adapters
 
 import android.graphics.drawable.AnimatedVectorDrawable
 import android.view.LayoutInflater
@@ -10,10 +10,10 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
-import com.playstudio.AITeacher.AIThemeManager
+import com.playstudio.aiteacher.AIThemeManager
 import com.playstudio.aiteacher.R
-import com.playstudio.AITeacher.models.AITheme
-import com.playstudio.AITeacher.models.ThemeCategory
+import com.playstudio.aiteacher.models.AITheme
+import com.playstudio.aiteacher.models.ThemeCategory
 import kotlinx.coroutines.*
 
 /**

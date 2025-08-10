@@ -240,6 +240,5 @@
     <string name="topics_scroll_desc" />
     <string name="chapters_scroll_desc" />
     <string name="subjects_scroll_desc" />
-    <string name="recent_conversations_desc" />
     <string name="tts_button_desc" />
 </resources>

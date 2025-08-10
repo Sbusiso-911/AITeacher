@@ -1,32 +1,36 @@
 <resources>
     <color name="black">#000000</color>
-    <color name="white">#FFFFFF</color>
-    <color name="light_blue">#ADD8E6</color>
+    <color name="white">#F8FFFE</color>
+    <color name="light_blue">#5FB3D4</color>
     <color name="light_green">#90EE90</color>
     <color name="light_yellow">#FFFFE0</color>
-    <color name="light_grey">#D3D3D3</color>
-    <color name="dark_grey">#333333</color>
+    <color name="light_grey">#7DD3FC</color> <!-- Ocean blue light -->
+    <color name="dark_grey">#1B4A6B</color> <!-- Ocean blue rich -->
 
 
 
 
 
-    <color name="input_background">#F8F9FA</color>
-    <color name="category_card_bg">#F5F7FA</color>
+    <color name="input_background">#B0F2FF</color> <!-- Ocean blue crystal -->
+    <color name="category_card_bg">#7DD3FC</color> <!-- Ocean blue light -->
 
 
 
     <color name="accent_purple">#B19CD9</color>
+    
+    <!-- NEW: Learning-focused UI colors -->
+    <color name="correct_answer">#4CAF50</color>
+    <color name="incorrect_answer">#F44336</color>
 
     <color name="link_color">#1a73e8</color>
     <color name="default_background_color">#FFFFFF</color>
     <color name="red">#FF0000</color>
     <color name="green">#008000</color>
-    <color name="blue">#0000FF</color>
+    <color name="blue">#40E0D0</color>
     <color name="yellow">#FFFF00</color>
     <color name="cyan">#00FFFF</color>
     <color name="magenta">#FF00FF</color>
-    <color name="orange">#FFA500</color>
+    <color name="orange">#FF6B47</color>
     <color name="purple">#800080</color>
     <color name="pink">#FFC0CB</color>
     <color name="brown">#A52A2A</color>
@@ -47,14 +51,29 @@
     <color name="glow_start">#FF00FF00</color> <!-- Example color: Green -->
     <color name="glow_end">#FF0000FF</color> <!-- Example color: Blue -->
 
+    <!-- Security Analysis Colors -->
+    <color name="severity_low">#4CAF50</color>
+    <color name="severity_medium">#FF9800</color>
+    <color name="severity_high">#FF5722</color>
+    <color name="severity_critical">#F44336</color>
+    
+    <color name="problem_section_title">#D32F2F</color>
+    <color name="solution_section_title">@android:color/transparent</color>
+    <color name="result_section_title">#388E3C</color>
+    <color name="action_section_title">#F57C00</color>
+    
+    <color name="result_before_text">#757575</color>
+    <color name="result_after_text">#2E7D32</color>
+    <color name="result_outcome_text">#1B5E20</color>
+    
     <!-- New colors -->
-    <color name="slight_light_blue">#DDEEFF</color>
+    <color name="slight_light_blue">@android:color/transparent</color>
 
-    <color name="sky_blue">#87CEEB</color>
+    <color name="sky_blue">@android:color/transparent</color>
 
     <color name="slight_light_purple">#EEE6EE</color>
 
-    <color name="custom1_blue">#9999FF</color>
+    <color name="custom1_blue">@android:color/transparent</color>
 
     <color name="button_background_color">#FF6200EE</color>
 
@@ -99,7 +118,7 @@
     <color name="action_orange">#FF9500</color> <!-- Orange for action -->
 
     <!-- Trust Colors -->
-    <color name="trust_blue_translucent">#4065A3D0</color> <!-- Semi-transparent blue -->
+    <color name="trust_blue_translucent">@android:color/transparent</color> <!-- Transparent -->
 
 
 
@@ -119,7 +138,7 @@
     <color name="text_hint">#A0AEC0</color>
 
     <!-- Accent Colors -->
-    <color name="accent_blue">#4299E1</color>
+    <color name="accent_blue">@android:color/transparent</color>
     <color name="accent_green">#48BB78</color>
     <color name="accent_orange">#ED8936</color>
 
@@ -157,7 +176,7 @@
     <color name="gold_main">#FFD700</color>
     <color name="free_tier_text">#9E9E9E</color>
     <color name="free_tier_hint">#BDBDBD</color>
-    <color name="premium_badge_bg">#2A2A2A</color>
+    <color name="premium_badge_bg">#0F2257</color>
     <color name="premium_gold_30p">#4DFFD700</color>
 
 
@@ -173,12 +192,12 @@
 
     <color name="gold">#FFD700</color>
 
-    <color name="trust_blue_background">#00E3F2FD</color>
-    <color name="trust_blue">#1E88E5</color>
-    <color name="trust_blue_dark">#1565C0</color>
-    <color name="trust_blue_light">#90CAF9</color>
-    <color name="trust_blue_very_light">#00E3F2FD</color>
-    <color name="trust_blue_semi_transparent">#801E88E5</color>
+    <color name="trust_blue_background">@android:color/transparent</color>
+    <color name="trust_blue">@android:color/transparent</color>
+    <color name="trust_blue_dark">@android:color/transparent</color>
+    <color name="trust_blue_light">@android:color/transparent</color>
+    <color name="trust_blue_very_light">@android:color/transparent</color>
+    <color name="trust_blue_semi_transparent">@android:color/transparent</color>
     <color name="white_50_percent">#80FFFFFF</color>
 
 
@@ -242,39 +261,41 @@
     <!-- Glassmorphism Chat Theme Colors -->
     <color name="glass_background">#1AFFFFFF</color> <!-- rgba(255, 255, 255, 0.1) -->
     <color name="glass_background_strong">#4DFFFFFF</color> <!-- rgba(255, 255, 255, 0.3) -->
-    <color name="glass_border">#33FFFFFF</color> <!-- rgba(255, 255, 255, 0.2) -->
     <color name="glass_primary">#FFFFFF</color> <!-- #FFFFFF -->
     <color name="glass_secondary">#B3FFFFFF</color> <!-- rgba(255, 255, 255, 0.7) -->
-    <color name="glass_accent">#007AFF</color> <!-- #007AFF -->
+    <color name="glass_accent">@android:color/transparent</color> <!-- Transparent -->
     <color name="glass_text_primary">#1C1B1F</color> <!-- Dark text for better contrast on light backgrounds -->
     <color name="glass_text_secondary">#49454F</color> <!-- Darker secondary text for better readability -->
     <color name="glass_icon">#FFFFFF</color> <!-- #FFFFFF -->
-    
+
     <!-- Glassmorphism Background Gradient -->
-    <color name="glass_gradient_start">#0066CC</color> <!-- #0066CC -->
-    <color name="glass_gradient_middle">#003D7A</color> <!-- #003D7A -->
-    <color name="glass_gradient_end">#001A33</color> <!-- #001A33-->
-    
+    <color name="glass_gradient_start">@android:color/transparent</color> <!-- Transparent -->
+    <color name="glass_gradient_middle">@android:color/transparent</color> <!-- Transparent -->
+    <color name="glass_gradient_end">@android:color/transparent</color> <!-- Transparent-->
+
     <!-- Glassmorphism Decorative Elements -->
-    <color name="glass_circle_large">#4D007AFF</color> <!-- rgba(0, 122, 255, 0.3) -->
-    <color name="glass_circle_medium">#3300B3FF</color> <!-- rgba(0, 179, 255, 0.2) -->
-    
+    <color name="glass_circle_large">@android:color/transparent</color> <!-- Transparent -->
+    <color name="glass_circle_medium">@android:color/transparent</color> <!-- Transparent -->
+
     <!-- Glassmorphism Interactive States -->
     <color name="glass_hover">#33FFFFFF</color> <!-- rgba(255, 255, 255, 0.2) -->
     <color name="glass_pressed">#4DFFFFFF</color> <!-- rgba(255, 255, 255, 0.3) -->
-    
+
     <!-- Glassmorphism Search Bar -->
     <color name="glass_search_background">#1AFFFFFF</color> <!-- rgba(255, 255, 255, 0.1) -->
     <color name="glass_search_placeholder">#99FFFFFF</color> <!-- rgba(255, 255, 255, 0.6) -->
-    
+
     <!-- Chat specific glassmorphism colors -->
-    <color name="glass_message_sent">#4D007AFF</color> <!-- rgba(0, 122, 255, 0.3) -->
+    <color name="glass_message_sent">@android:color/transparent</color> <!-- Transparent -->
     <color name="glass_message_received">#1AFFFFFF</color> <!-- rgba(255, 255, 255, 0.1) -->
     <color name="glass_input_background">#26FFFFFF</color> <!-- rgba(255, 255, 255, 0.15) -->
-    
+
     <!-- Button glassmorphism -->
-    <color name="glass_button_primary">#B3007AFF</color> <!-- rgba(0, 122, 255, 0.7) -->
+    <color name="glass_button_primary">@android:color/transparent</color> <!-- Transparent -->
     <color name="glass_button_secondary">#33FFFFFF</color> <!-- rgba(255, 255, 255, 0.2) -->
     <color name="glass_surface">#26FFFFFF</color> <!-- rgba(255, 255, 255, 0.15) -->
+
+    <!-- Credit System Colors -->
+    <color name="highlight_background">#F0F8FF</color> <!-- Light blue highlight background -->
 
 </resources>

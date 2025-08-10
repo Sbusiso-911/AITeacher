@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/security_analysis_background">
+
+    <!-- Analysis Type Header -->
+    <TextView
+        android:id="@+id/analysisTypeTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Security Analysis"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/glass_text_primary"
+        android:gravity="center"
+        android:padding="12dp"
+        android:background="@drawable/analysis_header_background"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone" />
+
+    <!-- THE PROBLEM Section -->
+    <LinearLayout
+        android:id="@+id/problemSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/problem_section_background"
+        android:padding="16dp"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/problemSectionTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="THE PROBLEM"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/problem_section_title"
+            android:layout_marginBottom="12dp"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/problemTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Problem Title"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/glass_text_primary"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/severityBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Medium Risk"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                android:padding="6dp"
+                android:background="@drawable/severity_badge_background"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/problemDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Clear explanation of what was wrong"
+            android:textSize="16sp"
+            android:textColor="@color/glass_text_primary"
+            android:lineSpacingMultiplier="1.3"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/problemImpact"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Impact: What could happen"
+            android:textSize="14sp"
+            android:textColor="@color/glass_text_secondary"
+            android:textStyle="italic"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <!-- THE SOLUTION Section -->
+    <LinearLayout
+        android:id="@+id/solutionSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/solution_section_background"
+        android:padding="16dp"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/solutionSectionTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="THE SOLUTION"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/solution_section_title"
+            android:layout_marginBottom="12dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/solutionTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Solution Title"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/glass_text_primary"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/solutionDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Clear explanation of what was done"
+            android:textSize="16sp"
+            android:textColor="@color/glass_text_primary"
+            android:lineSpacingMultiplier="1.3"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/solutionHowItWorks"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="How it works: Simple explanation"
+            android:textSize="14sp"
+            android:textColor="@color/glass_text_secondary"
+            android:textStyle="italic"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <!-- THE RESULT Section -->
+    <LinearLayout
+        android:id="@+id/resultSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/result_section_background"
+        android:padding="16dp"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/resultSectionTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="THE RESULT"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/result_section_title"
+            android:layout_marginBottom="12dp"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:id="@+id/resultBefore"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Before: What the situation was like"
+                android:textSize="15sp"
+                android:textColor="@color/result_before_text"
+                android:padding="8dp"
+                android:background="@drawable/result_before_background"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/resultAfter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Now: What the situation is like now"
+                android:textSize="15sp"
+                android:textColor="@color/result_after_text"
+                android:padding="8dp"
+                android:background="@drawable/result_after_background"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/resultOutcome"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Clear, positive outcome"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/result_outcome_text"
+            android:lineSpacingMultiplier="1.3"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <!-- ACTION SECTION (Optional) -->
+    <LinearLayout
+        android:id="@+id/actionSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/action_section_background"
+        android:padding="16dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/actionSectionTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="RECOMMENDED ACTION"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/action_section_title"
+            android:layout_marginBottom="12dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/actionTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Action Title"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/glass_text_primary"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/actionDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Simple explanation of what the user should do"
+            android:textSize="16sp"
+            android:textColor="@color/glass_text_primary"
+            android:lineSpacingMultiplier="1.3"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</LinearLayout>

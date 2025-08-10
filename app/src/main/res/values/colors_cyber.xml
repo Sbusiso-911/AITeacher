@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Cyber Robot Theme Colors -->
-    <color name="cyber_primary">#00FFFF</color>      <!-- Cyan -->
-    <color name="cyber_secondary">#2D3A8C</color>    <!-- Dark Blue -->
+    <color name="cyber_primary">@android:color/transparent</color>      <!-- Transparent -->
+    <color name="cyber_secondary">@android:color/transparent</color>    <!-- Transparent -->
     <color name="cyber_background">#0F0F23</color>   <!-- Space Black -->
     <color name="cyber_accent">#FFFFFF</color>       <!-- White -->
     
     <!-- Additional cyber colors -->
-    <color name="cyber_glow">#00CCCC</color>         <!-- Dimmed Cyan -->
-    <color name="cyber_dark_blue">#1A237E</color>    <!-- Darker Blue -->
-    <color name="cyber_electric">#00E5FF</color>     <!-- Electric Cyan -->
-    <color name="cyber_neural">#536DFE</color>       <!-- Neural Blue -->
+    <color name="cyber_glow">@android:color/transparent</color>         <!-- Transparent -->
+    <color name="cyber_dark_blue">@android:color/transparent</color>    <!-- Transparent -->
+    <color name="cyber_electric">@android:color/transparent</color>     <!-- Transparent -->
+    <color name="cyber_neural">@android:color/transparent</color>       <!-- Transparent -->
     <color name="cyber_status_green">#00FF41</color> <!-- Matrix Green -->
     <color name="cyber_warning">#FF5722</color>      <!-- Warning Red -->
     
     <!-- Transparency variations -->
-    <color name="cyber_primary_50">#8000FFFF</color>
-    <color name="cyber_primary_30">#4D00FFFF</color>
-    <color name="cyber_primary_10">#1A00FFFF</color>
+    <color name="cyber_primary_50">@android:color/transparent</color>
+    <color name="cyber_primary_30">@android:color/transparent</color>
+    <color name="cyber_primary_10">@android:color/transparent</color>
     <color name="cyber_background_80">#CC0F0F23</color>
     <color name="cyber_background_60">#990F0F23</color>
 </resources>

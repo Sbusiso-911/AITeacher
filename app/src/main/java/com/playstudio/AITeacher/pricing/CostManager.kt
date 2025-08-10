@@ -256,8 +256,8 @@ class CostManager private constructor(private val context: Context) {
             SubscriptionTier.FREE -> SubscriptionTier.BASIC
             SubscriptionTier.BASIC -> SubscriptionTier.PRO
             SubscriptionTier.PRO -> SubscriptionTier.PREMIUM
-            SubscriptionTier.PREMIUM -> SubscriptionTier.ULTRA_PREMIUM
-            SubscriptionTier.ULTRA_PREMIUM -> null
+            SubscriptionTier.PREMIUM -> SubscriptionTier.ENTERPRISE
+            SubscriptionTier.ENTERPRISE -> null
         }
     }
     

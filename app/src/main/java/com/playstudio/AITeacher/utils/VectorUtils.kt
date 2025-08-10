@@ -1,4 +1,4 @@
-package com.playstudio.AITeacher.utils
+package com.playstudio.aiteacher.utils
 
 import android.content.Context
 import android.graphics.*
@@ -7,7 +7,7 @@ import android.graphics.drawable.VectorDrawable
 import androidx.core.content.ContextCompat
 import androidx.vectordrawable.graphics.drawable.AnimatedVectorDrawableCompat
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
-import com.playstudio.AITeacher.models.*
+import com.playstudio.aiteacher.models.*
 
 /**
  * Utility class for working with vector drawables and theme graphics

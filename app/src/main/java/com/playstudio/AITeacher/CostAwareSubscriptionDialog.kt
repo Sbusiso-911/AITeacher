@@ -57,7 +57,7 @@ class CostAwareSubscriptionDialog(
         SubscriptionTier.BASIC to "basic_monthly_subscription",
         SubscriptionTier.PRO to "pro_monthly_subscription", 
         SubscriptionTier.PREMIUM to "premium_monthly_subscription",
-        SubscriptionTier.ULTRA_PREMIUM to "ultra_monthly_subscription"
+        SubscriptionTier.ENTERPRISE to "ultra_monthly_subscription"
     )
     
     companion object {
@@ -145,14 +145,14 @@ class CostAwareSubscriptionDialog(
         basicPrice.text = "$${SubscriptionPlans.BASIC_PLAN.price}/month"
         proPrice.text = "$${SubscriptionPlans.PRO_PLAN.price}/month"
         premiumPrice.text = "$${SubscriptionPlans.PREMIUM_PLAN.price}/month"
-        ultraPrice.text = "$${SubscriptionPlans.ULTRA_PREMIUM_PLAN.price}/month"
+        ultraPrice.text = "$${SubscriptionPlans.ENTERPRISE_PLAN.price}/month"
     }
 
     private fun setupTierSelectionListeners() {
         basicTier.setOnClickListener { selectTier(SubscriptionTier.BASIC, basicTier) }
         proTier.setOnClickListener { selectTier(SubscriptionTier.PRO, proTier) }
         premiumTier.setOnClickListener { selectTier(SubscriptionTier.PREMIUM, premiumTier) }
-        ultraTier.setOnClickListener { selectTier(SubscriptionTier.ULTRA_PREMIUM, ultraTier) }
+        ultraTier.setOnClickListener { selectTier(SubscriptionTier.ENTERPRISE, ultraTier) }
     }
 
     private fun selectTier(tier: SubscriptionTier, selectedView: LinearLayout) {
@@ -229,7 +229,7 @@ class CostAwareSubscriptionDialog(
                 premiumTier.setBackgroundResource(R.drawable.subscription_option_selected)
                 updateTierToCurrent(premiumTier, "✅ CURRENT PLAN")
             }
-            SubscriptionTier.ULTRA_PREMIUM -> {
+            SubscriptionTier.ENTERPRISE -> {
                 ultraTier.setBackgroundResource(R.drawable.subscription_option_selected)
                 updateTierToCurrent(ultraTier, "✅ CURRENT PLAN")
             }
@@ -274,16 +274,15 @@ class CostAwareSubscriptionDialog(
     }
 
     /**
-     * Show models available for a specific tier
+     * Show models available for a specific tier - Updated for single token pool system
      */
     private fun showModelsForTier(tier: SubscriptionTier): String {
-        // val models = AIModel.getModelsForTier(tier) // Will be implemented later
         return when (tier) {
-            SubscriptionTier.FREE -> "GPT-4.1 nano only"
-            SubscriptionTier.BASIC -> "GPT-4.1 mini, GPT-4o mini, Gemini Flash"
-            SubscriptionTier.PRO -> "GPT-4.1, Claude Sonnet 4, All Basic models"
-            SubscriptionTier.PREMIUM -> "GPT-4.1, o3, Claude Sonnet 4, Realtime Text, All lower models"
-            SubscriptionTier.ULTRA_PREMIUM -> "ALL MODELS including Claude Opus 4 (3/day limit)"
+            SubscriptionTier.FREE -> "ALL MODELS available • 1,000 tokens/day • Expensive models cost more"
+            SubscriptionTier.BASIC -> "ALL MODELS available • 2,000 tokens/day • Better value per token"
+            SubscriptionTier.PREMIUM -> "ALL MODELS available • 4,000 tokens/day • Even better pricing"
+            SubscriptionTier.PRO -> "ALL MODELS available • 8,000 tokens/day • Professional pricing"
+            SubscriptionTier.ENTERPRISE -> "ALL MODELS available • 16,000 tokens/day • Best pricing"
         }
     }
 

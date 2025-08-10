@@ -14,7 +14,7 @@
 
         <!-- Make window background transparent to show themes -->
         <item name="android:windowBackground">@android:color/transparent</item>
-        
+
         <!-- Customize your theme here. -->
         <item name="buttonStyle">@style/CustomButton</item>
     </style>
@@ -58,30 +58,30 @@
         <item name="colorPrimary">@color/ai_robot_primary</item>
         <item name="colorPrimaryVariant">@color/ai_robot_secondary</item>
         <item name="colorOnPrimary">@color/ai_robot_background</item>
-        
+
         <!-- Secondary colors -->
         <item name="colorSecondary">@color/ai_robot_secondary</item>
         <item name="colorSecondaryVariant">@color/ai_robot_dark_blue</item>
         <item name="colorOnSecondary">@color/ai_robot_primary</item>
-        
+
         <!-- Surface colors -->
         <item name="colorSurface">@color/ai_robot_background</item>
         <item name="colorOnSurface">@color/ai_robot_white</item>
-        
+
         <!-- Background -->
         <item name="android:colorBackground">@color/ai_robot_background</item>
-        
+
         <!-- Action Bar -->
         <item name="android:actionBarStyle">@style/AIRobotActionBar</item>
         <item name="actionBarStyle">@style/AIRobotActionBar</item>
-        
+
         <!-- Status bar -->
         <item name="android:statusBarColor">@color/ai_robot_background</item>
         <item name="android:windowLightStatusBar">false</item>
-        
+
         <!-- Navigation bar -->
         <item name="android:navigationBarColor">@color/ai_robot_background</item>
-        
+
         <!-- Window flags for edge-to-edge -->
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
@@ -92,26 +92,26 @@
         <item name="colorPrimary">@color/ai_robot_primary</item>
         <item name="colorPrimaryVariant">@color/ai_robot_secondary</item>
         <item name="colorOnPrimary">@color/ai_robot_background</item>
-        
+
         <!-- Secondary colors -->
         <item name="colorSecondary">@color/ai_robot_secondary</item>
         <item name="colorSecondaryVariant">@color/ai_robot_dark_blue</item>
         <item name="colorOnSecondary">@color/ai_robot_primary</item>
-        
+
         <!-- Surface colors -->
         <item name="colorSurface">@color/ai_robot_background</item>
         <item name="colorOnSurface">@color/ai_robot_white</item>
-        
+
         <!-- Background -->
         <item name="android:colorBackground">@color/ai_robot_background</item>
-        
+
         <!-- Status bar -->
         <item name="android:statusBarColor">@color/ai_robot_background</item>
         <item name="android:windowLightStatusBar">false</item>
-        
+
         <!-- Navigation bar -->
         <item name="android:navigationBarColor">@color/ai_robot_background</item>
-        
+
         <!-- Window flags for edge-to-edge -->
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
@@ -354,6 +354,13 @@
 
 
     <style name="PremiumDialogTheme" parent="Theme.MaterialComponents.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+
+    <!-- Glassmorphism Dialog Theme -->
+    <style name="GlassDialogTheme" parent="Theme.MaterialComponents.Dialog">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsFloating">true</item>
         <item name="android:windowContentOverlay">@null</item>

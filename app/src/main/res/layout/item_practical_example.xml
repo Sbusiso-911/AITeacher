@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@color/glass_message_received">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Example Title -->
+        <TextView
+            android:id="@+id/exampleTitleText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/glass_text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/montserrat"
+            android:layout_marginBottom="12dp"
+            android:text="Example Title" />
+
+        <!-- Context Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🏢 Context:"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/montserrat"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/contextText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="14sp"
+                android:lineSpacingExtra="2dp"
+                android:fontFamily="@font/montserrat"
+                android:text="Context description..." />
+        </LinearLayout>
+
+        <!-- Application Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="⚙️ How it's Applied:"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/montserrat"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/applicationText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="14sp"
+                android:lineSpacingExtra="2dp"
+                android:fontFamily="@font/montserrat"
+                android:text="Application description..." />
+        </LinearLayout>
+
+        <!-- Outcome Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_outcome_highlight"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="✨ Result:"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/montserrat"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/outcomeText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="14sp"
+                android:lineSpacingExtra="2dp"
+                android:fontFamily="@font/montserrat"
+                android:text="Outcome description..." />
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

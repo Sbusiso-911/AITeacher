@@ -25,7 +25,8 @@ class StructuredContentView @JvmOverloads constructor(
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
     private val binding: ViewStructuredContentBinding
-    private var currentResponse: EducationalResponse? = null
+    private var currentLearningContent: LearningContent? = null
+    private var stepsAdapter: LearningStepsAdapter? = null
 
     init {
         orientation = VERTICAL
@@ -44,62 +45,38 @@ class StructuredContentView @JvmOverloads constructor(
         binding.formulasRecyclerView.layoutManager = LinearLayoutManager(context)
     }
 
-    fun setEducationalResponse(response: EducationalResponse) {
-        currentResponse = response
-        displayContent(response)
+    fun setLearningContent(content: LearningContent) {
+        currentLearningContent = content
+        displayLearningContent(content)
     }
 
-    private fun displayContent(response: EducationalResponse) {
-        Log.d("StructuredView", "▶️ displayContent: type=${response.responseType}, mainExp=${response.content.mainExplanation.take(30)}...")
+    @Deprecated("Use setLearningContent instead")
+    fun setEducationalResponse(response: EducationalResponse) {
+        // Legacy support - convert if needed
+        throw UnsupportedOperationException("Use setLearningContent with new LearningContent model")
+    }
+
+    private fun displayLearningContent(content: LearningContent) {
+        Log.d("StructuredView", "▶️ displayLearningContent: topic=${content.topicTitle}, subject=${content.subjectArea}")
         // Clear all views first
         clearAllViews()
 
-        // Set main content
-        setupMainContent(response)
-        
-        // Set metadata
-        setupMetadata(response.metadata)
-        
-        // Display structured content based on type
-        when (response.responseType) {
-            ResponseType.STEP_BY_STEP -> {
-                Log.d("StructuredView", "Setting up STEP_BY_STEP content")
-                setupStepByStepContent(response.content)
-            }
-            ResponseType.QUIZ -> {
-                Log.d("StructuredView", "Setting up QUIZ content")
-                setupQuizContent(response.content)
-            }
-            ResponseType.LESSON -> {
-                Log.d("StructuredView", "Setting up LESSON content")
-                setupLessonContent(response.content)
-            }
-            ResponseType.CODE_TUTORIAL -> {
-                Log.d("StructuredView", "Setting up CODE_TUTORIAL content")
-                setupCodeTutorialContent(response.content)
-            }
-            ResponseType.PRACTICE -> {
-                Log.d("StructuredView", "Setting up PRACTICE content")
-                setupPracticeContent(response.content)
-            }
-            else -> {
-                Log.d("StructuredView", "Setting up GENERAL content")
-                setupGeneralContent(response.content)
-            }
-        }
+        // Set up the new learning content structure
+        setupLearningHeader(content)
+        setupLearningIntroduction(content.introduction)
+        setupLearningCoreContent(content.coreContent)
+        setupLearningExamples(content.practicalExamples)
+        setupLearningApplications(content.applications)
+        setupLearningMetadata(content)
 
-        // Setup interactive elements
-        response.interactiveElements?.let { setupInteractiveElements(it) }
-        
-        // Force visibility of main sections for debugging
+        // Force visibility of main sections
         binding.mainExplanationText.visibility = View.VISIBLE
-        
-        // TEMPORARY: Force all sections visible to test collapse theory
-        forceVisibilityForDebug()
-        
-        Log.d("StructuredView", "✅ displayContent completed")
+        binding.keyConceptsSection.visibility = View.VISIBLE
+        binding.examplesSection.visibility = View.VISIBLE
+
+        Log.d("StructuredView", "✅ displayLearningContent completed")
     }
-    
+
     // Helper method to force visibility of all sections for debugging
     private fun forceVisibilityForDebug() {
         binding.stepsSection.visibility = View.VISIBLE
@@ -115,41 +92,102 @@ class StructuredContentView @JvmOverloads constructor(
         Log.d("StructuredView", "🔧 Forced all sections to VISIBLE for debugging")
     }
 
-    private fun setupMainContent(response: EducationalResponse) {
-        // Subject and difficulty indicators
-        binding.subjectChip.text = response.subject.capitalize()
-        binding.difficultyChip.text = response.difficultyLevel.name.lowercase().capitalize()
-        
-        // Set difficulty chip color based on level
-        val difficultyColor = when (response.difficultyLevel) {
-            DifficultyLevel.BEGINNER -> R.color.difficulty_beginner
-            DifficultyLevel.INTERMEDIATE -> R.color.difficulty_intermediate
-            DifficultyLevel.ADVANCED -> R.color.difficulty_advanced
-            DifficultyLevel.EXPERT -> R.color.difficulty_expert
-        }
-        binding.difficultyChip.setBackgroundResource(difficultyColor)
+    private fun setupLearningHeader(content: LearningContent) {
+        // Subject and content type indicators
+        binding.subjectChip.text = content.subjectArea.replaceFirstChar { it.uppercase() }
+        binding.difficultyChip.text = content.contentType.name.lowercase().replace("_", " ").replaceFirstChar { it.uppercase() }
 
-        // Main explanation
-        binding.mainExplanationText.text = response.content.mainExplanation
-        Log.d("StructuredView", "Set main explanation: ${response.content.mainExplanation.take(50)}...")
-        
-        // Key concepts
-        response.content.keyConcepts?.let { concepts ->
-            if (concepts.isNotEmpty()) {
-                binding.keyConceptsSection.visibility = View.VISIBLE
-                binding.keyConceptsContainer.removeAllViews()
-                concepts.forEach { concept ->
-                    val chipView = createConceptChip(concept)
-                    binding.keyConceptsContainer.addView(chipView)
-                }
-            }
+        // Set content type chip color
+        val typeColor = when (content.contentType) {
+            ContentType.COMPREHENSIVE_EXPLANATION -> R.color.accent_blue
+            ContentType.CONCEPT_OVERVIEW -> R.color.accent_green
+            ContentType.DETAILED_GUIDE -> R.color.accent_orange
+            ContentType.PRACTICAL_TUTORIAL -> R.color.premium_gold
         }
+        binding.difficultyChip.setBackgroundResource(typeColor)
+
+        // Topic title as main explanation
+        binding.mainExplanationText.text = "${content.topicTitle}\n\n${content.introduction.hook}"
+        Log.d("StructuredView", "Set topic title: ${content.topicTitle}")
+    }
+
+    private fun setupLearningIntroduction(introduction: Introduction) {
+        // Show introduction content in key concepts section
+        binding.keyConceptsSection.visibility = View.VISIBLE
+        binding.keyConceptsContainer.removeAllViews()
+        
+        // Add overview as a concept chip
+        val overviewChip = createConceptChip("Overview: ${introduction.overview}")
+        binding.keyConceptsContainer.addView(overviewChip)
+        
+        // Add real-world relevance as a concept chip
+        val relevanceChip = createConceptChip("Real-world: ${introduction.realWorldRelevance}")
+        binding.keyConceptsContainer.addView(relevanceChip)
+    }
+
+    private fun setupLearningCoreContent(coreContent: CoreContent) {
+        // Use the main explanation text for fundamental concepts
+        val currentText = binding.mainExplanationText.text.toString()
+        binding.mainExplanationText.text = "$currentText\n\n📚 Fundamental Concepts:\n${coreContent.fundamentalConcepts}\n\n📖 Detailed Explanation:\n${coreContent.detailedExplanation}"
+        
+        // Add key principles as concept chips
+        coreContent.keyPrinciples.forEach { principle ->
+            val principleChip = createConceptChip("${principle.principle}: ${principle.explanation}")
+            binding.keyConceptsContainer.addView(principleChip)
+        }
+        
+        // Add advanced concepts if available
+        coreContent.advancedConcepts?.let { advanced ->
+            val currentMainText = binding.mainExplanationText.text.toString()
+            binding.mainExplanationText.text = "$currentMainText\n\n🚀 Advanced Concepts:\n$advanced"
+        }
+    }
+
+    private fun setupLearningExamples(examples: List<PracticalExample>) {
+        if (examples.isNotEmpty()) {
+            binding.examplesSection.visibility = View.VISIBLE
+            // Convert practical examples to old format for compatibility with existing adapter
+            val convertedExamples = examples.map { practicalExample ->
+                Example(
+                    title = practicalExample.exampleTitle,
+                    description = practicalExample.context,
+                    solution = practicalExample.application,
+                    explanation = practicalExample.outcome
+                )
+            }
+            val adapter = ExamplesAdapter(convertedExamples) { example ->
+                onExampleClicked(example)
+            }
+            binding.examplesRecyclerView.adapter = adapter
+        }
+    }
+
+    private fun setupLearningApplications(applications: Applications) {
+        // Add applications to the key concepts section
+        val applicationsText = "💼 Common Uses: ${applications.commonUses.joinToString(", ")}"
+        val applicationsChip = createConceptChip(applicationsText)
+        binding.keyConceptsContainer.addView(applicationsChip)
+        
+        applications.professionalApplications?.let { professional ->
+            val professionalText = "🏢 Professional: ${professional.joinToString(", ")}"
+            val professionalChip = createConceptChip(professionalText)
+            binding.keyConceptsContainer.addView(professionalChip)
+        }
+        
+        val relevanceText = "🌍 Everyday Relevance: ${applications.everydayRelevance}"
+        val relevanceChip = createConceptChip(relevanceText)
+        binding.keyConceptsContainer.addView(relevanceChip)
+    }
+
+    private fun setupLearningMetadata(content: LearningContent) {
+        // Show reading time
+        binding.estimatedTimeText.text = "${content.readingTimeMinutes} min read"
     }
 
     private fun setupMetadata(metadata: ResponseMetadata) {
         // Reading time
         binding.estimatedTimeText.text = "${metadata.estimatedReadingTime} min read"
-        
+
         // Prerequisites
         metadata.prerequisites?.let { prereqs ->
             if (prereqs.isNotEmpty()) {
@@ -157,7 +195,7 @@ class StructuredContentView @JvmOverloads constructor(
                 binding.prerequisitesText.text = prereqs.joinToString(", ")
             }
         }
-        
+
         // Next topics
         metadata.nextTopics?.let { topics ->
             if (topics.isNotEmpty()) {
@@ -165,7 +203,7 @@ class StructuredContentView @JvmOverloads constructor(
                 binding.nextTopicsText.text = topics.joinToString(", ")
             }
         }
-        
+
         // Learning objectives
         metadata.learningObjectives?.let { objectives ->
             if (objectives.isNotEmpty()) {
@@ -184,13 +222,13 @@ class StructuredContentView @JvmOverloads constructor(
             if (steps.isNotEmpty()) {
                 binding.stepsSection.visibility = View.VISIBLE
                 val adapter = LearningStepsAdapter(steps) { step ->
-                    // Handle step click (expand/collapse)
                     onStepClicked(step)
                 }
+                stepsAdapter = adapter
                 binding.stepsRecyclerView.adapter = adapter
             }
         }
-        
+
         // Also show examples if available
         setupExamples(content.examples)
     }
@@ -232,7 +270,7 @@ class StructuredContentView @JvmOverloads constructor(
         setupExamples(content.examples)
         setupFormulas(content.formulas)
         setupCodeSnippets(content.codeSnippets)
-        
+
         content.practiceQuestions?.let { questions ->
             if (questions.isNotEmpty()) {
                 binding.questionsSection.visibility = View.VISIBLE
@@ -283,7 +321,7 @@ class StructuredContentView @JvmOverloads constructor(
     private fun setupInteractiveElements(elements: List<InteractiveElement>) {
         binding.interactiveElementsSection.visibility = View.VISIBLE
         binding.interactiveElementsContainer.removeAllViews()
-        
+
         elements.forEach { element ->
             val elementView = createInteractiveElementView(element)
             binding.interactiveElementsContainer.addView(elementView)
@@ -301,7 +339,7 @@ class StructuredContentView @JvmOverloads constructor(
         binding.nextTopicsSection.visibility = View.GONE
         binding.learningObjectivesSection.visibility = View.GONE
         binding.interactiveElementsSection.visibility = View.GONE
-        
+
         binding.keyConceptsContainer.removeAllViews()
         binding.learningObjectivesList.removeAllViews()
         binding.interactiveElementsContainer.removeAllViews()
@@ -442,5 +480,13 @@ class StructuredContentView @JvmOverloads constructor(
 
     fun setOnContentInteractionListener(listener: OnContentInteractionListener) {
         this.contentInteractionListener = listener
+    }
+
+    fun expandAllSteps() {
+        stepsAdapter?.expandAllSteps()
+    }
+
+    fun collapseAllSteps() {
+        stepsAdapter?.collapseAllSteps()
     }
 }

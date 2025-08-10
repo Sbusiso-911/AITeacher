@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- HTML Demo Exact Colors -->
+    <color name="demo_primary">#40E0D0</color>
+    <color name="demo_secondary">#5FB3D4</color>
+    <color name="demo_text_primary">#F8FFFE</color>
+    <color name="demo_text_secondary">#CCF8FFFE</color> <!-- rgba(248, 255, 254, 0.8) -->
+    <color name="demo_accent">#FF6B47</color>
+    <color name="demo_accent_light">#FF8A6B</color>
+    
+    <!-- Background Colors -->
+    <color name="demo_bg_dark">#0B1426</color>
+    <color name="demo_bg_mid">#1E3A5F</color>
+    <color name="demo_bg_light">#2E5984</color>
+    
+    <!-- Card Background (semi-transparent) -->
+    <color name="demo_card_bg_start">#CC0B1426</color> <!-- rgba(11, 20, 38, 0.8) -->
+    <color name="demo_card_bg_end">#991E3A5F</color>   <!-- rgba(30, 58, 95, 0.6) -->
+    
+    <!-- Border Colors -->
+    <color name="demo_border">#1A40E0D0</color> <!-- rgba(64, 224, 208, 0.1) -->
+    <color name="demo_border_hover">#40E0D0</color>
+    
+    <!-- Ocean Blue Variants (NO GREY!) -->
+    <color name="ocean_blue_deep">#0A1629</color>        <!-- Deeper ocean blue -->
+    <color name="ocean_blue_rich">#1B4A6B</color>        <!-- Rich ocean blue -->
+    <color name="ocean_blue_medium">#2D6A8F</color>      <!-- Medium ocean blue -->
+    <color name="ocean_blue_bright">#3498D6</color>      <!-- Bright ocean blue -->
+    <color name="ocean_blue_light">#7DD3FC</color>       <!-- Light ocean blue -->
+    <color name="ocean_blue_crystal">#B0F2FF</color>     <!-- Crystal ocean blue -->
+    
+    <!-- Ocean Teal Variants -->
+    <color name="ocean_teal_dark">#0F4A42</color>        <!-- Dark ocean teal -->
+    <color name="ocean_teal_medium">#1F6B5E</color>      <!-- Medium ocean teal -->
+    <color name="ocean_teal_bright">#26D0CE</color>      <!-- Bright ocean teal -->
+    
+</resources>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    
+    <!-- Ocean gradient background -->
+    <gradient
+        android:type="linear"
+        android:angle="135"
+        android:startColor="@color/ocean_gradient_start"
+        android:centerColor="@color/ocean_gradient_middle"
+        android:endColor="@color/ocean_gradient_end"/>
+        
+</shape>

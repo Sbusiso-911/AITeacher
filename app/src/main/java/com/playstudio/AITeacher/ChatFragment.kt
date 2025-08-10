@@ -91,10 +91,13 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.playstudio.aiteacher.databinding.FragmentChatBinding
 import com.playstudio.aiteacher.utils.FileUtils
 import com.playstudio.aiteacher.AudioControlsView
+import com.playstudio.aiteacher.api.AIFunctionCallManager
+import com.playstudio.aiteacher.api.EducationalFunctions
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -237,13 +240,18 @@ class ChatFragment : Fragment() {
     private var rewardedAd: RewardedAd? = null
     private var canSendMessage = false
     private val client = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
+        .connectTimeout(60, TimeUnit.SECONDS)  // Increased for GPT-4o models
+        .readTimeout(120, TimeUnit.SECONDS)    // Increased to 2 minutes for GPT-4o response time
+        .writeTimeout(60, TimeUnit.SECONDS)    // Increased for large request payloads
         .build()
-    private val apiKey =  BuildConfig.API_KEY
-    // Anthropic API key for Claude models
-    private val anthropicApiKey = BuildConfig.ANTHROPIC_API_KEY
+    private val keyManager = com.playstudio.aiteacher.security.FirestoreKeyManager.getInstance()
+    
+    // Get API key with Firestore fallback to BuildConfig
+    private fun getApiKey(provider: String = "openai"): String? {
+        val key = keyManager.getApiKeyWithFallback(provider)
+        Log.d("ChatFragment", "🔑 Getting API key for $provider: ${key?.takeLast(4) ?: "null"}")
+        return key
+    }
     private var currentModel = "gpt-3.5-turbo"
     private var conversationId: String? = null
     private var isTtsEnabled = false
@@ -255,10 +263,14 @@ class ChatFragment : Fragment() {
     // Realtime Voice Agent
     private var realtimeVoiceAgent: RealtimeVoiceAgent? = null
     private var isRealtimeMode = false
+    
+    // AI Function Call Manager for educational functions
+    private lateinit var aiFunctionCallManager: AIFunctionCallManager
     private var currentVoiceAgent: RealtimeVoiceAgent.VoiceAgentConfig? = null
     private var voiceAgentCallback: RealtimeVoiceAgent.VoiceAgentCallback? = null
     private var voiceRecordingJob: kotlinx.coroutines.Job? = null
-    
+    private var pendingVoiceAgentType: String? = null // Store agent type during permission request
+
     // Voice conversation state management
     private var isAICurrentlySpeaking = false
     private var currentAudioTracks = mutableListOf<android.media.AudioTrack>()
@@ -266,13 +278,34 @@ class ChatFragment : Fragment() {
     private var hasInterruptedCurrentResponse = false  // Prevent multiple interruptions
     private var lastInterruptTime = 0L  // Debounce interruption calls
     private var lastAiSpeakStartTime = 0L  // Track when AI started speaking to prevent immediate interruption
-    
-    // Enhanced voice activity detection
-    private var audioLevelThreshold = 5000 // Much higher threshold to prevent AI self-interruption
+
+    // Enhanced voice activity detection - increased threshold to prevent interrupting AI
+    private var audioLevelThreshold = 75 // Increased from 25 to prevent false speech detection during AI playback
     private var consecutiveQuietSamples = 0 // Counter for quiet periods
     private var consecutiveLoudSamples = 0 // Counter for speech periods
+    
+    // Audio mode management
+    private var originalAudioMode = android.media.AudioManager.MODE_NORMAL
     private var userSpeechDetected = false // More accurate user speech detection
     private var lastAudioLevelCheck = 0L // Timing for audio level checks
+    
+    // Fallback VAD for triggering responses
+    private var lastSpeechDetectedTime = 0L
+    private var lastManualTriggerTime = 0L
+    private var hasTriggeredResponse = false
+    
+    // Audio playback mode control - prevent dual playback systems
+    private var isAudioTrackMode = true // true = AudioTrack, false = MediaPlayer only
+    private var consecutiveAudioTrackFailures = 0
+    private val maxAudioTrackFailures = 3
+    
+    // Sequential MediaPlayer fallback queue
+    private var fallbackMediaPlayer: android.media.MediaPlayer? = null
+    private val audioChunkQueue = mutableListOf<ByteArray>()
+    private var isProcessingAudioQueue = false
+    
+    // Streaming AudioTrack for real-time audio playback
+    private var streamingAudioTrack: android.media.AudioTrack? = null
 
     private lateinit var requestAudioPermissionLauncher: ActivityResultLauncher<String> // Assuming this is declared
 
@@ -416,22 +449,23 @@ class ChatFragment : Fragment() {
             setHomeAsUpIndicator(R.drawable.ic_arrow_back)
 
         }
-        
+
         // Initialize usage tracking and subscription management
         initializeUsageTracking()
-        
+
         // Setup subscription UI manager for this fragment
         subscriptionUIManager.setupForFragment(this)
-        
-        // Update subscription status display
+
+        // Update subscription status display and credit balance
         updateSubscriptionStatusDisplay()
-        
+        updateCreditBalanceDisplay()
+
         // Check if user should get model recommendations
         lifecycleScope.launch {
             delay(2000) // Small delay to let UI settle
             showModelRecommendationDialog()
         }
-        
+
         //loadInterstitialAd() // Load the interstitial ad when the fragment resumes
     }
 
@@ -503,16 +537,22 @@ class ChatFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         Log.d("ChatFragment", "onViewCreated called")
 
+        // Initialize AI Function Call Manager for educational features
+        aiFunctionCallManager = AIFunctionCallManager(requireContext(), getApiKey("openai") ?: "")
+
+        // Handle specialized AI modes from MainActivity
+        handleSpecializedAIMode()
+
         // Load persisted preferences early so conversation ID and other
         // settings are initialized before any messages are processed
         loadSharedPrefs()
-        
+
         // Initialize audio handler and features
         initializeAudioHandler()
-        
+
         // Initialize realtime voice agent
         initializeRealtimeVoiceAgent()
-        
+
         // Initialize structured outputs system
         initializeStructuredOutputs(client)
         Log.d("ChatFragment", "▶️ StructuredAPIHandler initialized with client: $client")
@@ -541,6 +581,57 @@ class ChatFragment : Fragment() {
         // Check for email content in arguments
         arguments?.getString("email_content")?.let { emailContent ->
             binding.messageEditText.setText(emailContent)
+        }
+
+        // Handle auto show image picker from MainActivity shortcut
+        arguments?.getBoolean("auto_show_image_picker", false)?.let { autoShow ->
+            if (autoShow) {
+                // Automatically show image picker dialog after a short delay
+                Handler(Looper.getMainLooper()).postDelayed({
+                    showImageOrDocumentPickerDialog()
+                }, 800) // Small delay to ensure UI is fully loaded
+            }
+        }
+
+        // Handle auto show document picker from Homework Helper shortcut
+        arguments?.getBoolean("auto_show_document_picker", false)?.let { autoShow ->
+            if (autoShow) {
+                // Automatically show document/image picker dialog for homework assistance
+                Handler(Looper.getMainLooper()).postDelayed({
+                    showImageOrDocumentPickerDialog()
+                }, 800) // Small delay to ensure UI is fully loaded
+            }
+        }
+
+        // Handle auto model selection from AI Image Generator shortcut
+        arguments?.getBoolean("auto_select_model", false)?.let { autoSelect ->
+            if (autoSelect) {
+                arguments?.getString("selected_model")?.let { model ->
+                    // Automatically select the specified model (e.g., gpt-image-1)
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        setSelectedModel(model)
+                    }, 500) // Small delay to ensure UI is initialized
+                }
+            }
+        }
+
+        // Handle auto start live voice chat from Intent extra
+        arguments?.getBoolean("auto_start_live_voice", false)?.let { autoStart ->
+            Log.d("ChatFragment", "🚀 Voice Chat Auto-Start Check: autoStart=$autoStart")
+            if (autoStart) {
+                val agentType = arguments?.getString("voice_agent_type", "general_assistant")
+                Log.d("ChatFragment", "🎙️ Voice Chat Button Clicked - Starting live voice chat with agent: $agentType")
+                // Automatically start live voice chat after a short delay
+                Handler(Looper.getMainLooper()).postDelayed({
+                    try {
+                        Log.d("ChatFragment", "🔥 STARTING LIVE VOICE CHAT (NOT TTS) with agent: $agentType")
+                        startRealtimeVoiceChat(agentType ?: "general_assistant")
+                    } catch (e: Exception) {
+                        Log.e("ChatFragment", "💥 Error auto-starting live voice chat", e)
+                        showCustomToast("Error starting live voice chat: ${e.message}")
+                    }
+                }, 1000) // Delay to ensure UI is fully initialized
+            }
         }
 
         // Voice selection styling now handled within message input area
@@ -628,9 +719,10 @@ class ChatFragment : Fragment() {
 
         val conversationId = arguments?.getString("conversation_id")
         initializeChat(selectedModel, conversationId)
-        
-        // Update subscription status display after initialization
+
+        // Update subscription status display and show credit balance after initialization
         updateSubscriptionStatusDisplay()
+        updateCreditBalanceDisplay()
 
         binding.historyButton.setOnClickListener {
             showChatHistoryDialog()
@@ -706,14 +798,18 @@ class ChatFragment : Fragment() {
             registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
                 if (isGranted) {
                     showCustomToast("Audio permission granted.")
-                    // Decide if you want to auto-trigger the action or let the user tap again
-                    // For example, if the user was trying to start the OpenAI session:
-                    if (binding.openaiLiveAudioControls.visibility == View.VISIBLE) { // Check if this mode is active
-                        // DISABLED OLD IMPLEMENTATION - Using new RealtimeVoiceAgent instead
-                        // openAILiveAudioViewModel.toggleSession(requireContext())
+                    // Handle pending voice agent type for live voice chat
+                    if (pendingVoiceAgentType != null) {
+                        Log.d("ChatFragment", "Permission granted, starting live voice chat with agent: $pendingVoiceAgentType")
+                        startRealtimeVoiceChat(pendingVoiceAgentType!!)
+                        pendingVoiceAgentType = null
+                    } else {
+                        Log.d("ChatFragment", "Permission granted, showing voice agent selection")
+                        showVoiceAgentSelectionDialog()
                     }
                 } else {
                     showCustomToast("Audio permission denied. Cannot use voice features.")
+                    pendingVoiceAgentType = null
                 }
             }
 
@@ -831,7 +927,7 @@ class ChatFragment : Fragment() {
                 startEnhancedVoiceRecording()
             }
         }
-        
+
         // Long press to access voice options menu
         binding.voiceInputButton.setOnLongClickListener {
             showVoiceOptionsMenu()
@@ -1054,14 +1150,175 @@ class ChatFragment : Fragment() {
         }
     }
 
+    /**
+     * Handle specialized AI modes passed from MainActivity
+     */
+    private fun handleSpecializedAIMode() {
+        val chatMode = arguments?.getString("chat_mode")
+        val featureName = arguments?.getString("feature_name")
+        val aiSpecialty = arguments?.getString("ai_specialty")
+        
+        Log.d("ChatFragment", "Handling AI mode: $chatMode, feature: $featureName, specialty: $aiSpecialty")
+
+        when (chatMode) {
+            "voice" -> {
+                setupVoiceChatMode()
+            }
+            "document" -> {
+                setupDocumentIntelligenceMode()
+            }
+            "image_generation" -> {
+                setupImageGenerationMode()
+            }
+            "image_generation_basic" -> {
+                setupBasicImageGenerationMode()
+            }
+            "email" -> {
+                setupEmailAssistantMode()
+            }
+            "math" -> {
+                setupMathSolverMode()
+            }
+            "science" -> {
+                setupScienceAssistantMode()
+            }
+            "creative_hub" -> {
+                setupCreativeToolsHub()
+            }
+            "academic_hub" -> {
+                setupAcademicToolsHub()
+            }
+            "productivity_hub" -> {
+                setupProductivityToolsHub()
+            }
+        }
+
+        // Set activity title based on feature name
+        featureName?.let { name ->
+            (requireActivity() as? AppCompatActivity)?.supportActionBar?.title = name
+        }
+    }
+
+    private fun setupVoiceChatMode() {
+        // Enable voice features
+        arguments?.getBoolean("enable_voice", false)?.let { enableVoice ->
+            if (enableVoice) {
+                // Show voice input controls
+                binding.voiceInputButton.visibility = View.VISIBLE
+                // Enable TTS if specified
+                arguments?.getBoolean("enable_tts", false)?.let { enableTts ->
+                    if (enableTts) {
+                        // Initialize text-to-speech
+                        Log.d("ChatFragment", "Enabling TTS for voice chat mode")
+                    }
+                }
+            }
+        }
+    }
+
+    private fun setupDocumentIntelligenceMode() {
+        // Show file upload capabilities
+        arguments?.getBoolean("enable_file_upload", false)?.let { enableUpload ->
+            if (enableUpload) {
+                // Show document upload button
+                Log.d("ChatFragment", "Enabling document upload for intelligence mode")
+                showCustomToast("Ready for document analysis - tap to upload files")
+            }
+        }
+    }
+
+    private fun setupImageGenerationMode() {
+        // Setup for premium image generation
+        val selectedModel = arguments?.getString("selected_model", "dall-e-3")
+        selectedModel?.let { model ->
+            Log.d("ChatFragment", "Setting up image generation with model: $model")
+            currentModel = model
+            showCustomToast("AI Image Generator ready - describe your image")
+        }
+    }
+
+    private fun setupBasicImageGenerationMode() {
+        // Setup for basic image generation with limits
+        val generationLimit = arguments?.getInt("generation_limit", 3)
+        Log.d("ChatFragment", "Basic image generation mode - limit: $generationLimit")
+        showCustomToast("Basic Image Generator (${generationLimit} generations)")
+    }
+
+    private fun setupEmailAssistantMode() {
+        // Setup email-specific AI assistance
+        arguments?.getBoolean("enable_templates", false)?.let { enableTemplates ->
+            if (enableTemplates) {
+                Log.d("ChatFragment", "Email assistant with templates enabled")
+                showCustomToast("Email Assistant ready - I can help with professional emails")
+            }
+        }
+    }
+
+    private fun setupMathSolverMode() {
+        // Setup math-specific features
+        arguments?.getBoolean("enable_latex", false)?.let { enableLatex ->
+            if (enableLatex) {
+                Log.d("ChatFragment", "Math solver with LaTeX support enabled")
+            }
+        }
+        arguments?.getBoolean("enable_step_by_step", false)?.let { enableSteps ->
+            if (enableSteps) {
+                Log.d("ChatFragment", "Step-by-step math solutions enabled")
+                showCustomToast("Math Solver ready - I'll solve problems step by step")
+            }
+        }
+    }
+
+    private fun setupScienceAssistantMode() {
+        // Setup science-specific features
+        arguments?.getBoolean("enable_diagrams", false)?.let { enableDiagrams ->
+            if (enableDiagrams) {
+                Log.d("ChatFragment", "Science assistant with diagrams enabled")
+            }
+        }
+        arguments?.getBoolean("enable_experiments", false)?.let { enableExperiments ->
+            if (enableExperiments) {
+                Log.d("ChatFragment", "Science experiments feature enabled")
+                showCustomToast("Science Assistant ready - ask about any scientific concept")
+            }
+        }
+    }
+
+    private fun setupCreativeToolsHub() {
+        val availableTools = arguments?.getStringArray("available_tools")
+        availableTools?.let { tools ->
+            Log.d("ChatFragment", "Creative tools available: ${tools.joinToString()}")
+            showCustomToast("Creative Hub loaded - ${tools.size} tools available")
+        }
+    }
+
+    private fun setupAcademicToolsHub() {
+        val availableTools = arguments?.getStringArray("available_tools")
+        availableTools?.let { tools ->
+            Log.d("ChatFragment", "Academic tools available: ${tools.joinToString()}")
+            showCustomToast("Academic Hub loaded - ${tools.size} tools available")
+        }
+    }
+
+    private fun setupProductivityToolsHub() {
+        val availableTools = arguments?.getStringArray("available_tools")
+        availableTools?.let { tools ->
+            Log.d("ChatFragment", "Productivity tools available: ${tools.joinToString()}")
+            showCustomToast("Productivity Hub loaded - ${tools.size} tools available")
+        }
+    }
+
     private fun setupUIListeners() {
         binding.sendButton.setOnClickListener {
             val userMessage = binding.messageEditText.text.toString().trim()
             if (userMessage.isNotEmpty()) {
-                // Check if we should use structured outputs for educational content
-                if (shouldUseStructuredOutput(userMessage)) {
+                Log.d("ChatFragment", "🚀 Send button clicked with message: '$userMessage'")
+                // Check if we should use enhanced rendering for educational content
+                if (shouldUseEnhancedRendering(userMessage)) {
+                    Log.d("ChatFragment", "📚 Using ENHANCED structured path (enhancedSendMessage)")
                     enhancedSendMessage(userMessage)
                 } else {
+                    Log.d("ChatFragment", "💬 Using REGULAR chat path (processUserMessageSend)")
                     processUserMessageSend(userMessage)
                 }
             }
@@ -1081,7 +1338,7 @@ class ChatFragment : Fragment() {
         // Voice input functionality is now handled above in the main setup
 
         // Hamburger menu button listener
-        binding.hamburgerMenuButton.setOnClickListener { 
+        binding.hamburgerMenuButton.setOnClickListener {
             // Show the options menu when hamburger menu is clicked with custom styling
             val contextThemeWrapper = androidx.appcompat.view.ContextThemeWrapper(requireContext(), R.style.PremiumPopupMenu)
             val popup = androidx.appcompat.widget.PopupMenu(contextThemeWrapper, binding.hamburgerMenuButton)
@@ -1097,7 +1354,7 @@ class ChatFragment : Fragment() {
         binding.historyButton.setOnClickListener { showChatHistoryDialog() }
         binding.tierButton.setOnClickListener { openSubscriptionActivity() }
         binding.shareButton.setOnClickListener { shareLastResponse() }
-        
+
         // Record Meeting and Live Chat buttons (now visible in secondary actions)
         binding.meetingRecordButton.setOnClickListener { toggleMeetingRecording() }
         binding.realtimeVoiceButton.setOnClickListener { toggleLiveChat() }
@@ -1236,6 +1493,7 @@ class ChatFragment : Fragment() {
         binding.openaiLiveAudioControls.visibility = View.GONE
         binding.openAIStatusTextView.visibility = View.GONE
         binding.openAIAiResponseTextView.visibility = View.GONE
+        binding.imageContainer.visibility = View.GONE
 
 
 
@@ -1252,6 +1510,18 @@ class ChatFragment : Fragment() {
                 binding.messageEditText.hint = "Describe an image..."
                 binding.generatedImageView.visibility = View.VISIBLE // Or visible after generation
                 // Standard text input is still used for DALL-E prompt
+                binding.followUpQuestionsContainer.visibility = View.GONE
+            }
+            "gpt-image-1" -> {
+                binding.messageEditText.hint = "Describe an image (supports text + image input)..."
+                binding.generatedImageView.visibility = View.VISIBLE
+                // GPT Image 1 supports multimodal input
+                binding.followUpQuestionsContainer.visibility = View.GONE
+            }
+            "veo-3.0-generate-preview", "veo-3.0-fast-generate-preview", "veo-2.0-generate-001" -> {
+                binding.messageEditText.hint = "Describe a video scene with audio cues..."
+                binding.generatedImageView.visibility = View.VISIBLE
+                // Veo supports image-to-video input
                 binding.followUpQuestionsContainer.visibility = View.GONE
             }
             "computer-use-preview" -> {
@@ -1289,7 +1559,7 @@ class ChatFragment : Fragment() {
 
     private fun processUserMessageSend(userMessage: String) {
         Log.d("ChatFragment", "processUserMessageSend called with: $userMessage")
-        
+
         // Central point for sending a message based on currentModel and limits
         hideKeyboard()
         addMessageToChat(userMessage, true)
@@ -1304,12 +1574,13 @@ class ChatFragment : Fragment() {
             if (!isSubscribed) canSendMessage = false // Consume one "rewarded" message
             return
         }
-        
+
         Log.d("ChatFragment", "User cannot send message, checking model-specific limits")
 
         // Check model-specific limits first
         val (limitKey, dailyMax) = when (currentModel) {
             "dall-e-3" -> "dall-e-3" to DAILY_LIMIT_DALLE
+            "gpt-image-1" -> "gpt-image-1" to DAILY_LIMIT_DALLE // Image generation limit
             "gemini" -> "gemini_text" to DAILY_LIMIT_GEMINI_TEXT // Differentiate text Gemini
             "deepseek" -> "deepseek" to DAILY_LIMIT_DEEPSEEK
             "o3-mini" -> "o3-mini" to DAILY_LIMIT_O3_MINI
@@ -1321,8 +1592,30 @@ class ChatFragment : Fragment() {
         }
 
         if (checkDailyLimit(limitKey, dailyMax)) {
-            // Usage will be tracked in trackMessageUsage() after successful response
-            handleMessage(userMessage)
+            // Check credit balance before sending - must call suspend function in coroutine
+            lifecycleScope.launch {
+                val tier = subscriptionUIManager.getUserSubscriptionTier()
+                val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(requireContext())
+                val model = com.playstudio.aiteacher.pricing.AIModel.fromModelId(currentModel)
+                if (model != null && currentModel != "gpt-image-1") {
+                    val estimatedCost = creditManager.calculateMessageCost(
+                        model.averageInputTokens,
+                        model.averageOutputTokens,
+                        model.modelId,
+                        tier
+                    )
+                    val remaining = creditManager.getRemainingCredits("default_user", tier)
+                    if (remaining < estimatedCost) {
+                        withContext(Dispatchers.Main) {
+                            showCustomToast("Insufficient credits to send message")
+                        }
+                        return@launch
+                    }
+                }
+
+                // Usage will be tracked in trackMessageUsage() after successful response
+                withContext(Dispatchers.Main) { handleMessage(userMessage) }
+            }
         } else {
             showCustomToast("Daily limit for $currentModel reached.")
             showRewardedAd() // Offer ad to continue
@@ -1338,12 +1631,12 @@ class ChatFragment : Fragment() {
         userMessageContent: String
     ) {
         Log.d("ChatFragment", "handleChatCompletion called with message: $userMessageContent")
-        
+
         // Check usage limits before processing
         lifecycleScope.launch {
             val currentAIModel = com.playstudio.aiteacher.pricing.AIModel.fromModelId(currentModel)
             Log.d("ChatFragment", "Current model: $currentModel, AIModel found: ${currentAIModel != null}")
-            
+
             if (currentAIModel != null) {
                 val canSend = checkUsageBeforeMessage(currentAIModel)
                 if (!canSend) {
@@ -1356,13 +1649,13 @@ class ChatFragment : Fragment() {
             } else {
                 Log.w("ChatFragment", "Could not find AIModel for currentModel: $currentModel, proceeding anyway")
             }
-            
+
             Log.d("ChatFragment", "Proceeding with message processing")
             // Proceed with actual message processing
             processChatCompletionInternal(userMessageContent)
         }
     }
-    
+
     internal fun processChatCompletionInternal(userMessageContent: String) {
         val messagesToSend = JSONArray()
 
@@ -1404,20 +1697,46 @@ class ChatFragment : Fragment() {
 
         val requestBodyJson = JSONObject().apply {
             put("model", currentModel) // Ensure this is a model that supports tools (e.g., gpt-4o, gpt-3.5-turbo-0125+)
-            put("messages", messagesToSend)
-            // Only include tools if the model supports them and this isn't a search-preview model
-            if (modelSupportsTools(currentModel) && !WEB_SEARCH_MODELS.contains(currentModel)) {
-                val tools = if (currentModel.startsWith("claude")) {
-                    convertToolsForClaude(getAvailableTools())
-                } else {
-                    getAvailableTools()
+            
+            if (currentModel.startsWith("claude")) {
+                // Claude/Anthropic API format - extract system message and put in separate field
+                val systemMessage = "You are a specialized assistant. Use tools when necessary to fulfill the request."
+                val claudeMessages = JSONArray()
+                
+                // Only add user/assistant messages to messages array (skip system messages)
+                for (i in 0 until messagesToSend.length()) {
+                    val msg = messagesToSend.getJSONObject(i)
+                    if (msg.getString("role") != "system") {
+                        claudeMessages.put(msg)
+                    }
                 }
-                put("tools", tools)
-                // put("tool_choice", "auto") // "auto" is default
-            }
-            put("max_completion_tokens", 300)
-            if (WEB_SEARCH_MODELS.contains(currentModel)) {
-                put("web_search_options", JSONObject())
+                
+                if (!currentModel.startsWith("o1") && !currentModel.startsWith("o3")) {
+                    put("system", systemMessage)
+                }
+                put("messages", claudeMessages)
+                put("max_tokens", 2000) // Claude uses max_tokens, not max_completion_tokens
+                
+                // Add tools for Claude
+                if (modelSupportsTools(currentModel) && !WEB_SEARCH_MODELS.contains(currentModel)) {
+                    val tools = convertToolsForClaude(getAvailableTools())
+                    put("tools", tools)
+                }
+            } else {
+                // OpenAI API format - keep existing structure
+                put("messages", messagesToSend)
+                put("max_completion_tokens", 300)
+                
+                // Only include tools if the model supports them and this isn't a search-preview model
+                if (modelSupportsTools(currentModel) && !WEB_SEARCH_MODELS.contains(currentModel)) {
+                    val tools = getAvailableTools()
+                    put("tools", tools)
+                    // put("tool_choice", "auto") // "auto" is default
+                }
+                
+                if (WEB_SEARCH_MODELS.contains(currentModel)) {
+                    put("web_search_options", JSONObject())
+                }
             }
             // Add other params like temperature if needed
         }
@@ -1431,12 +1750,16 @@ class ChatFragment : Fragment() {
         if (currentModel.startsWith("claude")) {
             requestBuilder
                 .url("https://api.anthropic.com/v1/messages")
-                .addHeader("x-api-key", anthropicApiKey)
+                .addHeader("x-api-key", getApiKey("anthropic") ?: "")
                 .addHeader("anthropic-version", "2023-06-01")
+        } else if (currentModel.startsWith("grok")) {
+            requestBuilder
+                .url("https://api.x.ai/v1/chat/completions")
+                .addHeader("Authorization", "Bearer ${BuildConfig.GROK_API_KEY}")
         } else {
             requestBuilder
                 .url("https://api.openai.com/v1/chat/completions")
-                .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
+                .addHeader("Authorization", "Bearer ${getApiKey("openai") ?: ""}")
         }
 
         val request = requestBuilder.build()
@@ -1591,6 +1914,43 @@ class ChatFragment : Fragment() {
             val arguments = JSONObject(argumentsJsonString)
             Log.i("ChatFragmentTool", "Executing tool: $functionName with args: $arguments")
 
+            // First check if this is an educational AI function
+            if (aiFunctionCallManager.isEducationalFunction(functionName)) {
+                Log.d("ChatFragmentTool", "Delegating to AIFunctionCallManager: $functionName")
+                // Execute the educational function via the function caller
+                return withContext(Dispatchers.IO) {
+                    val result = when (functionName) {
+                        "explain_concept" -> {
+                            val concept = arguments.optString("concept")
+                            val gradeLevel = arguments.optString("grade_level", "High School")
+                            val chatMessage = aiFunctionCallManager.explainConcept(concept, gradeLevel)
+                            chatMessage.content
+                        }
+                        "create_practice_quiz" -> {
+                            val topic = arguments.optString("topic")
+                            val difficulty = arguments.optString("difficulty", "medium")
+                            val questionCount = arguments.optInt("num_questions", 5)
+                            val chatMessage = aiFunctionCallManager.createQuiz(topic, difficulty, questionCount)
+                            chatMessage.content
+                        }
+                        "get_homework_help" -> {
+                            val question = arguments.optString("question")
+                            val subject = arguments.optString("subject")
+                            val chatMessage = aiFunctionCallManager.getHomeworkHelp(question, subject)
+                            chatMessage.content
+                        }
+                        "search_educational_resources" -> {
+                            val topic = arguments.optString("query")
+                            val chatMessage = aiFunctionCallManager.searchResources(topic)
+                            chatMessage.content
+                        }
+                        else -> JSONObject().apply { put("error", "Educational function '$functionName' not implemented.") }.toString()
+                    }
+                    result
+                }
+            }
+
+            // Fall back to existing native tool functions
             when (functionName) {
                 "get_weather" -> {
                     val location = arguments.optString("location")
@@ -1978,7 +2338,7 @@ class ChatFragment : Fragment() {
 
             val request = Request.Builder()
                 .url("https://api.openai.com/v1/audio/transcriptions")
-                .header("Authorization", "Bearer ${BuildConfig.API_KEY}") // Ensure BuildConfig.API_KEY is OpenAI key
+                .header("Authorization", "Bearer ${getApiKey("openai") ?: ""}") // Using Firestore key with BuildConfig fallback
                 .post(requestBody)
                 .build()
 
@@ -2020,7 +2380,7 @@ class ChatFragment : Fragment() {
         val summaryRequest = Request.Builder()
             .url("https://api.openai.com/v1/chat/completions")
             .post(summaryBody)
-            .addHeader("Authorization", "Bearer ${BuildConfig.API_KEY}")
+            .addHeader("Authorization", "Bearer ${getApiKey("openai") ?: ""}")
             .addHeader("Content-Type", "application/json")
             .build()
 
@@ -2064,7 +2424,23 @@ class ChatFragment : Fragment() {
     // In ChatFragment.kt
 
     private fun getAvailableTools(): JSONArray {
-        return JSONArray().apply {
+        val tools = JSONArray()
+        
+        // Add educational AI functions from EducationalFunctions
+        val educationalFunctions = com.playstudio.aiteacher.api.EducationalFunctions.getAllFunctions()
+        for (function in educationalFunctions) {
+            tools.put(JSONObject().apply {
+                put("type", "function")
+                put("function", JSONObject().apply {
+                    put("name", function.name)
+                    put("description", function.description)
+                    put("parameters", function.parameters)
+                })
+            })
+        }
+        
+        // Add existing native tools
+        tools.apply {
             // --- Tool 1: Get Weather ---
             put(JSONObject().apply {
                 put("type", "function")
@@ -2300,6 +2676,82 @@ class ChatFragment : Fragment() {
             // })
 
         }
+        
+        return tools
+    }
+
+    /**
+     * Process message using AI Function Call Manager for enhanced educational responses
+     */
+    private suspend fun processMessageWithAIFunctions(userMessage: String, enableWebSearch: Boolean = true) {
+        Log.d("ChatFragment", "Processing message with AI functions: $userMessage")
+        
+        try {
+            // Use AIFunctionCallManager to process the message
+            val response = aiFunctionCallManager.processMessageWithFunctions(
+                message = userMessage,
+                includeWebSearch = enableWebSearch
+            )
+            
+            // Add the enhanced response to chat
+            lifecycleScope.launch(Dispatchers.Main) {
+                chatMessages.add(response)
+                chatAdapter.submitList(chatMessages.toList()) {
+                    binding.recyclerView.smoothScrollToPosition(chatMessages.size - 1)
+                }
+            }
+            
+        } catch (e: Exception) {
+            Log.e("ChatFragment", "Error processing message with AI functions", e)
+            
+            // Fall back to regular chat completion
+            lifecycleScope.launch(Dispatchers.Main) {
+                showCustomToast("Enhanced AI features temporarily unavailable. Using standard mode.")
+                handleChatCompletion(userMessage)
+            }
+        }
+    }
+
+    /**
+     * Determine if a user message should use enhanced educational AI features
+     */
+    private fun shouldUseEducationalAI(message: String): Boolean {
+        val lowerMessage = message.lowercase()
+        
+        // Educational keywords that should trigger enhanced AI
+        val educationalKeywords = listOf(
+            "teach", "learn", "explain", "lesson", "quiz", "test", "study", "homework", 
+            "assignment", "practice", "example", "concept", "definition", "how to",
+            "what is", "why does", "how does", "tutorial", "guide", "course", 
+            "exercise", "problem", "solution", "formula", "theorem", "principle",
+            "calculate", "solve", "prove", "demonstrate", "analyze", "evaluate",
+            "math", "science", "history", "english", "literature", "physics", 
+            "chemistry", "biology", "algebra", "geometry", "calculus", "statistics"
+        )
+        
+        // Check if message contains educational keywords
+        val hasEducationalKeywords = educationalKeywords.any { keyword ->
+            lowerMessage.contains(keyword)
+        }
+        
+        // Check if message is a question (likely educational)
+        val isQuestion = lowerMessage.contains("?") || 
+                        lowerMessage.startsWith("what") || 
+                        lowerMessage.startsWith("how") || 
+                        lowerMessage.startsWith("why") ||
+                        lowerMessage.startsWith("when") ||
+                        lowerMessage.startsWith("where") ||
+                        lowerMessage.startsWith("who")
+        
+        // Check for educational sentence patterns
+        val hasEducationalPatterns = lowerMessage.contains("i need help with") ||
+                                   lowerMessage.contains("help me understand") ||
+                                   lowerMessage.contains("can you explain") ||
+                                   lowerMessage.contains("create a lesson") ||
+                                   lowerMessage.contains("make a quiz") ||
+                                   lowerMessage.contains("give me examples")
+        
+        return hasEducationalKeywords || (isQuestion && message.length > 10) || hasEducationalPatterns
     }
 
 
@@ -2322,6 +2774,12 @@ class ChatFragment : Fragment() {
                 binding.followUpQuestionsContainer.visibility = View.GONE
                 binding.generatedImageView.visibility = View.VISIBLE
                 updateActiveModelButton("DALL-E 3")
+            }
+            "gpt-image-1" -> {
+                binding.messageEditText.hint = "Describe the image you want to generate (supports image input)..."
+                binding.followUpQuestionsContainer.visibility = View.GONE
+                binding.generatedImageView.visibility = View.VISIBLE
+                updateActiveModelButton("GPT Image 1")
             }
             else -> {
                 binding.messageEditText.hint = "Type your message here..."
@@ -2424,7 +2882,7 @@ class ChatFragment : Fragment() {
             removeTypingIndicator() // Call this early, outside the async block if response parsing is quick
 
             val jsonResponse = JSONObject(responseBody)
-            
+
             // Track usage for successful API responses
             val currentAIModel = com.playstudio.aiteacher.pricing.AIModel.fromModelId(currentModel)
             if (currentAIModel != null) {
@@ -2432,7 +2890,7 @@ class ChatFragment : Fragment() {
                 val usage = jsonResponse.optJSONObject("usage")
                 val inputTokens = usage?.optInt("prompt_tokens") ?: 200 // Default estimate
                 val outputTokens = usage?.optInt("completion_tokens") ?: 300 // Default estimate
-                
+
                 // Track the usage asynchronously
                 trackMessageUsage(currentAIModel, inputTokens, outputTokens)
             }
@@ -2644,6 +3102,7 @@ class ChatFragment : Fragment() {
     private fun sendMessageToAPI(message: String) {
         when (currentModel) {
             "dall-e-3" -> handleImageGeneration(message)
+            "gpt-image-1" -> handleGPTImageGeneration(message)
             else -> {
                 handleChatCompletion(message)
             }
@@ -2674,7 +3133,7 @@ class ChatFragment : Fragment() {
         val request = Request.Builder()
             .url("https://api.openai.com/v1/chat/completions") // Assuming OpenAI endpoint
             .post(body)
-            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Authorization", "Bearer ${getApiKey("openai") ?: ""}")
             .addHeader("Content-Type", "application/json")
             .build()
 
@@ -2728,13 +3187,13 @@ class ChatFragment : Fragment() {
                                         containsRichContent = determineIfRichContent(reply)
                                         // Parse and pass citations/followUps if this model provides them
                                     )
-                                    
+
                                     // Track usage after successful response
                                     val currentAIModel = com.playstudio.aiteacher.pricing.AIModel.fromModelId(model)
                                     if (currentAIModel != null) {
                                         trackMessageUsage(currentAIModel, inputTokens, outputTokens)
                                     }
-                                    
+
                                     // TTS is now automatically handled by addMessageToChat() when audio mode is enabled
                                     incrementInteractionCount()
                                 }
@@ -2977,7 +3436,7 @@ class ChatFragment : Fragment() {
             containsRichContent = containsRichContent
         )
         addMessageToList(newChatMessage)
-        
+
         // Auto-save meeting summaries when AI response is complete
         if (!isUser && pendingMeetingSummaryType != null && pendingMeetingTranscript != null) {
             saveMeetingSummary(messageContent, pendingMeetingSummaryType!!, pendingMeetingTranscript!!)
@@ -2985,7 +3444,7 @@ class ChatFragment : Fragment() {
             pendingMeetingSummaryType = null
             pendingMeetingTranscript = null
         }
-        
+
         // Generate TTS for AI responses when audio mode is enabled BUT NOT in realtime mode
         // (RealtimeVoiceAgent handles its own audio output)
         if (!isUser && isAudioModeEnabled && messageContent.isNotBlank() && !isRealtimeMode) {
@@ -3026,7 +3485,7 @@ class ChatFragment : Fragment() {
         val request = Request.Builder()
             .url("https://api.openai.com/v1/chat/completions")
             .post(json.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull()))
-            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Authorization", "Bearer ${getApiKey("openai") ?: ""}")
             .build()
 
         lifecycleScope.launch(Dispatchers.IO) {
@@ -3111,7 +3570,7 @@ class ChatFragment : Fragment() {
         val request = Request.Builder()
             .url("https://api.openai.com/v1/images/generations")
             .post(body)
-            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Authorization", "Bearer ${getApiKey("openai") ?: ""}")
             .build()
 
         client.newCall(request).enqueue(object : Callback {
@@ -3206,9 +3665,198 @@ class ChatFragment : Fragment() {
         })
     }
 
+    /**
+     * Enhanced image generation using GPT Image 1 with multimodal support
+     * Supports both text-only and text+image inputs
+     */
+    private fun handleGPTImageGeneration(prompt: String, inputImageBase64: String? = null, quality: String = "medium", size: String = "1024x1024", retryCount: Int = 3) {
+        if (!isNetworkAvailable()) {
+            showCustomToast("No internet connection. Please check your network settings.")
+            return
+        }
+
+        // Validate quality and size parameters
+        val validQualities = listOf("low", "medium", "high")
+        val validSizes = listOf("1024x1024", "1024x1536", "1536x1024")
+        val finalQuality = if (quality in validQualities) quality else "medium"
+        val finalSize = if (size in validSizes) size else "1024x1024"
+
+        // Show "Generating..." text and hide other elements
+        binding.imageContainer.visibility = View.VISIBLE
+        binding.generatingText.visibility = View.VISIBLE
+        binding.generatedImageView.visibility = View.GONE
+        binding.downloadButton.visibility = View.GONE
+
+        // Start the "Generating..." animation
+        startGeneratingAnimation()
+        
+        Log.d("ChatFragment", "🎨 GPT Image 1 generation started with prompt: '$prompt'")
+
+        // Build request for GPT Image 1 using images/generations endpoint
+        // This should work similar to DALL-E 3 but with GPT Image 1 model
+        val requestJson = JSONObject().apply {
+            put("model", "gpt-image-1")
+            put("prompt", prompt)
+            put("n", 1)
+            put("size", finalSize)
+            put("quality", finalQuality)
+            
+            // Add input image if provided (multimodal capability)
+            inputImageBase64?.let { imageData ->
+                put("input_image", "data:image/jpeg;base64,$imageData")
+            }
+        }
+
+        val body = requestJson.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
+        val request = Request.Builder()
+            .url("https://api.openai.com/v1/images/generations")
+            .post(body)
+            .addHeader("Authorization", "Bearer ${getApiKey("openai") ?: ""}")
+            .addHeader("Content-Type", "application/json")
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                if (retryCount > 0) {
+                    Log.d("ChatFragment", "Retrying GPT Image 1 generation... Attempts left: $retryCount")
+                    handleGPTImageGeneration(prompt, inputImageBase64, finalQuality, finalSize, retryCount - 1)
+                } else {
+                    Log.e("ChatFragment", "Failed to get GPT Image 1 response", e)
+                    requireActivity().runOnUiThread {
+                        showCustomToast("Failed to generate image with GPT Image 1. Please try again.")
+                        binding.imageContainer.visibility = View.GONE
+                        binding.generatingText.visibility = View.GONE
+                        binding.downloadButton.visibility = View.GONE
+                        stopGeneratingAnimation()
+                    }
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                if (!response.isSuccessful || response.body == null) {
+                    Log.e("ChatFragment", "GPT Image 1 request failed: ${response.code} - ${response.message}")
+                    requireActivity().runOnUiThread {
+                        showCustomToast("GPT Image 1 request failed: ${response.message}")
+                        binding.imageContainer.visibility = View.GONE
+                        binding.generatingText.visibility = View.GONE
+                        binding.downloadButton.visibility = View.GONE
+                        stopGeneratingAnimation()
+                    }
+                    return
+                }
+
+                try {
+                    val responseData = JSONObject(response.body!!.string())
+                    Log.d("ChatFragment", "GPT Image 1 response: $responseData")
+
+                    // Parse response using DALL-E format (GPT Image 1 may return b64_json or url)
+                    val data = responseData.optJSONArray("data")
+                    if (data != null && data.length() > 0) {
+                        val firstImage = data.getJSONObject(0)
+                        val revisedPrompt = firstImage.optString("revised_prompt", prompt)
+                        
+                        // GPT Image 1 may return base64 data instead of URL
+                        var imageUrl: String? = null
+                        
+                        if (firstImage.has("url")) {
+                            // Standard URL format (like DALL-E 3)
+                            imageUrl = firstImage.getString("url")
+                        } else if (firstImage.has("b64_json")) {
+                            // Base64 format (GPT Image 1 format)
+                            val base64Data = firstImage.getString("b64_json")
+                            imageUrl = "data:image/png;base64,$base64Data"
+                            Log.d("ChatFragment", "GPT Image 1 returned base64 data, converted to data URL")
+                        }
+                        
+                        if (imageUrl != null) {
+                            requireActivity().runOnUiThread {
+                                Log.d("ChatFragment", "🎨 Loading GPT Image 1 result, URL length: ${imageUrl.length}")
+                                
+                                // Display the generated image using Glide (same as DALL-E 3)
+                                Glide.with(this@ChatFragment)
+                                    .load(imageUrl)
+                                    .listener(object : com.bumptech.glide.request.RequestListener<android.graphics.drawable.Drawable> {
+                                        override fun onLoadFailed(
+                                            e: com.bumptech.glide.load.engine.GlideException?,
+                                            model: Any?,
+                                            target: com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable>?,
+                                            isFirstResource: Boolean
+                                        ): Boolean {
+                                            Log.e("ChatFragment", "🎨 Glide failed to load GPT Image 1", e)
+                                            showCustomToast("Failed to display generated image")
+                                            return false
+                                        }
+                                        
+                                        override fun onResourceReady(
+                                            resource: android.graphics.drawable.Drawable?,
+                                            model: Any?,
+                                            target: com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable>?,
+                                            dataSource: com.bumptech.glide.load.DataSource?,
+                                            isFirstResource: Boolean
+                                        ): Boolean {
+                                            Log.d("ChatFragment", "🎨 GPT Image 1 successfully loaded and displayed")
+                                            return false
+                                        }
+                                    })
+                                    .into(binding.generatedImageView)
+                                binding.imageContainer.visibility = View.VISIBLE
+                                binding.generatedImageView.visibility = View.VISIBLE
+
+                                // Show the download button and change its color to green
+                                binding.downloadButton.visibility = View.VISIBLE
+                                binding.downloadButton.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.green)
+                                binding.downloadButton.setOnClickListener {
+                                    downloadImage(imageUrl)
+                                }
+                                
+                                // Calculate and track usage with proper pricing
+                                val currentAIModel = com.playstudio.aiteacher.pricing.AIModel.fromModelId("gpt-image-1")
+                                if (currentAIModel != null) {
+                                    // Calculate cost based on quality and size
+                                    val imageCost = currentAIModel.imageOutputCostPerImage[finalQuality]?.get(finalSize) ?: 0.0
+                                    
+                                    // Convert cost to token equivalent for tracking (approximation)
+                                    val equivalentOutputTokens = (imageCost / currentAIModel.outputCostPer1M * 1000000).toInt()
+                                    
+                                    trackMessageUsage(currentAIModel, 100, equivalentOutputTokens) // 100 tokens for prompt
+                                }
+
+                                binding.generatingText.visibility = View.GONE
+                                stopGeneratingAnimation()
+                            }
+                        } else {
+                            requireActivity().runOnUiThread {
+                                showCustomToast("No image URL found in GPT Image 1 response")
+                                binding.generatingText.visibility = View.GONE
+                                binding.downloadButton.visibility = View.GONE
+                                stopGeneratingAnimation()
+                            }
+                        }
+                    } else {
+                        requireActivity().runOnUiThread {
+                            showCustomToast("No image data in GPT Image 1 response")
+                            binding.generatingText.visibility = View.GONE
+                            binding.downloadButton.visibility = View.GONE
+                            stopGeneratingAnimation()
+                        }
+                    }
+                } catch (e: JSONException) {
+                    Log.e("ChatFragment", "Failed to parse GPT Image 1 response", e)
+                    requireActivity().runOnUiThread {
+                        showCustomToast("Failed to parse GPT Image 1 response")
+                        binding.generatingText.visibility = View.GONE
+                        binding.downloadButton.visibility = View.GONE
+                        stopGeneratingAnimation()
+                    }
+                }
+            }
+        })
+    }
+
+
 
     // Old subscription prompt methods removed - replaced with new subscription system
-    
+
     private fun isUserCurrentlySubscribed(): Boolean {
         return try {
             // Use the new authentication and Firestore-based subscription system
@@ -3219,12 +3867,12 @@ class ChatFragment : Fragment() {
                 val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
                 sharedPreferences.edit().putBoolean("current_subscription_active", tier != com.playstudio.aiteacher.pricing.SubscriptionTier.FREE).apply()
             }
-            
+
             // For immediate synchronous response, check cached value or fallback to old method
             val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
             val cachedSubscriptionActive = sharedPreferences.getBoolean("current_subscription_active", false)
             val expirationTime = sharedPreferences.getLong("expiration_time", 0)
-            
+
             // Return true if either new system shows active subscription or old system shows valid expiration
             cachedSubscriptionActive || (System.currentTimeMillis() < expirationTime)
         } catch (e: Exception) {
@@ -3234,7 +3882,7 @@ class ChatFragment : Fragment() {
             System.currentTimeMillis() < expirationTime
         }
     }
-    
+
     /**
      * Asynchronous version that properly checks Firestore authentication and subscription
      */
@@ -3347,7 +3995,13 @@ class ChatFragment : Fragment() {
                     showCustomToast("Daily limit for DALL-E 3 reached.")
                 }
             }
-            "gemini" -> {
+            "gpt-image-1" -> {
+                // Direct access to GPT Image 1 for all users
+                Log.d("ChatFragment", "GPT Image 1 generation - direct access for all users")
+                handleGPTImageGeneration(message)
+                binding.messageEditText.text.clear()
+            }
+            "gemini", "gemini-2.5-flash" -> {
                 if (checkDailyLimit("gemini", DAILY_LIMIT_GEMINI)) {
                     handleGeminiCompletion(message)
                     binding.messageEditText.text.clear()
@@ -3365,6 +4019,26 @@ class ChatFragment : Fragment() {
                     showCustomToast("Daily limit for DeepSeek reached.")
                 }
             }
+            "veo-3.0-generate-preview", "veo-3.0-fast-generate-preview", "veo-2.0-generate-001" -> {
+                // Use new subscription-based limit system for Veo models
+                val currentAIModel = com.playstudio.aiteacher.pricing.AIModel.fromModelId(currentModel)
+                if (currentAIModel != null) {
+                    lifecycleScope.launch {
+                        val canSend = checkUsageBeforeMessage(currentAIModel)
+                        if (canSend) {
+                            Log.d("ChatFragment", "Veo usage check passed, generating video")
+                            handleVeoVideoGeneration(message)
+                            binding.messageEditText.text.clear()
+                        } else {
+                            Log.d("ChatFragment", "Veo usage limit reached")
+                            showCustomToast("Veo video generation limit reached for your subscription tier.")
+                        }
+                    }
+                } else {
+                    Log.e("ChatFragment", "Veo model not found in AIModel enum")
+                    showCustomToast("Veo model configuration error.")
+                }
+            }
             "o1", "o1-mini", "o3", "o3-mini" -> {
                 if (checkDailyLimit(currentModel, DAILY_LIMIT_GPT4)) {
                     handleReasoningModelCompletion(message, currentModel)
@@ -3376,7 +4050,15 @@ class ChatFragment : Fragment() {
             }
             else -> {
                 if (isUserCurrentlySubscribed() || canSendMessage) {
-                    sendMessageToAPI(response)
+                    // Check if this is an educational query that should use enhanced AI functions
+                    if (shouldUseEducationalAI(message)) {
+                        Log.d("ChatFragment", "Using enhanced educational AI for query: $message")
+                        lifecycleScope.launch {
+                            processMessageWithAIFunctions(message, enableWebSearch = true)
+                        }
+                    } else {
+                        sendMessageToAPI(response)
+                    }
                     binding.messageEditText.text.clear()
                     if (!isUserCurrentlySubscribed()) {
                         canSendMessage = false
@@ -3420,7 +4102,7 @@ class ChatFragment : Fragment() {
             // timestamp will be set by default in ChatMessage constructor
         )
         addMessageToList(newChatMessage) // Your helper that calls submitList
-        
+
         // Generate TTS for AI responses when audio mode is enabled BUT NOT in realtime mode
         // (RealtimeVoiceAgent handles its own audio output)
         if (!isUser && isAudioModeEnabled && messageContent.isNotBlank() && !isRealtimeMode) {
@@ -3456,12 +4138,48 @@ class ChatFragment : Fragment() {
     }
 
     private fun generateFollowUpQuestions(response: String) {
-        val prompt = "Based on the following response, generate 3 follow-up questions that the user can send to openAI for an answer: $response"
+        val prompt = "Based on the following response, generate 3 follow-up questions that the user can send to AI for an answer: $response"
 
-        sendMessageToChatGPT(prompt) { followUpResponse ->
-            val questions = followUpResponse.split("\n").filter { it.isNotBlank() }
-            requireActivity().runOnUiThread {
-                addFollowUpQuestionsToChat(questions)
+        // Use hardcoded OpenAI model for follow-up questions to avoid routing issues
+        val messagesArray = JSONArray().apply {
+            put(JSONObject().apply {
+                put("role", "user")
+                put("content", prompt)
+            })
+        }
+
+        val json = JSONObject().apply {
+            put("model", "gpt-3.5-turbo") // Hardcoded lightweight model
+            put("messages", messagesArray)
+            put("temperature", 0.7)
+            put("max_completion_tokens", 150)
+        }
+
+        val request = Request.Builder()
+            .url("https://api.openai.com/v1/chat/completions")
+            .post(json.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull()))
+            .addHeader("Authorization", "Bearer ${getApiKey("openai") ?: ""}")
+            .addHeader("Content-Type", "application/json")
+            .build()
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val apiResponse = client.newCall(request).execute()
+                if (apiResponse.isSuccessful) {
+                    val responseBody = apiResponse.body?.string()
+                    val jsonResponse = JSONObject(responseBody!!)
+                    val followUpResponse = jsonResponse.getJSONArray("choices")
+                        .getJSONObject(0)
+                        .getJSONObject("message")
+                        .getString("content")
+
+                    val questions = followUpResponse.split("\n").filter { it.isNotBlank() }
+                    requireActivity().runOnUiThread {
+                        addFollowUpQuestionsToChat(questions)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("ChatFragment", "Error generating follow-up questions", e)
             }
         }
     }
@@ -3547,7 +4265,7 @@ class ChatFragment : Fragment() {
         val request = Request.Builder()
             .url("https://api.openai.com/v1/chat/completions")
             .post(body)
-            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Authorization", "Bearer ${getApiKey("openai") ?: ""}")
             .addHeader("Content-Type", "application/json")
             .build()
 
@@ -3650,9 +4368,10 @@ class ChatFragment : Fragment() {
         if (expirationTime <= System.currentTimeMillis()) {
             canSendMessage = false
         }
-        
-        // Update the subscription status display
+
+        // Update the subscription status display and credit balance
         updateSubscriptionStatusDisplay()
+        updateCreditBalanceDisplay()
     }
 
     private fun openDocumentPicker() {
@@ -3791,85 +4510,16 @@ class ChatFragment : Fragment() {
     }
 
     private fun showChatGptOptionsDialog() {
-        lifecycleScope.launch {
-            val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_with_overlay, null)
-            val dialog = AlertDialog.Builder(requireContext())
-                .setView(dialogView)
-                .setCancelable(true)
-                .create()
-
-            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-
-            // Get models from AIModel.kt in the correct order
-            val availableModels = listOf(
-                com.playstudio.aiteacher.pricing.AIModel.GPT_35_TURBO,
-                com.playstudio.aiteacher.pricing.AIModel.DEEPSEEK,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_41_MINI,
-                com.playstudio.aiteacher.pricing.AIModel.GEMINI,
-                com.playstudio.aiteacher.pricing.AIModel.GEMINI_VOICE,
-                // Audio Models
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O_AUDIO,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O_MINI_AUDIO,
-                // Regular Models
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4_TURBO,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O_SEARCH,
-                com.playstudio.aiteacher.pricing.AIModel.CLAUDE_SONNET_4,
-                com.playstudio.aiteacher.pricing.AIModel.O1,
-                com.playstudio.aiteacher.pricing.AIModel.O1_MINI,
-                com.playstudio.aiteacher.pricing.AIModel.O3,
-                com.playstudio.aiteacher.pricing.AIModel.O3_MINI,
-                com.playstudio.aiteacher.pricing.AIModel.GPT_4O_REALTIME,
-                com.playstudio.aiteacher.pricing.AIModel.OPENAI_REALTIME_VOICE,
-                com.playstudio.aiteacher.pricing.AIModel.DALL_E_3,
-                com.playstudio.aiteacher.pricing.AIModel.CLAUDE_OPUS_4
-            )
-
-            // Set up RecyclerView with GridLayoutManager (2 columns)
-            val recyclerView = dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.modelsRecyclerView)
-            recyclerView.layoutManager = androidx.recyclerview.widget.GridLayoutManager(requireContext(), 2)
-            
-            // Create subscription-aware adapter with fresh subscription data
-            val subscriptionUIManager = SubscriptionUIManager(requireContext())
-            val usageTracker = com.playstudio.aiteacher.pricing.UsageTracker(requireContext())
-            
-            // Ensure we get the latest subscription status
-            subscriptionUIManager.updateUIForSubscriptionStatus(this@ChatFragment)
-            val userTier = subscriptionUIManager.getUserSubscriptionTier()
-            
-            Log.d("ChatFragment", "Model dialog - User tier: $userTier")
-            
-            val modelAdapter = SubscriptionAwareModelAdapter(
-                availableModels,
-                userTier,
-                usageTracker
-            ) { selectedModel ->
-                handleModelSelection(selectedModel)
-                dialog.dismiss()
-            }
-            
-            recyclerView.adapter = modelAdapter
-
-            // Handle close button
-            val closeButton = dialogView.findViewById<ImageButton>(R.id.closeButton)
-            closeButton?.setOnClickListener {
-                dialog.dismiss()
-            }
-
-            dialog.setOnDismissListener {
-                hideOverlay()
-            }
-            
-
-            showOverlay()
-            dialog.show()
+        val subscriptionUIManager = SubscriptionUIManager(requireContext())
+        showSubscriptionAwareModelDialog(subscriptionUIManager) { selectedModel ->
+            handleModelSelection(selectedModel)
         }
     }
-    
+
     private fun handleModelSelection(selectedModel: com.playstudio.aiteacher.pricing.AIModel) {
         // Update current model ID
         currentModel = selectedModel.modelId
-        
+
         // Handle special model UI configurations
         when (selectedModel.modelId) {
             "gemini-2.5-flash" -> {
@@ -3929,7 +4579,34 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
+    /**
+     * Automatically selects the specified model by model ID
+     * Used by auto-selection from shortcuts (e.g., AI Image Generator)
+     */
+    private fun setSelectedModel(modelId: String) {
+        Log.d("ChatFragment", "Auto-selecting model: $modelId")
+        
+        // Find the corresponding AIModel enum from the model ID
+        val aiModel = com.playstudio.aiteacher.pricing.AIModel.values().find { 
+            it.modelId == modelId 
+        }
+        
+        if (aiModel != null) {
+            Log.d("ChatFragment", "Found AIModel: ${aiModel.displayName}")
+            // Use the existing model selection logic
+            handleModelSelection(aiModel)
+            showCustomToast("Auto-selected ${aiModel.displayName} for image generation")
+        } else {
+            Log.w("ChatFragment", "Could not find AIModel for ID: $modelId")
+            // Fallback to setting currentModel directly
+            currentModel = modelId
+            updateUIForCurrentModel()
+            switchUiForModel(currentModel)
+            showCustomToast("Selected model: $modelId")
+        }
+    }
+
     private fun hideStandardChatUI() {
         binding.messageInputLayout.visibility = View.GONE
         binding.scanTextButton.visibility = View.GONE
@@ -3940,7 +4617,7 @@ class ChatFragment : Fragment() {
         binding.downloadButton.visibility = View.GONE
         binding.generatingText.visibility = View.GONE
     }
-    
+
     private fun showStandardChatUI() {
         binding.openaiLiveAudioControls.visibility = View.GONE
         binding.messageInputLayout.visibility = View.VISIBLE
@@ -3953,23 +4630,23 @@ class ChatFragment : Fragment() {
     private lateinit var usageTracker: com.playstudio.aiteacher.pricing.UsageTracker
     private lateinit var costManager: com.playstudio.aiteacher.pricing.CostManager
     private lateinit var subscriptionUIManager: SubscriptionUIManager
-    
+
     private fun initializeUsageTracking() {
         usageTracker = com.playstudio.aiteacher.pricing.UsageTracker(requireContext())
         costManager = com.playstudio.aiteacher.pricing.CostManager.getInstance(requireContext())
         subscriptionUIManager = SubscriptionUIManager(requireContext())
     }
-    
+
     private fun updateSubscriptionStatusDisplay() {
         lifecycleScope.launch {
             try {
                 // Use the new authentication and Firestore-based subscription system
                 val subscriptionUIManager = SubscriptionUIManager(requireContext())
                 val firebaseAuthService = com.playstudio.aiteacher.profile.FirebaseAuthenticationService(requireContext())
-                
+
                 val statusText: String
                 val isSubscribed: Boolean
-                
+
                 if (!firebaseAuthService.isSignedIn()) {
                     // User not authenticated - show free plan with sign-in prompt
                     isSubscribed = false
@@ -3978,30 +4655,30 @@ class ChatFragment : Fragment() {
                     // Get subscription status from Firestore
                     val tier = subscriptionUIManager.getUserSubscriptionTier()
                     isSubscribed = tier != com.playstudio.aiteacher.pricing.SubscriptionTier.FREE
-                    
+
                     statusText = when (tier) {
                         com.playstudio.aiteacher.pricing.SubscriptionTier.BASIC -> "Essential Plan"
-                        com.playstudio.aiteacher.pricing.SubscriptionTier.PRO -> "Professional Plan"  
+                        com.playstudio.aiteacher.pricing.SubscriptionTier.PRO -> "Professional Plan"
                         com.playstudio.aiteacher.pricing.SubscriptionTier.PREMIUM -> "Premium Plan"
-                        com.playstudio.aiteacher.pricing.SubscriptionTier.ULTRA_PREMIUM -> "Enterprise Max"
+                        com.playstudio.aiteacher.pricing.SubscriptionTier.ENTERPRISE -> "Enterprise Max"
                         else -> "Free Plan"
                     }
                 }
-                
+
                 // Update the cached SharedPreferences for backward compatibility
                 val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
                 sharedPreferences.edit().putBoolean("current_subscription_active", isSubscribed).apply()
-                
+
                 binding.subscriptionStatusText.text = statusText
-                
+
                 // Update color based on subscription status
                 val textColor = if (isSubscribed) {
                     android.R.color.holo_green_light
                 } else {
-                    android.R.color.darker_gray
+                    android.R.color.holo_red_light
                 }
                 binding.subscriptionStatusText.setTextColor(ContextCompat.getColor(requireContext(), textColor))
-                
+
                 // Set up click listener based on authentication status
                 binding.subscriptionStatusText.setOnClickListener {
                     if (!firebaseAuthService.isSignedIn()) {
@@ -4014,29 +4691,29 @@ class ChatFragment : Fragment() {
                         openSubscriptionActivity()
                     }
                 }
-                
+
             } catch (e: Exception) {
                 Log.e("ChatFragment", "Error updating subscription status display", e)
-                
+
                 // Fallback to SharedPreferences method if Firestore fails
                 try {
                     val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
                     val subscriptionType = sharedPreferences.getString("subscription_type", null)
                     val expirationTime = sharedPreferences.getLong("expiration_time", 0)
                     val currentTime = System.currentTimeMillis()
-                    
+
                     val statusText = if (currentTime < expirationTime) {
                         when (subscriptionType) {
                             "basic" -> "Essential Plan"
                             "pro" -> "Professional Plan"
-                            "premium" -> "Premium Plan" 
+                            "premium" -> "Premium Plan"
                             "ultra_premium" -> "Enterprise Max"
                             else -> "Free Plan"
                         }
                     } else {
                         "Free Plan"
                     }
-                    
+
                     binding.subscriptionStatusText.text = statusText
                 } catch (fallbackError: Exception) {
                     Log.e("ChatFragment", "Fallback subscription check also failed", fallbackError)
@@ -4045,73 +4722,94 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun trackMessageUsage(model: com.playstudio.aiteacher.pricing.AIModel, inputTokens: Int, outputTokens: Int) {
         lifecycleScope.launch {
             try {
                 // Increment usage count
                 usageTracker.incrementUsage(model.modelId)
-                
+
                 // Record actual cost with CostManager
                 costManager.recordActualCost(
                     model = model,
                     inputTokens = inputTokens,
                     outputTokens = outputTokens
                 )
-                
-                // Update UI with remaining usage
+
+                // Deduct credits using the new credit system
+                val tier = subscriptionUIManager.getUserSubscriptionTier()
+                val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(requireContext())
+                val creditCost = creditManager.calculateMessageCost(inputTokens, outputTokens, model.modelId, tier)
+                creditManager.updateUserCredits("default_user", tier, creditCost)
+
+                // Update UI with remaining usage and credit balance
                 updateUsageDisplay(model)
-                
+                updateCreditBalanceDisplay()
+
             } catch (e: Exception) {
                 Log.e("ChatFragment", "Error tracking usage", e)
             }
         }
     }
-    
+
     private fun updateUsageDisplay(model: com.playstudio.aiteacher.pricing.AIModel) {
         lifecycleScope.launch {
             try {
                 val userTier = subscriptionUIManager.getUserSubscriptionTier()
                 val remainingUsage = usageTracker.getRemainingUsage(model.modelId, userTier)
                 val usageLimit = model.getUsageLimitForTier(userTier)
-                
+
                 val usageText = if (usageLimit == -1) {
                     "Unlimited"
                 } else {
                     "$remainingUsage/$usageLimit remaining today"
                 }
-                
+
                 // Update any UI elements that show usage info
                 // This could be a toast, status bar, or dedicated usage indicator
                 if (remainingUsage <= 3 && usageLimit != -1) {
                     showCustomToast("⚠️ Low usage: $usageText")
                 }
-                
+
             } catch (e: Exception) {
                 Log.e("ChatFragment", "Error updating usage display", e)
             }
         }
     }
-    
+
+    private fun updateCreditBalanceDisplay() {
+        lifecycleScope.launch {
+            try {
+                val tier = subscriptionUIManager.getUserSubscriptionTier()
+                val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(requireContext())
+                val remaining = creditManager.getRemainingCredits("default_user", tier)
+                val config = com.playstudio.aiteacher.credits.SubscriptionTiers.getConfig(tier)
+                binding.tvCreditBalance.text = "Credits: ${String.format("%.2f", remaining)} / ${config.dailyCredits}"
+            } catch (e: Exception) {
+                Log.e("ChatFragment", "Error updating credit balance", e)
+            }
+        }
+    }
+
     private suspend fun checkUsageBeforeMessage(model: com.playstudio.aiteacher.pricing.AIModel): Boolean {
         return try {
             Log.d("ChatFragment", "Checking usage for model: ${model.modelId}")
-            
+
             // Use the same subscription checking logic as the rest of the app
             val isSubscribed = isUserCurrentlySubscribed()
             Log.d("ChatFragment", "User subscribed: $isSubscribed")
-            
+
             // If user is subscribed, allow unlimited usage
             if (isSubscribed) {
                 Log.d("ChatFragment", "User is subscribed, allowing unlimited usage")
                 return true
             }
-            
+
             // For free users, check daily limits using UsageTracker
             val userTier = com.playstudio.aiteacher.pricing.SubscriptionTier.FREE
             val canUse = usageTracker.canUseModel(model.modelId, userTier)
             Log.d("ChatFragment", "Free user can use model ${model.modelId}: $canUse")
-            
+
             if (!canUse) {
                 Log.d("ChatFragment", "Usage limit reached for ${model.modelId}, showing dialog")
                 withContext(Dispatchers.Main) {
@@ -4119,7 +4817,7 @@ class ChatFragment : Fragment() {
                 }
                 return false
             }
-            
+
             Log.d("ChatFragment", "Usage check passed, allowing message")
             true
         } catch (e: Exception) {
@@ -4131,7 +4829,7 @@ class ChatFragment : Fragment() {
             false
         }
     }
-    
+
     private fun showUsageLimitDialog(model: com.playstudio.aiteacher.pricing.AIModel) {
         AlertDialog.Builder(requireContext())
             .setTitle("Usage Limit Reached")
@@ -4147,7 +4845,7 @@ class ChatFragment : Fragment() {
             }
             .show()
     }
-    
+
     private fun openSubscriptionActivity() {
         try {
             val intent = Intent(requireContext(), com.playstudio.aiteacher.profile.SubscriptionActivity::class.java)
@@ -4157,7 +4855,7 @@ class ChatFragment : Fragment() {
             showCustomToast("Subscription settings not available")
         }
     }
-    
+
     private fun openUsageDashboard() {
         try {
             val intent = Intent(requireContext(), UsageDashboardActivity::class.java)
@@ -4167,25 +4865,25 @@ class ChatFragment : Fragment() {
             showCustomToast("Usage dashboard not available")
         }
     }
-    
+
     // Smart model selection based on usage and cost
     private suspend fun suggestOptimalModel(): com.playstudio.aiteacher.pricing.AIModel? {
         return try {
             val userTier = subscriptionUIManager.getUserSubscriptionTier()
             val smartUpgradeManager = com.playstudio.aiteacher.pricing.SmartUpgradeManager(requireContext())
-            
+
             // Get recommendation based on usage patterns
             val recommendation = smartUpgradeManager.getUpgradeRecommendation(userTier)
-            
+
             // Find the best available model for current tier
             com.playstudio.aiteacher.pricing.AIModel.getBestModelForTier(userTier)
-            
+
         } catch (e: Exception) {
             Log.e("ChatFragment", "Error getting optimal model", e)
             null
         }
     }
-    
+
     private fun showModelRecommendationDialog() {
         lifecycleScope.launch {
             try {
@@ -4212,17 +4910,17 @@ class ChatFragment : Fragment() {
     private fun setupAdvancedUIFeatures() {
         // Model-specific UI optimizations
         setupModelSpecificFeatures()
-        
+
         // Cost-aware UI elements
         setupCostAwareUIElements()
-        
+
         // Usage progress indicators
         setupUsageProgressIndicators()
-        
+
         // Smart suggestions
         setupSmartSuggestions()
     }
-    
+
     private fun setupModelSpecificFeatures() {
         lifecycleScope.launch {
             try {
@@ -4235,7 +4933,7 @@ class ChatFragment : Fragment() {
                         "Google" -> setupGoogleSpecificFeatures(currentAIModel)
                         "DeepSeek" -> setupDeepSeekSpecificFeatures(currentAIModel)
                     }
-                    
+
                     // Update UI elements based on model costs
                     updateCostIndicators(currentAIModel)
                 }
@@ -4244,7 +4942,7 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun setupOpenAISpecificFeatures(model: com.playstudio.aiteacher.pricing.AIModel) {
         // Enable specific OpenAI features
         when (model.modelId) {
@@ -4266,7 +4964,7 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun setupAnthropicSpecificFeatures(model: com.playstudio.aiteacher.pricing.AIModel) {
         when {
             model.modelId.contains("claude-sonnet") -> {
@@ -4277,7 +4975,7 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun setupGoogleSpecificFeatures(model: com.playstudio.aiteacher.pricing.AIModel) {
         when {
             model.modelId.contains("gemini") && model.displayName.contains("Voice") -> {
@@ -4288,11 +4986,11 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun setupDeepSeekSpecificFeatures(model: com.playstudio.aiteacher.pricing.AIModel) {
         showModelCapabilityHints("🧮 Optimized for coding and math")
     }
-    
+
     private fun showModelCapabilityHints(hint: String) {
         // Show capability hints in a subtle way
         binding.root.post {
@@ -4303,19 +5001,19 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun setupCostAwareUIElements() {
         lifecycleScope.launch {
             try {
                 val currentAIModel = com.playstudio.aiteacher.pricing.AIModel.fromModelId(currentModel)
                 if (currentAIModel != null) {
                     val messageCost = currentAIModel.calculateMessageCost()
-                    
+
                     // Show cost indicators for expensive models
                     if (messageCost > 0.01) { // More than 1 cent per message
                         showCostWarning(currentAIModel, messageCost)
                     }
-                    
+
                     // Update UI with cost-efficient suggestions
                     suggestCostOptimizations(currentAIModel)
                 }
@@ -4324,11 +5022,11 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun showCostWarning(model: com.playstudio.aiteacher.pricing.AIModel, cost: Double) {
         val costFormatted = String.format("%.3f", cost)
         val warningMessage = "💰 ${model.displayName} costs ~$${costFormatted} per message"
-        
+
         // Show cost warning for expensive models
         if (cost > 0.05) { // More than 5 cents
             AlertDialog.Builder(requireContext())
@@ -4344,20 +5042,20 @@ class ChatFragment : Fragment() {
                 .show()
         }
     }
-    
+
     private fun showCostOptimizedModels() {
         lifecycleScope.launch {
             try {
                 val userTier = subscriptionUIManager.getUserSubscriptionTier()
                 val cheapestModel = com.playstudio.aiteacher.pricing.AIModel.getCheapestModelForTier(userTier)
-                
+
                 if (cheapestModel != null) {
                     val cheapestCost = cheapestModel.calculateMessageCost()
                     val currentAIModel = com.playstudio.aiteacher.pricing.AIModel.fromModelId(currentModel)
                     val currentCost = currentAIModel?.calculateMessageCost() ?: 0.0
-                    
+
                     val savings = ((currentCost - cheapestCost) / currentCost * 100).toInt()
-                    
+
                     withContext(Dispatchers.Main) {
                         AlertDialog.Builder(requireContext())
                             .setTitle("Cost Optimization")
@@ -4374,7 +5072,7 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun suggestCostOptimizations(model: com.playstudio.aiteacher.pricing.AIModel) {
         // Suggest optimizations based on usage patterns
         lifecycleScope.launch {
@@ -4382,7 +5080,7 @@ class ChatFragment : Fragment() {
                 val userTier = subscriptionUIManager.getUserSubscriptionTier()
                 val usageSummary = usageTracker.getUsageSummary(userTier)
                 val dailyUsage = usageSummary.values.sumOf { it.currentUsage }
-                
+
                 if (dailyUsage > 10 && model.calculateMessageCost() > 0.02) {
                     // High usage with expensive model - suggest optimization
                     val cheaperAlternatives = com.playstudio.aiteacher.pricing.AIModel.getAllModels()
@@ -4390,7 +5088,7 @@ class ChatFragment : Fragment() {
                         .filter { it.calculateMessageCost() < model.calculateMessageCost() }
                         .sortedBy { it.calculateMessageCost() }
                         .take(3)
-                    
+
                     if (cheaperAlternatives.isNotEmpty()) {
                         withContext(Dispatchers.Main) {
                             showCostOptimizationSuggestion(model, cheaperAlternatives)
@@ -4402,13 +5100,13 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun showCostOptimizationSuggestion(
         currentModel: com.playstudio.aiteacher.pricing.AIModel,
         alternatives: List<com.playstudio.aiteacher.pricing.AIModel>
     ) {
         val alternativeNames = alternatives.joinToString(", ") { it.displayName }
-        
+
         AlertDialog.Builder(requireContext())
             .setTitle("💡 Cost Optimization")
             .setMessage("You're using ${currentModel.displayName} frequently. Consider these cost-effective alternatives: $alternativeNames")
@@ -4422,17 +5120,17 @@ class ChatFragment : Fragment() {
             }
             .show()
     }
-    
+
     private fun saveCostSuggestionPreference(showSuggestions: Boolean) {
         val prefs = requireContext().getSharedPreferences("ai_cost_prefs", Context.MODE_PRIVATE)
         prefs.edit().putBoolean("show_cost_suggestions", showSuggestions).apply()
     }
-    
+
     private fun shouldShowCostSuggestions(): Boolean {
         val prefs = requireContext().getSharedPreferences("ai_cost_prefs", Context.MODE_PRIVATE)
         return prefs.getBoolean("show_cost_suggestions", true)
     }
-    
+
     private fun setupUsageProgressIndicators() {
         lifecycleScope.launch {
             try {
@@ -4441,10 +5139,10 @@ class ChatFragment : Fragment() {
                     val userTier = subscriptionUIManager.getUserSubscriptionTier()
                     val usageLimit = currentAIModel.getUsageLimitForTier(userTier)
                     val currentUsage = usageTracker.getCurrentUsage(currentAIModel.modelId)
-                    
+
                     if (usageLimit > 0) {
                         val usagePercentage = (currentUsage.toFloat() / usageLimit * 100).toInt()
-                        
+
                         withContext(Dispatchers.Main) {
                             updateUsageProgressUI(usagePercentage, currentUsage, usageLimit, currentAIModel.displayName)
                         }
@@ -4455,11 +5153,11 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun updateUsageProgressUI(percentage: Int, current: Int, limit: Int, modelName: String) {
         // Update any progress indicators in the UI
         val usageText = "$current/$limit messages used today"
-        
+
         when {
             percentage >= 90 -> {
                 showCustomToast("⚠️ $modelName: $usageText (${100-percentage}% remaining)")
@@ -4470,17 +5168,17 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun setupSmartSuggestions() {
         // Set up intelligent suggestions based on user behavior
         lifecycleScope.launch {
             try {
                 val smartUpgradeManager = com.playstudio.aiteacher.pricing.SmartUpgradeManager(requireContext())
                 val userTier = subscriptionUIManager.getUserSubscriptionTier()
-                
+
                 // Get smart recommendations
                 val recommendation = smartUpgradeManager.getUpgradeRecommendation(userTier)
-                
+
                 // Show smart suggestions if appropriate
                 if (shouldShowSmartSuggestions()) {
                     withContext(Dispatchers.Main) {
@@ -4492,21 +5190,21 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun shouldShowSmartSuggestions(): Boolean {
         val prefs = requireContext().getSharedPreferences("ai_suggestions_prefs", Context.MODE_PRIVATE)
         val lastShown = prefs.getLong("last_suggestion_time", 0)
         val now = System.currentTimeMillis()
-        
+
         // Show suggestions at most once per day
         return (now - lastShown) > 24 * 60 * 60 * 1000
     }
-    
+
     private fun showSmartSuggestionIfRelevant(recommendation: com.playstudio.aiteacher.pricing.SmartUpgradeRecommendation?) {
         if (recommendation != null && recommendation.urgency != com.playstudio.aiteacher.pricing.SmartUpgradeUrgency.OPTIONAL) {
             val smartUpgradeManager = com.playstudio.aiteacher.pricing.SmartUpgradeManager(requireContext())
             val message = smartUpgradeManager.getUpgradeMessage(recommendation)
-            
+
             AlertDialog.Builder(requireContext())
                 .setTitle("💡 Smart Suggestion")
                 .setMessage(message)
@@ -4518,18 +5216,18 @@ class ChatFragment : Fragment() {
                     disableSmartSuggestions()
                 }
                 .show()
-            
+
             // Update last shown time
             val prefs = requireContext().getSharedPreferences("ai_suggestions_prefs", Context.MODE_PRIVATE)
             prefs.edit().putLong("last_suggestion_time", System.currentTimeMillis()).apply()
         }
     }
-    
+
     private fun disableSmartSuggestions() {
         val prefs = requireContext().getSharedPreferences("ai_suggestions_prefs", Context.MODE_PRIVATE)
         prefs.edit().putLong("last_suggestion_time", Long.MAX_VALUE).apply()
     }
-    
+
     private fun updateCostIndicators(model: com.playstudio.aiteacher.pricing.AIModel) {
         // Update any cost indicators in the UI
         val costPerMessage = model.calculateMessageCost()
@@ -4538,7 +5236,7 @@ class ChatFragment : Fragment() {
         } else {
             "~$${String.format("%.3f", costPerMessage)}/msg"
         }
-        
+
         // This could update a status indicator or tooltip
         Log.d("ChatFragment", "Cost indicator for ${model.displayName}: $costText")
     }
@@ -4550,8 +5248,16 @@ class ChatFragment : Fragment() {
 
 
     private fun handleGeminiCompletion(message: String) {
-        val geminiApiKey = "YOUR_GEMINI_API_KEY" // Replace with actual key, ideally from secure storage
-        val geminiUrl = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent"
+        val geminiApiKey = getApiKey("google")
+        if (geminiApiKey.isNullOrEmpty()) {
+            Log.e("ChatFragment", "❌ No Google API key available for Gemini")
+            requireActivity().runOnUiThread {
+                showCustomToast("Google API key not available")
+                removeTypingIndicator()
+            }
+            return
+        }
+        val geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent"
 
         // 1. Define 'contentsArray' (for message history)
         val contentsArray = JSONArray().apply {
@@ -4654,13 +5360,13 @@ class ChatFragment : Fragment() {
                                         isUser = false,
                                         containsRichContent = determineIfRichContent(reply)
                                     )
-                                    
+
                                     // Track usage after successful response
                                     val currentAIModel = com.playstudio.aiteacher.pricing.AIModel.fromModelId("gemini")
                                     if (currentAIModel != null) {
                                         trackMessageUsage(currentAIModel, inputTokens, outputTokens)
                                     }
-                                    
+
                                     // If generateFollowUpQuestions is a suspend function, it needs to be called
                                     // from a coroutine scope or be launched in its own.
                                     // For now, assuming it's not a suspend function or handles its own scope.
@@ -4701,6 +5407,373 @@ class ChatFragment : Fragment() {
             }
         }
     }
+
+    /**
+     * Handle Veo video generation using Google's video generation API
+     * Supports async operation polling for video generation completion
+     * 
+     * STATUS: Veo 3 API is not yet publicly available (404 errors)
+     * Currently shows a preview demo. Will switch to real API when available.
+     * 
+     * TODO: Monitor Google's Veo API availability and switch to real implementation
+     */
+    private fun handleVeoVideoGeneration(prompt: String, inputImageBase64: String? = null, aspectRatio: String = "16:9") {
+        if (!isNetworkAvailable()) {
+            showCustomToast("No internet connection. Please check your network settings.")
+            return
+        }
+
+        // Show generating status
+        binding.imageContainer.visibility = View.VISIBLE
+        binding.generatingText.visibility = View.VISIBLE
+        binding.generatingText.text = "Generating video..."
+        binding.generatedImageView.visibility = View.GONE
+        binding.downloadButton.visibility = View.GONE
+
+        // Start generating animation
+        startGeneratingAnimation()
+        
+        Log.d("ChatFragment", "🎬 Veo video generation started with prompt: '$prompt'")
+        
+        // TEMPORARY: Show demo for now since Veo API isn't publicly available yet
+        if (prompt.length > 10) { // Only show demo for substantial prompts
+            showVeoPreviewDemo(prompt)
+            return
+        }
+
+        // Build request for Veo using Google's API format
+        val requestJson = JSONObject().apply {
+            put("prompt", prompt)
+            
+            // Add optional parameters
+            if (aspectRatio != "16:9") {
+                put("config", JSONObject().apply {
+                    put("aspectRatio", aspectRatio)
+                    put("personGeneration", "allow_all") // Allow people in videos
+                })
+            } else {
+                put("config", JSONObject().apply {
+                    put("personGeneration", "allow_all") // Allow people in videos
+                })
+            }
+            
+            // Add input image if provided (image-to-video capability)
+            inputImageBase64?.let { imageData ->
+                put("image", JSONObject().apply {
+                    put("data", imageData)
+                    put("mimeType", "image/jpeg")
+                })
+            }
+        }
+
+        val googleApiKey = getApiKey("google")
+        if (googleApiKey.isNullOrEmpty()) {
+            Log.e("ChatFragment", "❌ No Google API key available for Veo video generation")
+            requireActivity().runOnUiThread {
+                showCustomToast("Google API key not available")
+                removeTypingIndicator()
+            }
+            return
+        }
+        val url = "https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateVideos?key=$googleApiKey"
+        Log.d("ChatFragment", "🎬 Veo API URL: $url")
+        Log.d("ChatFragment", "🎬 Veo request body: ${requestJson.toString(2)}")
+        
+        val body = requestJson.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
+        val request = Request.Builder()
+            .url(url)
+            .post(body)
+            .addHeader("Content-Type", "application/json")
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e("ChatFragment", "Failed to start Veo video generation", e)
+                requireActivity().runOnUiThread {
+                    showCustomToast("Failed to start video generation. Please try again.")
+                    binding.imageContainer.visibility = View.GONE
+                    stopGeneratingAnimation()
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val responseBody = response.body?.string()
+                
+                if (!response.isSuccessful) {
+                    Log.e("ChatFragment", "Veo request failed: ${response.code} - ${response.message}")
+                    Log.e("ChatFragment", "Veo error body: $responseBody")
+                    Log.e("ChatFragment", "Veo request URL was: $url")
+                    
+                    requireActivity().runOnUiThread {
+                        val errorMessage = when (response.code) {
+                            404 -> "🎬 Veo video generation is not yet available. This feature is in preview and may require special access from Google. Please try again later or use image generation instead."
+                            403 -> "Access denied. Veo may require special API access or billing enabled in Google Cloud Console."
+                            429 -> "Rate limit exceeded. Please try again later."
+                            400 -> "Invalid request format. Please check the prompt."
+                            else -> "Video generation failed: ${response.code} ${response.message}"
+                        }
+                        showCustomToast(errorMessage)
+                        binding.imageContainer.visibility = View.GONE
+                        stopGeneratingAnimation()
+                    }
+                    return
+                }
+                
+                if (responseBody == null) {
+                    Log.e("ChatFragment", "Veo response body is null")
+                    requireActivity().runOnUiThread {
+                        showCustomToast("Video generation failed: empty response")
+                        binding.imageContainer.visibility = View.GONE
+                        stopGeneratingAnimation()
+                    }
+                    return
+                }
+
+                try {
+                    val responseData = JSONObject(responseBody)
+                    Log.d("ChatFragment", "Veo operation started: $responseData")
+
+                    // Extract operation name for polling
+                    val operationName = responseData.optString("name")
+                    if (operationName.isNotEmpty()) {
+                        // Start polling for completion
+                        pollVeoOperation(operationName)
+                    } else {
+                        requireActivity().runOnUiThread {
+                            showCustomToast("Failed to start video generation operation")
+                            binding.imageContainer.visibility = View.GONE
+                            stopGeneratingAnimation()
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("ChatFragment", "Error parsing Veo response", e)
+                    requireActivity().runOnUiThread {
+                        showCustomToast("Error processing video generation response")
+                        binding.imageContainer.visibility = View.GONE
+                        stopGeneratingAnimation()
+                    }
+                }
+            }
+        })
+    }
+
+    /**
+     * Poll Veo operation status until video generation is complete
+     */
+    private fun pollVeoOperation(operationName: String, maxAttempts: Int = 60) {
+        var attempts = 0
+        
+        val pollHandler = Handler(Looper.getMainLooper())
+        
+        fun pollOnce() {
+            attempts++
+            
+            if (attempts > maxAttempts) {
+                Log.w("ChatFragment", "Veo polling timeout after $maxAttempts attempts")
+                showCustomToast("Video generation timeout. Please try again.")
+                binding.imageContainer.visibility = View.GONE
+                stopGeneratingAnimation()
+                return
+            }
+
+            // Update status text with attempt count
+            binding.generatingText.text = "Generating video... (${attempts * 10}s)"
+
+            val googleApiKey = getApiKey("google")
+            if (googleApiKey.isNullOrEmpty()) {
+                Log.e("ChatFragment", "❌ No Google API key available for Veo polling")
+                requireActivity().runOnUiThread {
+                    showCustomToast("Google API key not available")
+                    stopGeneratingAnimation()
+                }
+                return
+            }
+            
+            val request = Request.Builder()
+                .url("https://generativelanguage.googleapis.com/v1beta/$operationName?key=$googleApiKey")
+                .get()
+                .build()
+
+            client.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    Log.e("ChatFragment", "Failed to poll Veo operation", e)
+                    pollHandler.postDelayed({ pollOnce() }, 10000) // Retry in 10 seconds
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    if (!response.isSuccessful) {
+                        Log.e("ChatFragment", "Veo polling failed: ${response.code}")
+                        pollHandler.postDelayed({ pollOnce() }, 10000)
+                        return
+                    }
+
+                    try {
+                        val operationData = JSONObject(response.body!!.string())
+                        val done = operationData.optBoolean("done", false)
+
+                        if (done) {
+                            // Video generation completed
+                            val responseObj = operationData.optJSONObject("response")
+                            val generatedVideos = responseObj?.optJSONArray("generatedVideos")
+                            
+                            if (generatedVideos != null && generatedVideos.length() > 0) {
+                                val firstVideo = generatedVideos.getJSONObject(0)
+                                val videoFile = firstVideo.optJSONObject("video")
+                                val videoUri = videoFile?.optString("uri")
+                                
+                                if (videoUri != null) {
+                                    requireActivity().runOnUiThread {
+                                        displayGeneratedVideo(videoUri)
+                                    }
+                                } else {
+                                    requireActivity().runOnUiThread {
+                                        showCustomToast("Video generation completed but no video found")
+                                        binding.imageContainer.visibility = View.GONE
+                                        stopGeneratingAnimation()
+                                    }
+                                }
+                            } else {
+                                requireActivity().runOnUiThread {
+                                    showCustomToast("Video generation completed but no videos returned")
+                                    binding.imageContainer.visibility = View.GONE
+                                    stopGeneratingAnimation()
+                                }
+                            }
+                        } else {
+                            // Continue polling
+                            pollHandler.postDelayed({ pollOnce() }, 10000) // Poll every 10 seconds
+                        }
+                    } catch (e: Exception) {
+                        Log.e("ChatFragment", "Error parsing Veo operation response", e)
+                        pollHandler.postDelayed({ pollOnce() }, 10000)
+                    }
+                }
+            })
+        }
+        
+        // Start polling
+        pollHandler.postDelayed({ pollOnce() }, 10000) // First poll after 10 seconds
+    }
+
+    /**
+     * Display generated video and setup download functionality
+     */
+    private fun displayGeneratedVideo(videoUri: String) {
+        Log.d("ChatFragment", "🎬 Displaying generated video: $videoUri")
+        
+        binding.imageContainer.visibility = View.VISIBLE
+        binding.generatingText.visibility = View.GONE
+        stopGeneratingAnimation()
+        
+        // For now, show the video URI as text (we'll need VideoView for actual playback)
+        // TODO: Implement proper video display with VideoView or WebView
+        binding.generatedImageView.visibility = View.VISIBLE
+        
+        // Load video thumbnail or show placeholder
+        // TODO: Extract video thumbnail and display with Glide
+        
+        // Show download button
+        binding.downloadButton.visibility = View.VISIBLE
+        binding.downloadButton.text = "Download Video"
+        binding.downloadButton.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.green)
+        binding.downloadButton.setOnClickListener {
+            downloadVideo(videoUri)
+        }
+        
+        // Track usage
+        val currentAIModel = com.playstudio.aiteacher.pricing.AIModel.fromModelId(currentModel)
+        if (currentAIModel != null) {
+            // Calculate cost for video generation
+            val videoCost = currentAIModel.imageOutputCostPerImage["720p"]?.get("16:9") ?: 0.0
+            
+            // Convert cost to token equivalent for tracking
+            val equivalentOutputTokens = (videoCost / currentAIModel.outputCostPer1M * 1000000).toInt()
+            
+            trackMessageUsage(currentAIModel, 100, equivalentOutputTokens) // 100 tokens for prompt
+        }
+        
+        showCustomToast("Video generated successfully!")
+    }
+
+    /**
+     * Download generated video file
+     */
+    private fun downloadVideo(videoUri: String) {
+        Log.d("ChatFragment", "Downloading video: $videoUri")
+        showCustomToast("Video download started...")
+        
+        // TODO: Implement video download functionality
+        // This will involve downloading the video file from Google's servers
+        // and saving it to the device's storage
+    }
+
+    /**
+     * Show preview demo for Veo since the API isn't publicly available yet
+     */
+    private fun showVeoPreviewDemo(prompt: String) {
+        // Simulate video generation delay
+        Handler(Looper.getMainLooper()).postDelayed({
+            requireActivity().runOnUiThread {
+                binding.generatingText.text = "Analyzing prompt..."
+            }
+        }, 2000)
+        
+        Handler(Looper.getMainLooper()).postDelayed({
+            requireActivity().runOnUiThread {
+                binding.generatingText.text = "Creating video frames..."
+            }
+        }, 4000)
+        
+        Handler(Looper.getMainLooper()).postDelayed({
+            requireActivity().runOnUiThread {
+                binding.generatingText.text = "Adding audio track..."
+            }
+        }, 6000)
+        
+        Handler(Looper.getMainLooper()).postDelayed({
+            requireActivity().runOnUiThread {
+                stopGeneratingAnimation()
+                binding.generatingText.visibility = View.GONE
+                
+                // Show a preview message instead of actual video
+                binding.generatedImageView.visibility = View.VISIBLE
+                
+                // Set a placeholder or preview text
+                val previewMessage = """
+                    🎬 VIDEO PREVIEW 🎬
+                    
+                    Prompt: "$prompt"
+                    
+                    This would generate an 8-second 720p video with audio featuring:
+                    • Cinematic quality visuals
+                    • Synchronized audio track
+                    • Professional video effects
+                    
+                    📹 Veo 3 is coming soon! 
+                    Video generation will be available when Google releases the public API.
+                    
+                    For now, try our image generation with GPT Image 1 or DALL-E 3!
+                """.trimIndent()
+                
+                // Display preview message
+                addMessageToChat(previewMessage, false)
+                
+                // Show download button (for demo)
+                binding.downloadButton.visibility = View.VISIBLE
+                binding.downloadButton.text = "Preview Feature"
+                binding.downloadButton.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.blue)
+                binding.downloadButton.setOnClickListener {
+                    showCustomToast("🎬 Veo video generation will be available soon! Stay tuned for updates.")
+                }
+                
+                // Hide the image container after showing the message
+                Handler(Looper.getMainLooper()).postDelayed({
+                    binding.imageContainer.visibility = View.GONE
+                }, 1000)
+            }
+        }, 8000) // Total: 8 seconds simulation
+    }
+
     // In ChatFragment.kt
 
     private fun handleDeepSeekCompletion(message: String) {
@@ -4794,13 +5867,13 @@ class ChatFragment : Fragment() {
                                         containsRichContent = determineIfRichContent(reply)
                                         // Citations and followUpQuestions can be added here if DeepSeek provides them
                                     )
-                                    
+
                                     // Track usage after successful response
                                     val currentAIModel = com.playstudio.aiteacher.pricing.AIModel.fromModelId("deepseek")
                                     if (currentAIModel != null) {
                                         trackMessageUsage(currentAIModel, inputTokens, outputTokens)
                                     }
-                                    
+
                                     // The scrolling is now handled inside addMessageToChat (via addMessageToList)
 
                                     // This call might add follow-up questions to a separate UI element at the bottom
@@ -4867,6 +5940,7 @@ class ChatFragment : Fragment() {
             "gpt-4o-mini-search-preview" -> "GPT-4o Mini Search"
             "gpt-4-turbo" -> "GPT-4 Turbo"
             "dall-e-3" -> "DALL-E 3"
+            "gpt-image-1" -> "GPT Image 1"
             "claude-sonnet-4-20250514" -> "Claude Sonnet 4"
             "claude-opus-4-20250514" -> "Claude Opus 4"
             "o1" -> "O1"
@@ -4938,19 +6012,19 @@ class ChatFragment : Fragment() {
         // Show voice recording dialog with hold-to-record functionality
         showVoiceRecordingDialog()
     }
-    
+
     private fun showVoiceRecordingDialog() {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_voice_recording, null)
         val dialog = AlertDialog.Builder(requireContext())
             .setView(dialogView)
             .setCancelable(true)
             .create()
-        
+
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        
+
         // Initialize the audio controls view
         val audioControlsView = dialogView.findViewById<AudioControlsView>(R.id.audioControlsView)
-        
+
         // Set up audio recording callback
         audioControlsView.onAudioRecorded = { audioFile ->
             // Process the recorded audio file with Whisper transcription
@@ -4958,10 +6032,10 @@ class ChatFragment : Fragment() {
                 try {
                     showCustomToast("Transcribing audio...")
                     val audioHandler = audioApiHandler ?: return@launch
-                    
+
                     val transcription = audioHandler.transcribeAudio(audioFile)
                     val transcribedText = transcription.text
-                    
+
                     withContext(Dispatchers.Main) {
                         if (transcribedText.isNotBlank()) {
                             // Handle any existing text in the input field
@@ -4971,20 +6045,20 @@ class ChatFragment : Fragment() {
                             } else {
                                 "$currentText $transcribedText"
                             }
-                            
+
                             // Clear the input field and auto-send the voice message
                             binding.messageEditText.setText("")
                             showCustomToast("Voice message sent")
                             dialog.dismiss()
-                            
+
                             // Enable audio mode temporarily for voice-initiated conversations
                             val wasAudioModeEnabled = isAudioModeEnabled
                             isAudioModeEnabled = true
                             Log.d("ChatFragment", "Audio mode enabled for voice message: $isAudioModeEnabled")
-                            
+
                             // Automatically send the transcribed message
                             processUserMessageSend(finalMessage)
-                            
+
                             // Keep audio mode enabled for this conversation flow
                             // (User can disable manually if desired)
                         } else {
@@ -4999,17 +6073,17 @@ class ChatFragment : Fragment() {
                 }
             }
         }
-        
+
         // Set up cancel button
         val cancelButton = dialogView.findViewById<Button>(R.id.cancel_button)
         cancelButton.setOnClickListener {
             audioControlsView.cleanup() // Stop any ongoing recording
             dialog.dismiss()
         }
-        
+
         dialog.show()
     }
-    
+
     @Deprecated("Replaced with startEnhancedVoiceRecording() using Whisper API")
     private fun startVoiceRecognition() {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
@@ -5037,7 +6111,7 @@ class ChatFragment : Fragment() {
             val request = Request.Builder()
                 .url("https://api.openai.com/v1/audio/speech")
                 .post(body)
-                .addHeader("Authorization", "Bearer $apiKey")
+                .addHeader("Authorization", "Bearer ${getApiKey("openai") ?: ""}")
                 .build()
 
             client.newCall(request).enqueue(object : Callback {
@@ -5089,7 +6163,7 @@ class ChatFragment : Fragment() {
             "Record Meeting",
             "Meeting Summary (from file)"
         )
-        
+
         AlertDialog.Builder(requireContext())
             .setTitle("Voice & Meeting Options")
             .setItems(options) { _, which ->
@@ -5103,20 +6177,20 @@ class ChatFragment : Fragment() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-    
+
     private fun showVoiceSelectionDialog() {
         showVoiceSelectionDialogInternal()
     }
-    
+
     private fun showVoiceSelectionDialogInternal() {
         // Check microphone permission before showing audio features
         if (!checkAndRequestPermissions()) {
             // Permission request was initiated, dialog will be shown in onRequestPermissionsResult
             return
         }
-        
+
         val audioEnabledModels = com.playstudio.aiteacher.pricing.AIModel.getAudioModelsForTier(getCurrentUserTier())
-        
+
         if (audioEnabledModels.isEmpty()) {
             // Fallback to simple voice selection for non-audio models
             showSimpleVoiceSelection()
@@ -5125,19 +6199,19 @@ class ChatFragment : Fragment() {
 
         val dialogBuilder = AlertDialog.Builder(requireContext())
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_voice_features, null)
-        
+
         val audioControlsView = dialogView.findViewById<AudioControlsView>(R.id.audio_controls_view)
-        
+
         // Setup audio controls
         audioControlsView.setAvailableModels(audioEnabledModels)
         audioControlsView.setSelectedVoice(selectedVoice)
         audioControlsView.setAudioModeEnabled(isAudioModeEnabled)
-        
+
         // Set callbacks
         audioControlsView.onVoiceSelected = { voice ->
             updateSelectedVoice(voice)
         }
-        
+
         audioControlsView.onAudioModelSelected = { model ->
             if (model.supportsAudio()) {
                 selectedModel = model.modelId
@@ -5145,7 +6219,7 @@ class ChatFragment : Fragment() {
                 showCustomToast("Selected: ${model.displayName}")
             }
         }
-        
+
         audioControlsView.onAudioModeToggled = { enabled ->
             isAudioModeEnabled = enabled
             if (enabled) {
@@ -5154,7 +6228,7 @@ class ChatFragment : Fragment() {
                 showCustomToast("Audio mode disabled")
             }
         }
-        
+
         audioControlsView.onAudioRecorded = { audioFile ->
             // Process the recorded audio
             processAudioInput(audioFile)
@@ -5170,7 +6244,7 @@ class ChatFragment : Fragment() {
 
         dialog.show()
     }
-    
+
     private fun showSimpleVoiceSelection() {
         val voices = arrayOf("Alloy", "Echo", "Fable", "Onyx", "Nova", "Shimmer")
         val builder = AlertDialog.Builder(requireContext())
@@ -5186,12 +6260,12 @@ class ChatFragment : Fragment() {
 
     private var selectedVoice = "alloy"
     private val SELECTED_VOICE_KEY = "selected_voice"
-    
+
     // Audio-related properties
     private var audioApiHandler: AudioApiHandler? = null
     private var currentAudioPlayer: MediaPlayer? = null
     private var isAudioModeEnabled = false
-    
+
     // Meeting recording properties
     private var meetingRecorder: MediaRecorder? = null
     private var meetingStartTime: Long = 0
@@ -5201,7 +6275,7 @@ class ChatFragment : Fragment() {
     private var currentMeetingDialog: AlertDialog? = null
     private var pendingMeetingSummaryType: String? = null
     private var pendingMeetingTranscript: String? = null
-    
+
 
     private fun saveSelectedVoice(voice: String) {
         val sharedPreferences = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -5287,7 +6361,7 @@ class ChatFragment : Fragment() {
         val request = Request.Builder()
             .url("https://api.openai.com/v1/chat/completions")
             .post(body)
-            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Authorization", "Bearer ${getApiKey("openai") ?: ""}")
             .addHeader("Content-Type", "application/json")
             .build()
 
@@ -5524,6 +6598,7 @@ class ChatFragment : Fragment() {
         - **GPT-3.5 Turbo**: Fast and efficient for most tasks.
         - **GPT-4o** 🧠: Advanced model for more complex queries.
         - **DALL-E 3** 🎨: Generate images from text prompts.
+        - **GPT Image 1** 🎨: Next-gen multimodal image generation (text + image input).
         - **TTS-1** 🔊: Convert text to speech.
     """.trimIndent()
 
@@ -5562,7 +6637,7 @@ class ChatFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        
+
         // Clean up voice agent resources
         if (isRealtimeMode) {
             stopRealtimeVoiceChat()
@@ -5570,15 +6645,15 @@ class ChatFragment : Fragment() {
         realtimeVoiceAgent?.disconnect()
         realtimeVoiceAgent = null
         voiceAgentCallback = null
-        
+
         // Clean up audio resources
         currentAudioPlayer?.release()
         currentAudioPlayer = null
-        
+
         // Clean up voice recording
         stopVoiceRecording()
         stopAllAIAudio()
-        
+
         // Save audio mode preference
         try {
             val appPrefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -5586,7 +6661,7 @@ class ChatFragment : Fragment() {
         } catch (e: Exception) {
             Log.w("ChatFragment", "Could not save audio mode preference", e)
         }
-        
+
         _binding = null
     }
 
@@ -6119,13 +7194,21 @@ class ChatFragment : Fragment() {
                     showCustomToast("Permissions required for voice recognition")
                 }
             }
-            
+
             REQUEST_RECORD_AUDIO_PERMISSION -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // Audio permission granted, use NEW voice agent system instead
-                    showVoiceAgentSelectionDialog()
+                    // Audio permission granted, continue with pending voice chat
+                    if (pendingVoiceAgentType != null) {
+                        // Continue with the specific agent type that was requested
+                        startRealtimeVoiceChat(pendingVoiceAgentType!!)
+                        pendingVoiceAgentType = null // Clear the pending state
+                    } else {
+                        // Fallback to agent selection dialog if no specific agent was pending
+                        showVoiceAgentSelectionDialog()
+                    }
                 } else {
                     showCustomToast("Microphone permission is required for audio features")
+                    pendingVoiceAgentType = null // Clear pending state on permission denial
                 }
             }
 
@@ -6264,35 +7347,35 @@ class ChatFragment : Fragment() {
     // ===========================================
     // AUDIO PROCESSING METHODS
     // ===========================================
-    
+
     private fun initializeAudioHandler() {
         audioApiHandler = AudioApiHandler(requireContext())
-        
+
         // Load audio mode preference
         val appPrefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         isAudioModeEnabled = appPrefs.getBoolean("audio_mode_enabled", false)
     }
-    
+
     private fun processAudioInput(audioFile: File) {
         if (!isAudioModeEnabled) {
             showCustomToast("Audio mode is disabled")
             return
         }
-        
+
         lifecycleScope.launch {
             try {
                 binding.progressBar.visibility = View.VISIBLE
-                
+
                 // Get current model from selectedModel or sharedPrefs or use default
                 val currentModelName = selectedModel ?: run {
                     val sharedPrefs = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
                     sharedPrefs.getString("selected_model", "gpt-4o-audio-preview") ?: "gpt-4o-audio-preview"
                 }
-                
+
                 // For now, always use transcription approach due to OpenAI format restrictions
                 // Direct audio input requires very specific formats (wav/mp3) that MediaRecorder doesn't produce reliably
                 processAudioTranscriptionThenChat(audioFile)
-                
+
             } catch (e: Exception) {
                 Log.e("ChatFragment", "Error processing audio input", e)
                 showCustomToast("Audio processing failed: ${e.message}")
@@ -6301,14 +7384,14 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private suspend fun processAudioChatCompletion(audioFile: File, model: com.playstudio.aiteacher.pricing.AIModel) {
         val audioHandler = audioApiHandler ?: return
-        
+
         try {
             // Add user audio message to chat
             addMessageToChat("🎤 Audio message", isUser = true)
-            
+
             // Send to API with audio support
             val response = audioHandler.chatCompletionWithAudio(
                 model = model,
@@ -6317,102 +7400,102 @@ class ChatFragment : Fragment() {
                 voice = "alloy", // Default voice
                 audioFormat = AudioApiHandler.FORMAT_WAV
             )
-            
+
             // Add AI response message
             addMessageToChat(response.textContent, isUser = false)
-            
+
             // Play audio response if available
             if (response.audioData != null) {
                 playAudioResponse(response.audioData)
             }
-            
+
         } catch (e: Exception) {
             Log.e("ChatFragment", "Audio chat completion failed", e)
             showCustomToast("Audio chat failed: ${e.message}")
         }
     }
-    
+
     private suspend fun processAudioTranscriptionThenChat(audioFile: File) {
         val audioHandler = audioApiHandler ?: return
-        
+
         try {
             // Show transcription status
             showCustomToast("Transcribing audio...")
-            
+
             // First transcribe the audio
             val transcription = audioHandler.transcribeAudio(
                 audioFile = audioFile,
                 model = "whisper-1",
                 responseFormat = "json"
             )
-            
+
             if (transcription.text.isNotBlank()) {
                 // Add transcribed text as user message
                 addMessageToChat("🎤 ${transcription.text}", isUser = true)
-                
-                // Process as regular text message  
+
+                // Process as regular text message
                 sendMessageToAPI(transcription.text)
             } else {
                 showCustomToast("Could not transcribe audio. Please try again.")
             }
-            
+
         } catch (e: Exception) {
             Log.e("ChatFragment", "Audio transcription failed", e)
             showCustomToast("Transcription failed: ${e.message}")
         }
     }
-    
+
     private suspend fun playAudioResponse(audioData: String) {
         try {
             val audioHandler = audioApiHandler ?: return
             val audioFile = audioHandler.saveBase64Audio(audioData, AudioApiHandler.FORMAT_WAV)
-            
+
             // Stop any currently playing audio
             currentAudioPlayer?.release()
-            
+
             // Play the new audio
             currentAudioPlayer = audioHandler.playAudioFile(audioFile)
-            
+
             currentAudioPlayer?.setOnCompletionListener { player ->
                 player.release()
                 currentAudioPlayer = null
             }
-            
+
         } catch (e: Exception) {
             Log.e("ChatFragment", "Error playing audio response", e)
             showCustomToast("Audio playback failed")
         }
     }
-    
+
     private suspend fun generateTextToSpeech(text: String) {
         if (text.isBlank()) return
-        
+
         Log.d("ChatFragment", "Starting TTS generation for text: ${text.take(50)}... with voice: $selectedVoice")
-        
+
         try {
             val audioHandler = audioApiHandler ?: return
-            
+
             val audioFile = audioHandler.textToSpeech(
                 text = text,
                 voice = selectedVoice
             )
-            
+
             Log.d("ChatFragment", "TTS audio file generated successfully, now playing...")
-            
+
             // Play the generated speech
             currentAudioPlayer?.release()
             currentAudioPlayer = audioHandler.playAudioFile(audioFile)
-            
+
             Log.d("ChatFragment", "TTS audio playback started")
-            
+
         } catch (e: Exception) {
             Log.e("ChatFragment", "TTS generation failed", e)
         }
     }
-    
+
     /*private fun showVoiceSelectionDialog() {
         val voiceOptions = AudioApiHandler.SUPPORTED_VOICES.toTypedArray()
-        
+
         AlertDialog.Builder(requireContext())
             .setTitle("Select Voice")
             .setItems(voiceOptions) { _, which ->
@@ -6423,7 +7506,7 @@ class ChatFragment : Fragment() {
             .setNegativeButton("Cancel", null)
             .show()
     }*/
-    
+
     private fun showAudioHelpDialog() {
         val helpText = """
             🎙️ Audio Features:
@@ -6448,14 +7531,14 @@ class ChatFragment : Fragment() {
             • Compatible subscription tier
             • Audio-enabled AI model
         """.trimIndent()
-        
+
         AlertDialog.Builder(requireContext())
             .setTitle("Audio Features Help")
             .setMessage(helpText)
             .setPositiveButton("Got it!", null)
             .show()
     }
-    
+
     private fun getCurrentUserTier(): com.playstudio.aiteacher.pricing.SubscriptionTier {
         return try {
             val subscriptionUIManager = SubscriptionUIManager(requireContext())
@@ -6465,13 +7548,13 @@ class ChatFragment : Fragment() {
             val subscriptionType = sharedPreferences.getString("subscription_type", null)
             val expirationTime = sharedPreferences.getLong("expiration_time", 0)
             val currentTime = System.currentTimeMillis()
-            
+
             if (currentTime < expirationTime && subscriptionType != null) {
                 when (subscriptionType.lowercase()) {
                     "essential", "basic" -> com.playstudio.aiteacher.pricing.SubscriptionTier.BASIC
                     "pro", "professional" -> com.playstudio.aiteacher.pricing.SubscriptionTier.PRO
                     "premium" -> com.playstudio.aiteacher.pricing.SubscriptionTier.PREMIUM
-                    "ultra_premium", "enterprise" -> com.playstudio.aiteacher.pricing.SubscriptionTier.ULTRA_PREMIUM
+                    "ultra_premium", "enterprise" -> com.playstudio.aiteacher.pricing.SubscriptionTier.ENTERPRISE
                     else -> com.playstudio.aiteacher.pricing.SubscriptionTier.FREE
                 }
             } else {
@@ -6481,7 +7564,7 @@ class ChatFragment : Fragment() {
             com.playstudio.aiteacher.pricing.SubscriptionTier.FREE
         }
     }
-    
+
     private fun updateActiveModelButton(model: com.playstudio.aiteacher.pricing.AIModel) {
         binding.activeModelButton.text = if (model.supportsAudio()) {
             "[AUDIO] ${model.displayName}"
@@ -6489,49 +7572,49 @@ class ChatFragment : Fragment() {
             model.displayName
         }
     }
-    
+
     private fun updateSelectedVoice(voice: String) {
         selectedVoice = voice
         saveSelectedVoice(voice)
         // Voice selection now integrated within message input area
         showCustomToast("Voice changed to: ${voice.replaceFirstChar { it.uppercase() }}")
     }
-    
+
     // =================== MEETING RECORDING FEATURES ===================
-    
+
     private fun startMeetingRecording() {
         if (isMeetingRecording) {
             stopMeetingRecording()
             return
         }
-        
+
         if (!checkAndRequestPermissions()) {
             showCustomToast("Microphone permission required for meeting recording")
             return
         }
-        
+
         showMeetingRecordingDialog()
     }
-    
+
     private fun showMeetingRecordingDialog() {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_meeting_recording, null)
         val dialog = AlertDialog.Builder(requireContext())
             .setView(dialogView)
             .setCancelable(false)
             .create()
-        
+
         currentMeetingDialog = dialog
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        
+
         val startStopButton = dialogView.findViewById<Button>(R.id.startStopRecordingButton)
         val statusText = dialogView.findViewById<TextView>(R.id.statusText)
         val timerText = dialogView.findViewById<TextView>(R.id.timerText)
         val doneButton = dialogView.findViewById<Button>(R.id.doneButton)
         val pauseResumeButton = dialogView.findViewById<Button>(R.id.pauseResumeButton)
-        
+
         // Update UI based on current state
         updateMeetingRecordingUI(startStopButton, statusText, timerText, doneButton, pauseResumeButton)
-        
+
         startStopButton.setOnClickListener {
             if (isMeetingRecording) {
                 stopMeetingRecordingInternal()
@@ -6540,7 +7623,7 @@ class ChatFragment : Fragment() {
             }
             updateMeetingRecordingUI(startStopButton, statusText, timerText, doneButton, pauseResumeButton)
         }
-        
+
         pauseResumeButton.setOnClickListener {
             if (isMeetingRecording) {
                 // Pause recording
@@ -6548,7 +7631,7 @@ class ChatFragment : Fragment() {
                 updateMeetingRecordingUI(startStopButton, statusText, timerText, doneButton, pauseResumeButton)
             }
         }
-        
+
         doneButton.setOnClickListener {
             stopMeetingTimer()
             if (isMeetingRecording) {
@@ -6560,19 +7643,19 @@ class ChatFragment : Fragment() {
             dialog.dismiss()
             currentMeetingDialog = null
         }
-        
+
         dialog.setOnDismissListener {
             stopMeetingTimer()
             currentMeetingDialog = null
         }
-        
+
         dialog.show()
     }
-    
+
     private fun startMeetingRecordingInternal() {
         try {
             currentMeetingFile = File(context?.cacheDir, "meeting_${System.currentTimeMillis()}.m4a")
-            
+
             meetingRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 MediaRecorder(requireContext())
             } else {
@@ -6587,18 +7670,18 @@ class ChatFragment : Fragment() {
                 prepare()
                 start()
             }
-            
+
             isMeetingRecording = true
             meetingStartTime = System.currentTimeMillis()
             startMeetingTimer()
             showCustomToast("Meeting recording started")
-            
+
         } catch (e: Exception) {
             Log.e("ChatFragment", "Failed to start meeting recording", e)
             showCustomToast("Failed to start recording: ${e.message}")
         }
     }
-    
+
     private fun stopMeetingRecordingInternal() {
         try {
             meetingRecorder?.apply {
@@ -6609,19 +7692,19 @@ class ChatFragment : Fragment() {
             isMeetingRecording = false
             stopMeetingTimer()
             showCustomToast("Meeting recording stopped")
-            
+
         } catch (e: Exception) {
             Log.e("ChatFragment", "Error stopping meeting recording", e)
             showCustomToast("Error stopping recording")
         }
     }
-    
+
     private fun stopMeetingRecording() {
         if (isMeetingRecording) {
             stopMeetingRecordingInternal()
         }
     }
-    
+
     private fun updateMeetingRecordingUI(
         startStopButton: Button,
         statusText: TextView,
@@ -6643,11 +7726,11 @@ class ChatFragment : Fragment() {
             doneButton.visibility = if (currentMeetingFile?.exists() == true) View.VISIBLE else View.GONE
             pauseResumeButton?.visibility = View.GONE
         }
-        
+
         // Update timer display
         updateTimerDisplay(timerText)
     }
-    
+
     private fun startMeetingTimer() {
         meetingTimerHandler = Handler(Looper.getMainLooper())
         meetingTimerRunnable = object : Runnable {
@@ -6661,7 +7744,7 @@ class ChatFragment : Fragment() {
         }
         meetingTimerHandler?.post(meetingTimerRunnable!!)
     }
-    
+
     private fun stopMeetingTimer() {
         meetingTimerRunnable?.let { runnable ->
             meetingTimerHandler?.removeCallbacks(runnable)
@@ -6669,27 +7752,27 @@ class ChatFragment : Fragment() {
         meetingTimerHandler = null
         meetingTimerRunnable = null
     }
-    
+
     private fun updateTimerDisplay(timerText: TextView?) {
         if (meetingStartTime > 0) {
             val elapsedTime = System.currentTimeMillis() - meetingStartTime
             val seconds = (elapsedTime / 1000) % 60
             val minutes = (elapsedTime / (1000 * 60)) % 60
             val hours = (elapsedTime / (1000 * 60 * 60))
-            
+
             val timeString = String.format("%02d:%02d:%02d", hours, minutes, seconds)
             timerText?.text = timeString
         } else {
             timerText?.text = "00:00:00"
         }
     }
-    
+
     private fun processMeetingRecording(meetingFile: File) {
         val fileSizeMB = meetingFile.length() / (1024 * 1024)
         val durationMinutes = estimateAudioDurationMinutes(meetingFile)
-        
+
         Log.d("ChatFragment", "Processing meeting: ${fileSizeMB}MB, estimated ${durationMinutes} minutes")
-        
+
         // Show processing strategy dialog for large files
         if (fileSizeMB > 25 || durationMinutes > 30) {
             showLongRecordingStrategyDialog(meetingFile, fileSizeMB, durationMinutes)
@@ -6698,13 +7781,13 @@ class ChatFragment : Fragment() {
             processStandardMeeting(meetingFile, fileSizeMB)
         }
     }
-    
+
     private fun estimateAudioDurationMinutes(audioFile: File): Int {
         // Rough estimation: M4A typically ~1MB per minute at standard quality
         val fileSizeMB = audioFile.length() / (1024 * 1024)
         return (fileSizeMB * 1.2).toInt() // Add 20% buffer for estimation
     }
-    
+
     private fun showLongRecordingStrategyDialog(meetingFile: File, fileSizeMB: Long, durationMinutes: Int) {
         val message = buildString {
             appendLine("Large Meeting Detected")
@@ -6713,13 +7796,13 @@ class ChatFragment : Fragment() {
             appendLine()
             appendLine("Choose processing method:")
         }
-        
+
         val options = arrayOf(
             "Split & Process (Recommended)",
             "Try Full File (May timeout)",
             "Save Audio Only"
         )
-        
+
         AlertDialog.Builder(requireContext())
             .setTitle("Long Recording Processing")
             .setMessage(message)
@@ -6733,11 +7816,11 @@ class ChatFragment : Fragment() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-    
+
     private fun processStandardMeeting(meetingFile: File, fileSizeMB: Long) {
         showCustomToast("Processing meeting recording... (${fileSizeMB}MB)")
         showLoadingOverlay(true)
-        
+
         lifecycleScope.launch {
             try {
                 val audioHandler = audioApiHandler
@@ -6748,18 +7831,18 @@ class ChatFragment : Fragment() {
                     }
                     return@launch
                 }
-                
+
                 val transcription = audioHandler.transcribeAudio(
                     audioFile = meetingFile,
                     model = "whisper-1",
                     responseFormat = "json"
                 )
-                
+
                 withContext(Dispatchers.Main) {
                     showLoadingOverlay(false)
                     showMeetingSummaryDialog(transcription.text, meetingFile)
                 }
-                
+
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     showLoadingOverlay(false)
@@ -6768,24 +7851,24 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun processLongMeetingInChunks(meetingFile: File, fileSizeMB: Long, durationMinutes: Int) {
         showCustomToast("Preparing to split large meeting into chunks...")
         showLoadingOverlay(true)
-        
+
         lifecycleScope.launch {
             try {
                 withContext(Dispatchers.Main) {
                     showCustomToast("Splitting ${durationMinutes}-minute recording into manageable chunks...")
                 }
-                
+
                 // For now, we'll simulate chunking and recommend the user manually split
                 // In a full implementation, you'd use FFmpeg or similar to split audio
                 withContext(Dispatchers.Main) {
                     showLoadingOverlay(false)
                     showChunkingRecommendationDialog(meetingFile, fileSizeMB, durationMinutes)
                 }
-                
+
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     showLoadingOverlay(false)
@@ -6795,11 +7878,11 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun processFullLongMeeting(meetingFile: File, fileSizeMB: Long, durationMinutes: Int) {
         showCustomToast("Processing full ${durationMinutes}-minute recording... This may take 10-15 minutes.")
         showLoadingOverlay(true)
-        
+
         lifecycleScope.launch {
             try {
                 val audioHandler = audioApiHandler
@@ -6810,7 +7893,7 @@ class ChatFragment : Fragment() {
                     }
                     return@launch
                 }
-                
+
                 // Show progress updates for long processing
                 var progressCounter = 0
                 val progressTimer = Timer()
@@ -6825,16 +7908,16 @@ class ChatFragment : Fragment() {
                         }
                     }
                 }, 30000, 30000) // Update every 30 seconds
-                
+
                 try {
                     val transcription = audioHandler.transcribeAudio(
                         audioFile = meetingFile,
                         model = "whisper-1",
                         responseFormat = "json"
                     )
-                    
+
                     progressTimer.cancel()
-                    
+
                     withContext(Dispatchers.Main) {
                         showLoadingOverlay(false)
                         showCustomToast("Long recording processed successfully!")
@@ -6844,7 +7927,7 @@ class ChatFragment : Fragment() {
                     progressTimer.cancel()
                     throw e
                 }
-                
+
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     showLoadingOverlay(false)
@@ -6853,18 +7936,18 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun saveAudioFileOnly(meetingFile: File) {
         lifecycleScope.launch {
             try {
                 val timestamp = System.currentTimeMillis()
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault())
                 val formattedDate = dateFormat.format(Date(timestamp))
-                
+
                 // Copy audio file to Documents/Meeting Transcripts folder
                 val fileName = "Meeting_Audio_${formattedDate}.m4a"
                 val success = copyAudioFileToDocuments(meetingFile, fileName)
-                
+
                 withContext(Dispatchers.Main) {
                     if (success) {
                         showCustomToast("Audio file saved to Documents/Meeting Transcripts/")
@@ -6873,7 +7956,7 @@ class ChatFragment : Fragment() {
                         showCustomToast("Failed to save audio file")
                     }
                 }
-                
+
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Log.e("ChatFragment", "Failed to save audio file", e)
@@ -6882,11 +7965,11 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun copyAudioFileToDocuments(sourceFile: File, fileName: String): Boolean {
         return try {
             val audioContent = sourceFile.readBytes()
-            
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val resolver = requireContext().contentResolver
                 val contentValues = ContentValues().apply {
@@ -6894,7 +7977,7 @@ class ChatFragment : Fragment() {
                     put(MediaStore.MediaColumns.MIME_TYPE, "audio/m4a")
                     put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOCUMENTS}/Meeting Transcripts")
                 }
-                
+
                 val uri = resolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
                 uri?.let { fileUri ->
                     resolver.openOutputStream(fileUri)?.use { outputStream ->
@@ -6902,23 +7985,23 @@ class ChatFragment : Fragment() {
                     }
                     true
                 } ?: false
-                
+
             } else {
                 val documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
                 val meetingDir = File(documentsDir, "Meeting Transcripts")
-                
+
                 if (!meetingDir.exists()) {
                     meetingDir.mkdirs()
                 }
-                
+
                 val file = File(meetingDir, fileName)
                 file.writeBytes(audioContent)
-                
+
                 // Notify media scanner
                 val intent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
                 intent.data = Uri.fromFile(file)
                 requireContext().sendBroadcast(intent)
-                
+
                 true
             }
         } catch (e: Exception) {
@@ -6926,7 +8009,7 @@ class ChatFragment : Fragment() {
             false
         }
     }
-    
+
     private fun showChunkingRecommendationDialog(meetingFile: File, fileSizeMB: Long, durationMinutes: Int) {
         val message = buildString {
             appendLine("Large Meeting Detected")
@@ -6939,7 +8022,7 @@ class ChatFragment : Fragment() {
             appendLine()
             appendLine("The audio file has been saved to Documents for manual processing.")
         }
-        
+
         AlertDialog.Builder(requireContext())
             .setTitle("Long Recording Recommendations")
             .setMessage(message)
@@ -6952,10 +8035,10 @@ class ChatFragment : Fragment() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-    
+
     private fun handleMeetingProcessingError(e: Exception, meetingFile: File, fileSizeMB: Long) {
         Log.e("ChatFragment", "Meeting processing error", e)
-        
+
         when (e) {
             is java.net.SocketTimeoutException -> {
                 showMeetingTimeoutDialog(meetingFile, fileSizeMB)
@@ -6978,7 +8061,7 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun showLoadingOverlay(show: Boolean) {
         try {
             binding.loadingOverlay.visibility = if (show) View.VISIBLE else View.GONE
@@ -6987,7 +8070,7 @@ class ChatFragment : Fragment() {
             Log.e("ChatFragment", "Error toggling loading overlay", e)
         }
     }
-    
+
     private fun showMeetingTimeoutDialog(meetingFile: File, fileSizeMB: Long) {
         AlertDialog.Builder(requireContext())
             .setTitle("Processing Timeout")
@@ -7003,17 +8086,17 @@ class ChatFragment : Fragment() {
             }
             .show()
     }
-    
+
     private fun showMeetingSummaryDialog(transcript: String, meetingFile: File) {
         val summaryOptions = arrayOf(
             "Generate Meeting Summary",
-            "Extract Action Items", 
+            "Extract Action Items",
             "Identify Key Decisions",
             "Create Meeting Minutes",
             "Analyze Speakers & Contributions",
             "Full Transcript Only"
         )
-        
+
         AlertDialog.Builder(requireContext())
             .setTitle("Meeting Processing Options")
             .setMessage("Meeting transcribed successfully! Choose how to process:\\n\\n✓ All summaries will be automatically saved to Documents/Meeting Transcripts/")
@@ -7036,7 +8119,7 @@ class ChatFragment : Fragment() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-    
+
     private fun generateMeetingSummary(transcript: String, summaryType: String) {
         val prompt = when (summaryType) {
             "summary" -> """
@@ -7066,7 +8149,7 @@ class ChatFragment : Fragment() {
                 - Overall productivity assessment
                 - Areas where more discussion may be needed
             """.trimIndent()
-            
+
             "action_items" -> """
                 Extract and analyze all action items from this meeting transcript:
                 
@@ -7100,7 +8183,7 @@ class ChatFragment : Fragment() {
                 - Items with deadlines: [Count]
                 - Items requiring follow-up: [Count]
             """.trimIndent()
-            
+
             "key_decisions" -> """
                 Analyze all decisions made in this meeting transcript:
                 
@@ -7136,7 +8219,7 @@ class ChatFragment : Fragment() {
                   - Communication method: [How to inform them]
                   - Timeline for communication: [When to communicate]
             """.trimIndent()
-            
+
             "meeting_minutes" -> """
                 Create formal meeting minutes from this transcript with speaker identification:
                 
@@ -7150,7 +8233,7 @@ class ChatFragment : Fragment() {
                 - Action items with specific owners identified
                 - Next steps and responsible parties
             """.trimIndent()
-            
+
             "speaker_analysis" -> """
                 Analyze speakers in this meeting transcript:
                 
@@ -7163,30 +8246,30 @@ class ChatFragment : Fragment() {
                 - Key statements and decisions attributed to each speaker
                 - Speaking patterns and engagement levels
             """.trimIndent()
-            
+
             else -> "Please summarize this meeting transcript: $transcript"
         }
-        
+
         // Store the summary type for saving when AI responds
         pendingMeetingSummaryType = summaryType
         pendingMeetingTranscript = transcript
-        
+
         // Send the prompt as a regular message to get AI processing
         processUserMessageSend(prompt)
         showCustomToast("Generating ${summaryType.replace("_", " ")}... (Will auto-save when complete)")
     }
-    
+
     private fun saveMeetingSummary(summaryContent: String, summaryType: String, originalTranscript: String) {
         lifecycleScope.launch {
             try {
                 val timestamp = System.currentTimeMillis()
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault())
                 val formattedDate = dateFormat.format(Date(timestamp))
-                
-                val typeDisplay = summaryType.replace("_", " ").split(" ").joinToString(" ") { 
-                    it.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString() } 
+
+                val typeDisplay = summaryType.replace("_", " ").split(" ").joinToString(" ") {
+                    it.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString() }
                 }
-                
+
                 val fullContent = buildString {
                     appendLine("=".repeat(60))
                     appendLine("MEETING $typeDisplay".uppercase())
@@ -7204,10 +8287,10 @@ class ChatFragment : Fragment() {
                     appendLine("=".repeat(60))
                     appendLine("Generated by AI Chat Teacher")
                 }
-                
+
                 val fileName = "Meeting_${typeDisplay.replace(" ", "_")}_${formattedDate}.txt"
                 val success = saveMeetingFileToDocuments(fullContent, fileName)
-                
+
                 withContext(Dispatchers.Main) {
                     if (success) {
                         showCustomToast("$typeDisplay saved to Documents/Meeting Transcripts/")
@@ -7216,7 +8299,7 @@ class ChatFragment : Fragment() {
                         showCustomToast("Failed to save $typeDisplay")
                     }
                 }
-                
+
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Log.e("ChatFragment", "Failed to save meeting summary", e)
@@ -7225,7 +8308,7 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun showFullTranscript(transcript: String) {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("Meeting Transcript")
@@ -7237,14 +8320,14 @@ class ChatFragment : Fragment() {
         builder.setNegativeButton("Close", null)
         builder.show()
     }
-    
+
     private fun saveMeetingTranscript(transcript: String, meetingFile: File) {
         lifecycleScope.launch {
             try {
                 val timestamp = System.currentTimeMillis()
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault())
                 val formattedDate = dateFormat.format(Date(timestamp))
-                
+
                 // Save transcript to Documents/Meeting Transcripts folder
                 val transcriptContent = buildString {
                     appendLine("=".repeat(50))
@@ -7258,10 +8341,10 @@ class ChatFragment : Fragment() {
                     appendLine("End of Transcript")
                     appendLine("Generated by AI Chat Teacher")
                 }
-                
+
                 val fileName = "Meeting_Transcript_${formattedDate}.txt"
                 val success = saveMeetingFileToDocuments(transcriptContent, fileName)
-                
+
                 withContext(Dispatchers.Main) {
                     if (success) {
                         showCustomToast("Transcript saved to Documents/Meeting Transcripts/")
@@ -7270,7 +8353,7 @@ class ChatFragment : Fragment() {
                         showCustomToast("Failed to save transcript")
                     }
                 }
-                
+
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Log.e("ChatFragment", "Failed to save meeting transcript", e)
@@ -7279,7 +8362,7 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun saveMeetingFileToDocuments(content: String, fileName: String): Boolean {
         return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -7290,7 +8373,7 @@ class ChatFragment : Fragment() {
                     put(MediaStore.MediaColumns.MIME_TYPE, "text/plain")
                     put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOCUMENTS}/Meeting Transcripts")
                 }
-                
+
                 val uri = resolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
                 uri?.let { fileUri ->
                     resolver.openOutputStream(fileUri)?.use { outputStream ->
@@ -7298,24 +8381,24 @@ class ChatFragment : Fragment() {
                     }
                     true
                 } ?: false
-                
+
             } else {
                 // For older Android versions
                 val documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
                 val meetingDir = File(documentsDir, "Meeting Transcripts")
-                
+
                 if (!meetingDir.exists()) {
                     meetingDir.mkdirs()
                 }
-                
+
                 val file = File(meetingDir, fileName)
                 file.writeText(content)
-                
+
                 // Notify media scanner
                 val intent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
                 intent.data = Uri.fromFile(file)
                 requireContext().sendBroadcast(intent)
-                
+
                 true
             }
         } catch (e: Exception) {
@@ -7323,7 +8406,7 @@ class ChatFragment : Fragment() {
             false
         }
     }
-    
+
     private fun showMeetingFileSavedDialog(fileName: String, fileType: String) {
         AlertDialog.Builder(requireContext())
             .setTitle("File Saved Successfully")
@@ -7339,7 +8422,7 @@ class ChatFragment : Fragment() {
             }
             .show()
     }
-    
+
     private fun shareMeetingFile(fileName: String, fileType: String) {
         try {
             // Get the file path
@@ -7349,7 +8432,7 @@ class ChatFragment : Fragment() {
                 val collection = MediaStore.Files.getContentUri("external")
                 val selection = "${MediaStore.MediaColumns.DISPLAY_NAME} = ?"
                 val selectionArgs = arrayOf(fileName)
-                
+
                 var fileUri: Uri? = null
                 resolver.query(collection, null, selection, selectionArgs, null)?.use { cursor ->
                     if (cursor.moveToFirst()) {
@@ -7366,7 +8449,7 @@ class ChatFragment : Fragment() {
                 val file = File(meetingDir, fileName)
                 FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.fileprovider", file)
             }
-            
+
             filePath?.let { uri ->
                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
@@ -7375,27 +8458,27 @@ class ChatFragment : Fragment() {
                     putExtra(Intent.EXTRA_TEXT, "Sharing meeting $fileType generated by AI Chat Teacher.\n\nFile: $fileName")
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
-                
+
                 startActivity(Intent.createChooser(shareIntent, "Share Meeting $fileType"))
             } ?: run {
                 showCustomToast("Could not find file to share")
             }
-            
+
         } catch (e: Exception) {
             Log.e("ChatFragment", "Error sharing meeting file", e)
             showCustomToast("Failed to share file: ${e.message}")
         }
     }
-    
+
     private fun showMeetingExportDialog(fileName: String, fileType: String) {
         val exportOptions = arrayOf(
             "Export as PDF",
-            "Export as Word Document", 
+            "Export as Word Document",
             "Email as Attachment",
             "Copy to Clipboard",
             "Create Summary Report"
         )
-        
+
         AlertDialog.Builder(requireContext())
             .setTitle("Export Meeting $fileType")
             .setMessage("Choose export format for $fileName:")
@@ -7411,17 +8494,17 @@ class ChatFragment : Fragment() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-    
+
     private fun exportAsPDF(fileName: String, fileType: String) {
         showCustomToast("PDF export feature coming soon!")
         // TODO: Implement PDF generation using library like iText
     }
-    
+
     private fun exportAsWord(fileName: String, fileType: String) {
         showCustomToast("Word export feature coming soon!")
         // TODO: Implement Word document generation
     }
-    
+
     private fun emailAsAttachment(fileName: String, fileType: String) {
         try {
             val filePath = getMeetingFilePath(fileName)
@@ -7434,7 +8517,7 @@ class ChatFragment : Fragment() {
                     putExtra(Intent.EXTRA_STREAM, uri)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
-                
+
                 startActivity(Intent.createChooser(emailIntent, "Send Email"))
             }
         } catch (e: Exception) {
@@ -7442,7 +8525,7 @@ class ChatFragment : Fragment() {
             showCustomToast("Failed to create email: ${e.message}")
         }
     }
-    
+
     private fun copyToClipboard(fileName: String, fileType: String) {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
@@ -7461,7 +8544,7 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun createSummaryReport(fileName: String, fileType: String) {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
@@ -7481,7 +8564,7 @@ class ChatFragment : Fragment() {
                 
                 Format as a professional report suitable for distribution.
                 """
-                
+
                 withContext(Dispatchers.Main) {
                     processUserMessageSend(summaryPrompt)
                     showCustomToast("Generating executive summary report...")
@@ -7494,7 +8577,7 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun getMeetingFilePath(fileName: String): Uri? {
         return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -7502,7 +8585,7 @@ class ChatFragment : Fragment() {
                 val collection = MediaStore.Files.getContentUri("external")
                 val selection = "${MediaStore.MediaColumns.DISPLAY_NAME} = ?"
                 val selectionArgs = arrayOf(fileName)
-                
+
                 resolver.query(collection, null, selection, selectionArgs, null)?.use { cursor ->
                     if (cursor.moveToFirst()) {
                         val idColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID)
@@ -7524,7 +8607,7 @@ class ChatFragment : Fragment() {
             null
         }
     }
-    
+
     private fun readMeetingFileContent(fileName: String): String {
         return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -7532,13 +8615,13 @@ class ChatFragment : Fragment() {
                 val collection = MediaStore.Files.getContentUri("external")
                 val selection = "${MediaStore.MediaColumns.DISPLAY_NAME} = ?"
                 val selectionArgs = arrayOf(fileName)
-                
+
                 resolver.query(collection, null, selection, selectionArgs, null)?.use { cursor ->
                     if (cursor.moveToFirst()) {
                         val idColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID)
                         val id = cursor.getLong(idColumn)
                         val uri = ContentUris.withAppendedId(collection, id)
-                        
+
                         resolver.openInputStream(uri)?.use { inputStream ->
                             return inputStream.bufferedReader().use { it.readText() }
                         }
@@ -7555,7 +8638,7 @@ class ChatFragment : Fragment() {
             throw Exception("Could not read file content: ${e.message}")
         }
     }
-    
+
     private fun openMeetingFolder() {
         try {
             val intent = Intent(Intent.ACTION_VIEW).apply {
@@ -7578,33 +8661,33 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     private fun selectMeetingFileForSummary() {
         val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
             type = "audio/*"
             addCategory(Intent.CATEGORY_OPENABLE)
         }
-        
+
         try {
             startActivityForResult(Intent.createChooser(intent, "Select Meeting Recording"), REQUEST_CODE_MEETING_FILE)
         } catch (e: ActivityNotFoundException) {
             showCustomToast("No file manager available")
         }
     }
-    
+
     /**
      * Initialize Realtime Voice Agent for speech-to-speech interactions
      */
     private fun initializeRealtimeVoiceAgent() {
         try {
             realtimeVoiceAgent = RealtimeVoiceAgent(requireContext())
-            
+
             // Create voice agent callback
             voiceAgentCallback = object : RealtimeVoiceAgent.VoiceAgentCallback {
                 override fun onStateChanged(newState: String) {
                     lifecycleScope.launch(Dispatchers.Main) {
                         updateVoiceAgentUI(newState)
-                        
+
                         // Handle AI speaking state changes with improved conflict prevention
                         when (newState) {
                             RealtimeVoiceAgent.STATE_SPEAKING -> {
@@ -7612,6 +8695,7 @@ class ChatFragment : Fragment() {
                                 if (!isUserCurrentlySpeaking()) {
                                     isAICurrentlySpeaking = true
                                     hasInterruptedCurrentResponse = false  // Reset interruption flag for new response
+                                    hasTriggeredResponse = false  // Reset trigger flag for next user turn
                                     lastAiSpeakStartTime = System.currentTimeMillis()  // Track when AI started speaking
                                     resumeStreamingAudio() // Resume if it was paused
                                     Log.d("ChatFragment", "AI started speaking - ready for interruption (protection window: 1s)")
@@ -7626,7 +8710,7 @@ class ChatFragment : Fragment() {
                                 }
                             }
                             RealtimeVoiceAgent.STATE_LISTENING -> {
-                                isAICurrentlySpeaking = false 
+                                isAICurrentlySpeaking = false
                                 hasInterruptedCurrentResponse = false  // Reset for next conversation turn
                                 Log.d("ChatFragment", "AI finished speaking - microphone input resumed")
                             }
@@ -7636,7 +8720,7 @@ class ChatFragment : Fragment() {
                             }
                             RealtimeVoiceAgent.STATE_INTERRUPTED -> {
                                 // User interrupted AI - pause audio instead of destroying it
-                                pauseStreamingAudio() 
+                                pauseStreamingAudio()
                                 isAICurrentlySpeaking = false
                                 hasInterruptedCurrentResponse = true  // Mark as already interrupted
                                 Log.d("ChatFragment", "User interrupted AI - paused audio")
@@ -7644,17 +8728,17 @@ class ChatFragment : Fragment() {
                         }
                     }
                 }
-                
+
                 override fun onAudioReceived(audioData: ByteArray) {
                     val userSpeaking = isUserCurrentlySpeaking()
                     val shouldPlayAudio = !userSpeaking && !hasInterruptedCurrentResponse
-                    
+
                     if (shouldPlayAudio) {
                         playRealtimeAudio(audioData)
                         Log.d("ChatFragment", "Playing AI audio (${audioData.size} bytes)")
                     } else {
                         Log.d("ChatFragment", "Blocking AI audio - User speaking: $userSpeaking, Already interrupted: $hasInterruptedCurrentResponse")
-                        
+
                         // If user is speaking and we haven't interrupted yet, trigger interruption
                         if (userSpeaking && !hasInterruptedCurrentResponse && isAICurrentlySpeaking) {
                             Log.d("ChatFragment", "Triggering interruption due to user speech")
@@ -7666,13 +8750,13 @@ class ChatFragment : Fragment() {
                         }
                     }
                 }
-                
+
                 override fun onTranscriptReceived(transcript: String, isUser: Boolean) {
                     lifecycleScope.launch(Dispatchers.Main) {
                         displayRealtimeTranscript(transcript, isUser)
                     }
                 }
-                
+
                 override fun onError(error: String) {
                     lifecycleScope.launch(Dispatchers.Main) {
                         // Filter out expected cancellation errors to reduce noise
@@ -7688,7 +8772,7 @@ class ChatFragment : Fragment() {
                         }
                     }
                 }
-                
+
                 override fun onAgentHandoff(newAgent: String) {
                     lifecycleScope.launch(Dispatchers.Main) {
                         if (isAdded && context != null) {
@@ -7697,7 +8781,7 @@ class ChatFragment : Fragment() {
                         handleAgentHandoff(newAgent)
                     }
                 }
-                
+
                 override fun onGuardrailTripped(reason: String) {
                     lifecycleScope.launch(Dispatchers.Main) {
                         if (isAdded && context != null) {
@@ -7707,21 +8791,21 @@ class ChatFragment : Fragment() {
                     }
                 }
             }
-            
+
             Log.d("ChatFragment", "Realtime Voice Agent initialized successfully")
         } catch (e: Exception) {
             Log.e("ChatFragment", "Failed to initialize Realtime Voice Agent", e)
             showCustomToast("Voice agent initialization failed")
         }
     }
-    
+
     /**
      * Create default voice agent configurations
      */
     private fun createDefaultVoiceAgents(): Map<String, RealtimeVoiceAgent.VoiceAgentConfig> {
         return try {
             Log.d("ChatFragment", "Creating default voice agents...")
-            
+
             val agents = mapOf(
                 "general_assistant" to RealtimeVoiceAgent.VoiceAgentConfig(
                     name = "🤖 AI Chat Assistant",
@@ -7738,7 +8822,7 @@ class ChatFragment : Fragment() {
                         voiceModel = "alloy"
                     )
                 ),
-                
+
                 "meeting_specialist" to RealtimeVoiceAgent.VoiceAgentConfig(
                     name = "📋 Meeting Specialist",
                     instructions = "You specialize in meeting analysis, note-taking, and action item extraction. Help users record, transcribe, and summarize meetings effectively.",
@@ -7755,9 +8839,9 @@ class ChatFragment : Fragment() {
                     ),
                     tools = createMeetingToolsSafely()
                 ),
-                
+
                 "educational_tutor" to RealtimeVoiceAgent.VoiceAgentConfig(
-                    name = "🎓 Educational Tutor", 
+                    name = "🎓 Educational Tutor",
                     instructions = "You are an expert tutor helping students learn. Break down complex concepts, provide examples, and encourage learning.",
                     personality = RealtimeVoiceAgent.AgentPersonality(
                         identity = "You are a patient and knowledgeable tutor",
@@ -7773,10 +8857,10 @@ class ChatFragment : Fragment() {
                     handoffAgents = listOf("general_assistant", "meeting_specialist")
                 )
             )
-            
+
             Log.d("ChatFragment", "Successfully created ${agents.size} voice agents")
             agents
-            
+
         } catch (e: Exception) {
             Log.e("ChatFragment", "Error creating voice agents", e)
             // Return minimal fallback agents
@@ -7788,7 +8872,7 @@ class ChatFragment : Fragment() {
             )
         }
     }
-    
+
     /**
      * Create meeting tools safely without throwing exceptions
      */
@@ -7796,7 +8880,7 @@ class ChatFragment : Fragment() {
         return try {
             listOf(
                 createMeetingTranscriptionTool(),
-                createActionItemExtractionTool(), 
+                createActionItemExtractionTool(),
                 createMeetingSummaryTool()
             )
         } catch (e: Exception) {
@@ -7804,7 +8888,7 @@ class ChatFragment : Fragment() {
             emptyList()
         }
     }
-    
+
     /**
      * Create meeting transcription tool
      */
@@ -7826,7 +8910,7 @@ class ChatFragment : Fragment() {
             "Meeting transcription started for $meetingType meeting. I will provide real-time transcription with speaker identification and key point extraction."
         }
     }
-    
+
     /**
      * Create action item extraction tool
      */
@@ -7847,15 +8931,15 @@ class ChatFragment : Fragment() {
         ) { args, context ->
             val priority = args["priority"] as? String ?: "all"
             val history = context.history
-            
+
             // Analyze conversation history for action items
             val actionItems = extractActionItemsFromHistory(history, priority)
             "Found ${actionItems.size} action items with $priority priority: $actionItems"
         }
     }
-    
+
     /**
-     * Create meeting summary tool  
+     * Create meeting summary tool
      */
     private fun createMeetingSummaryTool(): RealtimeVoiceAgent.VoiceAgentTool {
         return RealtimeVoiceAgent.VoiceAgentTool(
@@ -7874,35 +8958,35 @@ class ChatFragment : Fragment() {
         ) { args, context ->
             val format = args["format"] as? String ?: "executive"
             val history = context.history
-            
+
             generateMeetingSummaryFromHistory(history, format)
         }
     }
-    
+
     /**
      * Extract action items from conversation history
      */
     private fun extractActionItemsFromHistory(history: List<RealtimeVoiceAgent.VoiceMessage>, priority: String): List<String> {
         val actionItems = mutableListOf<String>()
 
-        
+
         history.forEach { message ->
             val content = message.content.lowercase()
             if (content.contains("action item") || content.contains("todo") || content.contains("follow up")) {
                 actionItems.add(message.content)
             }
         }
-        
+
         return actionItems
     }
-    
+
     /**
      * Generate meeting summary from history
      */
     private fun generateMeetingSummaryFromHistory(history: List<RealtimeVoiceAgent.VoiceMessage>, format: String): String {
         val userMessages = history.filter { it.isUser }
         val aiMessages = history.filter { !it.isUser }
-        
+
         return when (format) {
             "executive" -> "Executive Summary: Meeting covered ${userMessages.size} main topics with ${aiMessages.size} responses. Key decisions and action items identified."
             "detailed" -> "Detailed Summary: Comprehensive discussion with full transcript and analysis available."
@@ -7910,52 +8994,67 @@ class ChatFragment : Fragment() {
             else -> "Meeting summary generated successfully."
         }
     }
-    
+
     /**
      * Start realtime voice conversation
      */
     private fun startRealtimeVoiceChat(agentType: String = "general_assistant") {
+        Log.d("ChatFragment", "🎯 startRealtimeVoiceChat called with agentType: $agentType")
+        // Check microphone permission first
+        if (!checkAndRequestAudioPermission(REQUEST_RECORD_AUDIO_PERMISSION)) {
+            Log.w("ChatFragment", "🔒 Audio permission not granted, storing agent type: $agentType")
+            // Permission not granted, store agent type for later and request permission
+            pendingVoiceAgentType = agentType
+            return
+        }
+        Log.d("ChatFragment", "✅ Audio permission already granted, proceeding with live voice chat")
+
         lifecycleScope.launch {
             try {
                 val agents = createDefaultVoiceAgents()
                 val selectedAgent = agents[agentType] ?: agents["general_assistant"]!!
-                
+
                 currentVoiceAgent = selectedAgent
                 realtimeVoiceAgent?.initializeAgent(selectedAgent, voiceAgentCallback!!)
-                
+
                 showLoadingOverlay(true)
                 if (isAdded && context != null) {
                     showCustomToast("Connecting to voice agent...")
                 }
-                
+
                 // Try connecting with retry logic
                 var connected = false
                 for (attempt in 0..2) {
                     connected = realtimeVoiceAgent?.connectToRealtime(retryCount = attempt) == true
                     if (connected) break
-                    
+
                     if (attempt < 2) {
                         Log.d("ChatFragment", "Connection attempt ${attempt + 1} failed, retrying...")
                         kotlinx.coroutines.delay(1000L * (attempt + 1)) // Progressive delay
                     }
                 }
-                
+
                 withContext(Dispatchers.Main) {
                     showLoadingOverlay(false)
                     if (connected) {
+                        Log.d("ChatFragment", "🎉 LIVE VOICE CHAT CONNECTED! Setting isRealtimeMode = true")
                         isRealtimeMode = true
                         if (isAdded && context != null) {
                             showCustomToast("Voice agent ready! Start talking...")
                         }
                         updateRealtimeUI(true)
-                        
+
+                        // Configure audio mode for voice communication
+                        setupVoiceCommunicationMode()
+
                         // Start microphone recording for voice input
                         startVoiceRecording()
                     } else {
+                        Log.e("ChatFragment", "❌ LIVE VOICE CHAT CONNECTION FAILED! Falling back to TTS mode")
                         if (isAdded && context != null) {
                             showCustomToast("Failed to connect to voice agent after multiple attempts")
                         }
-                        Log.e("ChatFragment", "Failed to connect to voice agent after 3 attempts")
+                        Log.e("ChatFragment", "Failed to connect to voice agent after 3 attempts - isRealtimeMode remains false")
                     }
                 }
             } catch (e: Exception) {
@@ -7969,45 +9068,71 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
+    /**
+     * Setup voice communication mode for echo cancellation
+     */
+    private fun setupVoiceCommunicationMode() {
+        try {
+            val audioManager = requireContext().getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+            
+            // Store original mode to restore later
+            originalAudioMode = audioManager.mode
+            
+            // Set mode to voice communication for better echo cancellation
+            audioManager.mode = android.media.AudioManager.MODE_IN_COMMUNICATION
+            
+            // Enable speakerphone for hands-free operation
+            audioManager.isSpeakerphoneOn = true
+            
+            // Disable microphone mute
+            audioManager.isMicrophoneMute = false
+            
+            Log.d("ChatFragment", "Audio mode set to voice communication with speakerphone enabled")
+        } catch (e: Exception) {
+            Log.w("ChatFragment", "Failed to setup voice communication mode: ${e.message}")
+            // Continue without special audio mode - not critical
+        }
+    }
+
     /**
      * Start voice recording for real-time voice agents
      */
     private fun startVoiceRecording() {
         try {
             Log.d("ChatFragment", "Starting voice recording for realtime agent")
-            
+
             // Check microphone permission
-            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) 
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
                 Log.e("ChatFragment", "Microphone permission not granted")
                 showCustomToast("Microphone permission required for voice chat")
                 return
             }
-            
+
             // Initialize AudioRecord for capturing user's voice
             val sampleRate = 24000 // Match OpenAI Realtime API format
             val channelConfig = android.media.AudioFormat.CHANNEL_IN_MONO
             val audioFormat = android.media.AudioFormat.ENCODING_PCM_16BIT
-            
+
             val bufferSize = android.media.AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
-            if (bufferSize == android.media.AudioRecord.ERROR_BAD_VALUE || 
+            if (bufferSize == android.media.AudioRecord.ERROR_BAD_VALUE ||
                 bufferSize == android.media.AudioRecord.ERROR) {
                 Log.e("ChatFragment", "Invalid buffer size for AudioRecord")
                 showCustomToast("Audio recording setup failed")
                 return
             }
-            
+
             voiceRecordingJob = lifecycleScope.launch(Dispatchers.IO) {
                 try {
                     val audioRecord = android.media.AudioRecord(
-                        android.media.MediaRecorder.AudioSource.MIC,
+                        android.media.MediaRecorder.AudioSource.VOICE_COMMUNICATION,
                         sampleRate,
-                        channelConfig, 
+                        channelConfig,
                         audioFormat,
                         bufferSize
                     )
-                    
+
                     if (audioRecord.state != android.media.AudioRecord.STATE_INITIALIZED) {
                         withContext(Dispatchers.Main) {
                             Log.e("ChatFragment", "AudioRecord initialization failed")
@@ -8015,23 +9140,57 @@ class ChatFragment : Fragment() {
                         }
                         return@launch
                     }
-                    
+
+                    // Enable echo cancellation if available
+                    try {
+                        if (android.media.audiofx.AcousticEchoCanceler.isAvailable()) {
+                            val aec = android.media.audiofx.AcousticEchoCanceler.create(audioRecord.audioSessionId)
+                            aec?.let { echoCanceler ->
+                                echoCanceler.enabled = true
+                                Log.d("ChatFragment", "Acoustic Echo Cancellation enabled")
+                            }
+                        } else {
+                            Log.w("ChatFragment", "Acoustic Echo Cancellation not available on this device")
+                        }
+
+                        // Enable noise suppression if available
+                        if (android.media.audiofx.NoiseSuppressor.isAvailable()) {
+                            val noiseSuppressor = android.media.audiofx.NoiseSuppressor.create(audioRecord.audioSessionId)
+                            noiseSuppressor?.let { suppressor ->
+                                suppressor.enabled = true
+                                Log.d("ChatFragment", "Noise Suppression enabled")
+                            }
+                        }
+
+                        // Enable automatic gain control if available
+                        if (android.media.audiofx.AutomaticGainControl.isAvailable()) {
+                            val agc = android.media.audiofx.AutomaticGainControl.create(audioRecord.audioSessionId)
+                            agc?.let { gainControl ->
+                                gainControl.enabled = true
+                                Log.d("ChatFragment", "Automatic Gain Control enabled")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.w("ChatFragment", "Error setting up audio effects: ${e.message}")
+                        // Continue without effects - not critical
+                    }
+
                     audioRecord.startRecording()
-                    Log.d("ChatFragment", "AudioRecord started, streaming audio to voice agent")
-                    
+                    Log.d("ChatFragment", "AudioRecord started with echo cancellation, streaming audio to voice agent")
+
                     val buffer = ByteArray(bufferSize / 4) // Use smaller chunks for real-time streaming
-                    
+
                     while (isRealtimeMode && voiceRecordingJob?.isActive == true) {
                         val bytesRead = audioRecord.read(buffer, 0, buffer.size)
-                        
+
                         if (bytesRead > 0) {
                             val audioData = buffer.copyOfRange(0, bytesRead)
-                            
+
                             // Enhanced voice activity detection based on audio levels
                             val currentTime = System.currentTimeMillis()
                             val audioLevel = calculateAudioLevel(audioData)
                             updateVoiceActivityDetection(audioLevel, currentTime)
-                            
+
                             // EXTREMELY conservative interruption detection to prevent AI self-interruption
                             if (isAICurrentlySpeaking && !hasInterruptedCurrentResponse && userSpeechDetected) {
                                 // Much longer debounce: 5 seconds since last interrupt to let AI complete responses
@@ -8039,9 +9198,9 @@ class ChatFragment : Fragment() {
                                     // Additional check: Only interrupt if the AI has been speaking for at least 1 second
                                     // This prevents interrupting at the very start of AI responses
                                     if (currentTime - lastAiSpeakStartTime > 1000) {
-                                        // FINAL CHECK: Only interrupt on VERY loud user speech (double the threshold)
-                                        if (audioLevel > audioLevelThreshold * 1.5) {
-                                            Log.d("ChatFragment", "STRONG user speech detected (level: $audioLevel > ${audioLevelThreshold * 1.5}) - interrupting AI (last interrupt: ${(currentTime - lastInterruptTime)}ms ago, AI speaking for: ${(currentTime - lastAiSpeakStartTime)}ms)")
+                                        // FINAL CHECK: Only interrupt on EXTREMELY loud user speech (triple the threshold)
+                                        if (audioLevel > audioLevelThreshold * 3.0) {
+                                            Log.d("ChatFragment", "STRONG user speech detected (level: $audioLevel > ${audioLevelThreshold * 3.0}) - interrupting AI (last interrupt: ${(currentTime - lastInterruptTime)}ms ago, AI speaking for: ${(currentTime - lastAiSpeakStartTime)}ms)")
                                             // Gentle interruption - pause AudioTrack instead of destroying it
                                             pauseStreamingAudio()
                                             realtimeVoiceAgent?.interrupt()
@@ -8049,7 +9208,7 @@ class ChatFragment : Fragment() {
                                             lastInterruptTime = currentTime
                                             isAICurrentlySpeaking = false
                                         } else {
-                                            Log.d("ChatFragment", "Weak speech signal (level: $audioLevel <= ${audioLevelThreshold * 1.5}) - ignoring to prevent false interruption")
+                                            Log.d("ChatFragment", "Weak speech signal (level: $audioLevel <= ${audioLevelThreshold * 3.0}) - ignoring to prevent false interruption")
                                         }
                                     } else {
                                         Log.d("ChatFragment", "Ignoring potential interruption - AI just started speaking (${(currentTime - lastAiSpeakStartTime)}ms ago)")
@@ -8058,28 +9217,29 @@ class ChatFragment : Fragment() {
                                     Log.d("ChatFragment", "Debouncing interruption - too soon after last interrupt (${(currentTime - lastInterruptTime)}ms ago)")
                                 }
                             }
-                            
+
                             // Send audio data to RealtimeVoiceAgent
                             realtimeVoiceAgent?.sendAudio(audioData)
-                            
-                            // Log periodically to avoid spam but include useful info (every ~2 seconds)
-                            if (currentTime % 2000 < 50) {
-                                Log.d("ChatFragment", "Sent $bytesRead bytes to voice agent (audio level: $audioLevel, user speaking: $userSpeechDetected)")
+
+                            // Log periodically to avoid spam but include useful info (every ~1 second)
+                            if (currentTime % 1000 < 50) {
+                                val thresholdInfo = if (audioLevel > audioLevelThreshold) "ABOVE" else "below"
+                                Log.d("ChatFragment", "Sent $bytesRead bytes to voice agent (audio level: $audioLevel $thresholdInfo threshold $audioLevelThreshold, user speaking: $userSpeechDetected, loud samples: $consecutiveLoudSamples)")
                             }
                         } else if (bytesRead < 0) {
                             Log.w("ChatFragment", "AudioRecord read error: $bytesRead")
                             break
                         }
-                        
+
                         // Small delay to prevent excessive CPU usage
                         kotlinx.coroutines.delay(10L)
                     }
-                    
+
                     // Cleanup
                     audioRecord.stop()
                     audioRecord.release()
                     Log.d("ChatFragment", "Voice recording stopped and AudioRecord released")
-                    
+
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
                         Log.e("ChatFragment", "Error in voice recording", e)
@@ -8087,13 +9247,13 @@ class ChatFragment : Fragment() {
                     }
                 }
             }
-            
+
         } catch (e: Exception) {
             Log.e("ChatFragment", "Error starting voice recording", e)
             showCustomToast("Failed to start voice recording")
         }
     }
-    
+
     /**
      * Stop voice recording
      */
@@ -8106,16 +9266,16 @@ class ChatFragment : Fragment() {
             Log.e("ChatFragment", "Error stopping voice recording", e)
         }
     }
-    
+
     /**
      * Calculate audio level from PCM16 audio data
      */
     private fun calculateAudioLevel(audioData: ByteArray): Int {
         if (audioData.size < 2) return 0
-        
+
         var sum = 0L
         var sampleCount = 0
-        
+
         // Process PCM16 data (2 bytes per sample)
         for (i in 0 until audioData.size - 1 step 2) {
             val sample = (audioData[i].toInt() and 0xFF) or ((audioData[i + 1].toInt() and 0xFF) shl 8)
@@ -8123,36 +9283,67 @@ class ChatFragment : Fragment() {
             sum += kotlin.math.abs(signedSample)
             sampleCount++
         }
-        
+
         return if (sampleCount > 0) (sum / sampleCount).toInt() else 0
     }
-    
+
     /**
      * Update voice activity detection based on audio levels
      */
     private fun updateVoiceActivityDetection(audioLevel: Int, currentTime: Long) {
         // Update timing
         lastAudioLevelCheck = currentTime
-        
+
         if (audioLevel > audioLevelThreshold) {
             consecutiveLoudSamples++
             consecutiveQuietSamples = 0
-            
-            // Require MANY more consecutive samples above threshold to confirm speech (prevent AI self-interruption)
-            if (consecutiveLoudSamples >= 12) { // Increased from 6 to 12 samples - much more conservative
+
+            // Require fewer consecutive samples for faster speech detection
+            if (consecutiveLoudSamples >= 6) { // Reduced from 12 to 6 samples for better responsiveness
+                if (!userSpeechDetected) {
+                    // First detection of user speech
+                    lastSpeechDetectedTime = currentTime
+                    hasTriggeredResponse = false
+                    Log.d("ChatFragment", "Speech detected! Audio level: $audioLevel > $audioLevelThreshold, loud samples: $consecutiveLoudSamples")
+                }
                 userSpeechDetected = true
             }
         } else {
             consecutiveQuietSamples++
             consecutiveLoudSamples = 0
-            
-            // Require multiple consecutive quiet samples to stop speech detection
-            if (consecutiveQuietSamples >= 25) { // Increased from 15 to 25 samples (~250ms of quiet)
+
+            // Require fewer consecutive quiet samples for faster response triggering
+            if (consecutiveQuietSamples >= 20) { // Increased from 15 to 20 samples (~200ms of quiet) for more stable detection
+                // User stopped speaking - trigger response if OpenAI's VAD didn't
+                if (userSpeechDetected && !hasTriggeredResponse && !isAICurrentlySpeaking) {
+                    val speechDuration = currentTime - lastSpeechDetectedTime
+                    // Ensure robust minimum speech duration and cooldown - OpenAI needs substantial audio buffer
+                    if (speechDuration > 2000 && currentTime - lastManualTriggerTime > 8000) { // Further increased requirements for reliable buffer
+                        Log.w("ChatFragment", "Fallback VAD: User spoke for ${speechDuration}ms but OpenAI VAD didn't trigger - preparing manual response trigger")
+                        // Add substantial delay to ensure OpenAI's buffer has sufficient audio data
+                        lifecycleScope.launch {
+                            // Wait longer to ensure the audio buffer has enough data (OpenAI requires at least 100ms, we ensure much more)
+                            kotlinx.coroutines.delay(750) // Increased from 500ms to 750ms for even better buffer accumulation
+                            
+                            // Additional check: ensure user is still not speaking before committing
+                            if (!userSpeechDetected && !isAICurrentlySpeaking) {
+                                Log.w("ChatFragment", "🔄 FALLBACK VAD: Committing audio buffer (speech duration: ${speechDuration}ms, buffer wait: 750ms)")
+                                realtimeVoiceAgent?.commitAudioAndTriggerResponse()
+                            } else {
+                                Log.d("ChatFragment", "Cancelled fallback trigger - user resumed speaking or AI started responding")
+                            }
+                        }
+                        hasTriggeredResponse = true
+                        lastManualTriggerTime = currentTime
+                    } else {
+                        Log.d("ChatFragment", "User stopped speaking but not triggering: duration=${speechDuration}ms (need >2000ms), lastTrigger=${currentTime - lastManualTriggerTime}ms ago (need >8000ms)")
+                    }
+                }
                 userSpeechDetected = false
             }
         }
     }
-    
+
     /**
      * Check if user is currently speaking (voice activity detection)
      */
@@ -8160,21 +9351,21 @@ class ChatFragment : Fragment() {
         // Enhanced voice activity detection with more robust checks
         val currentTime = System.currentTimeMillis()
         val recentlyInterrupted = (currentTime - lastInterruptTime) < 2000 // Extended to 2 seconds
-        
+
         // Primary check: voice recording must be active and in realtime mode
         val basicConditions = voiceRecordingJob?.isActive == true && isRealtimeMode
-        
+
         // Enhanced logic: Use the more accurate userSpeechDetected flag
         val isCurrentlySpeaking = basicConditions && userSpeechDetected && !recentlyInterrupted
-        
+
         // Add logging for debugging
         if (isCurrentlySpeaking && isAICurrentlySpeaking) {
             Log.d("ChatFragment", "Concurrent speech detected - User: $isCurrentlySpeaking (speech detected: $userSpeechDetected), AI: $isAICurrentlySpeaking")
         }
-        
+
         return isCurrentlySpeaking
     }
-    
+
     /**
      * Stop all currently playing AI audio to prevent overlap
      */
@@ -8198,9 +9389,10 @@ class ChatFragment : Fragment() {
                 }
             }
             currentAudioTracks.clear()
-            
+
             // Also stop streaming audio track
-            streamingAudioTrack?.let { track ->
+            val track = streamingAudioTrack
+            if (track != null) {
                 try {
                     if (track.state == android.media.AudioTrack.STATE_INITIALIZED &&
                         track.playState == android.media.AudioTrack.PLAYSTATE_PLAYING) {
@@ -8217,98 +9409,145 @@ class ChatFragment : Fragment() {
             audioTrackLock.unlock()
         }
     }
-    
+
     /**
      * Pause streaming audio without destroying the AudioTrack
      */
     private fun pauseStreamingAudio() {
-        streamingAudioTrack?.let { track ->
-            try {
-                if (track.state == android.media.AudioTrack.STATE_INITIALIZED &&
-                    track.playState == android.media.AudioTrack.PLAYSTATE_PLAYING) {
-                    track.flush() // Clear any pending data to prevent buffer issues
-                    track.pause()
-                    Log.d("ChatFragment", "Paused and flushed streaming AudioTrack")
-                } else {
-                    Log.d("ChatFragment", "AudioTrack not in playing state, cannot pause (state: ${track.state}, playState: ${track.playState})")
-                }
-            } catch (e: Exception) {
-                Log.e("ChatFragment", "Error pausing streaming AudioTrack", e)
-                // If pause fails, stop and recreate to prevent crashes
+        audioTrackLock.lock()
+        try {
+            val track = streamingAudioTrack
+            if (track != null) {
                 try {
-                    track.stop()
-                    track.release()
-                    streamingAudioTrack = null
-                    Log.w("ChatFragment", "Released AudioTrack due to pause error")
-                } catch (releaseError: Exception) {
-                    Log.e("ChatFragment", "Error releasing AudioTrack", releaseError)
+                    if (track.state == android.media.AudioTrack.STATE_INITIALIZED &&
+                        track.playState == android.media.AudioTrack.PLAYSTATE_PLAYING) {
+                        track.flush() // Clear any pending data to prevent buffer issues
+                        track.pause()
+                        Log.d("ChatFragment", "Paused and flushed streaming AudioTrack")
+                    } else {
+                        Log.d("ChatFragment", "AudioTrack not in playing state, cannot pause (state: ${track.state}, playState: ${track.playState})")
+                    }
+                } catch (e: Exception) {
+                    Log.e("ChatFragment", "Error pausing streaming AudioTrack", e)
+                    // If pause fails, stop and recreate to prevent crashes
+                    try {
+                        track.stop()
+                        track.release()
+                        streamingAudioTrack = null
+                        Log.w("ChatFragment", "Released AudioTrack due to pause error")
+                    } catch (releaseError: Exception) {
+                        Log.e("ChatFragment", "Error releasing AudioTrack", releaseError)
+                    }
                 }
             }
+        } finally {
+            audioTrackLock.unlock()
         }
     }
-    
+
     /**
      * Resume streaming audio
      */
     private fun resumeStreamingAudio() {
-        streamingAudioTrack?.let { track ->
-            try {
-                if (track.state == android.media.AudioTrack.STATE_INITIALIZED) {
-                    when (track.playState) {
-                        android.media.AudioTrack.PLAYSTATE_PAUSED -> {
-                            track.play()
-                            Log.d("ChatFragment", "Resumed streaming AudioTrack from paused state")
-                        }
-                        android.media.AudioTrack.PLAYSTATE_STOPPED -> {
-                            track.play()
-                            Log.d("ChatFragment", "Started streaming AudioTrack from stopped state")
-                        }
-                        android.media.AudioTrack.PLAYSTATE_PLAYING -> {
-                            Log.d("ChatFragment", "AudioTrack already playing")
-                        }
-                        else -> {
-                            Log.d("ChatFragment", "AudioTrack in unknown state: ${track.playState}")
-                        }
-                    }
-                } else {
-                    Log.d("ChatFragment", "AudioTrack not initialized, cannot resume (state: ${track.state})")
-                }
-            } catch (e: Exception) {
-                Log.e("ChatFragment", "Error resuming streaming AudioTrack", e)
-                // If resume fails, release and recreate will happen automatically
+        audioTrackLock.lock()
+        try {
+            val track = streamingAudioTrack
+            if (track != null) {
                 try {
-                    track.stop()
-                    track.release()
-                    streamingAudioTrack = null
-                    Log.w("ChatFragment", "Released AudioTrack due to resume error")
-                } catch (releaseError: Exception) {
-                    Log.e("ChatFragment", "Error releasing AudioTrack", releaseError)
+                    if (track.state == android.media.AudioTrack.STATE_INITIALIZED) {
+                        when (track.playState) {
+                            android.media.AudioTrack.PLAYSTATE_PAUSED -> {
+                                track.play()
+                                Log.d("ChatFragment", "Resumed streaming AudioTrack from paused state")
+                            }
+                            android.media.AudioTrack.PLAYSTATE_STOPPED -> {
+                                track.play()
+                                Log.d("ChatFragment", "Started streaming AudioTrack from stopped state")
+                            }
+                            android.media.AudioTrack.PLAYSTATE_PLAYING -> {
+                                Log.d("ChatFragment", "AudioTrack already playing")
+                            }
+                            else -> {
+                                Log.d("ChatFragment", "AudioTrack in unknown state: ${track.playState}")
+                            }
+                        }
+                    } else {
+                        Log.d("ChatFragment", "AudioTrack not initialized, cannot resume (state: ${track.state})")
+                    }
+                } catch (e: Exception) {
+                    Log.e("ChatFragment", "Error resuming streaming AudioTrack", e)
+                    // If resume fails, release and recreate will happen automatically
+                    try {
+                        track.stop()
+                        track.release()
+                        streamingAudioTrack = null
+                        Log.w("ChatFragment", "Released AudioTrack due to resume error")
+                    } catch (releaseError: Exception) {
+                        Log.e("ChatFragment", "Error releasing AudioTrack", releaseError)
+                    }
                 }
             }
+        } finally {
+            audioTrackLock.unlock()
         }
     }
-    
+
     /**
      * Stop realtime voice conversation
      */
     private fun stopRealtimeVoiceChat() {
         stopVoiceRecording()
         stopAllAIAudio()  // Stop any playing AI audio
+        
+        // Clear audio fallback queue
+        synchronized(audioChunkQueue) {
+            audioChunkQueue.clear()
+            isProcessingAudioQueue = false
+            Log.d("ChatFragment", "Cleared audio fallback queue")
+        }
+        
+        // Reset audio mode flags
+        isAudioTrackMode = true
+        consecutiveAudioTrackFailures = 0
+        
         realtimeVoiceAgent?.disconnect()
         isRealtimeMode = false
         isAICurrentlySpeaking = false
         hasInterruptedCurrentResponse = false  // Reset interruption state
-        
+
         // Reset voice activity detection variables
         userSpeechDetected = false
         consecutiveQuietSamples = 0
         consecutiveLoudSamples = 0
         lastAudioLevelCheck = 0L
-        
+
+        // Restore original audio mode
+        restoreOriginalAudioMode()
+
         updateRealtimeUI(false)
         showCustomToast("Voice chat stopped")
     }
-    
+
+    /**
+     * Restore original audio mode after voice chat
+     */
+    private fun restoreOriginalAudioMode() {
+        try {
+            val audioManager = requireContext().getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+            
+            // Restore original audio mode
+            audioManager.mode = originalAudioMode
+            
+            // Restore speakerphone setting (turn off for normal mode)
+            audioManager.isSpeakerphoneOn = false
+            
+            Log.d("ChatFragment", "Audio mode restored to original settings")
+        } catch (e: Exception) {
+            Log.w("ChatFragment", "Failed to restore original audio mode: ${e.message}")
+            // Not critical - system will reset on app restart
+        }
+    }
+
     /**
      * Handle agent handoff
      */
@@ -8317,7 +9556,7 @@ class ChatFragment : Fragment() {
             try {
                 val agents = createDefaultVoiceAgents()
                 val newAgent = agents[newAgentType]
-                
+
                 if (newAgent != null) {
                     realtimeVoiceAgent?.updateAgent(newAgent)
                     currentVoiceAgent = newAgent
@@ -8331,7 +9570,7 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     /**
      * Update UI for realtime voice mode
      */
@@ -8353,7 +9592,7 @@ class ChatFragment : Fragment() {
             }
         }
     }
-    
+
     /**
      * Update UI based on voice agent state
      */
@@ -8366,12 +9605,12 @@ class ChatFragment : Fragment() {
             RealtimeVoiceAgent.STATE_INTERRUPTED -> "Interrupted"
             else -> state
         }
-        
+
         // Update status in UI if needed
         // Could add a status indicator to the top bar
         Log.d("ChatFragment", "Voice Agent State: $statusText")
     }
-    
+
     /**
      * Display realtime transcript
      */
@@ -8383,150 +9622,323 @@ class ChatFragment : Fragment() {
             isTyping = false,
             timestamp = System.currentTimeMillis()
         )
-        
+
         chatMessages.add(message)
         chatAdapter.notifyItemInserted(chatMessages.size - 1)
         binding.recyclerView.smoothScrollToPosition(chatMessages.size - 1)
     }
-    
-    // Single streaming AudioTrack for realtime audio
-    private var streamingAudioTrack: android.media.AudioTrack? = null
-    
+
+    // Single streaming AudioTrack for realtime audio (declared above)
+
     /**
-     * Play realtime audio from AI using a single streaming AudioTrack
-     * This prevents creating multiple simultaneous AudioTracks
+     * Play realtime audio from AI using thread-safe streaming AudioTrack
+     * Uses proper synchronization to prevent buffer corruption and crashes
      */
     private fun playRealtimeAudio(audioData: ByteArray) {
         try {
             Log.d("ChatFragment", "Received audio data: ${audioData.size} bytes")
+
+            // Check if we should use MediaPlayer-only mode
+            if (!isAudioTrackMode) {
+                Log.d("ChatFragment", "Using MediaPlayer-only mode for audio playback")
+                playRealtimeAudioFallback(audioData)
+                return
+            }
             
+            // CRITICAL FIX: If MediaPlayer is currently processing, queue this audio there instead
+            if (isProcessingAudioQueue || audioChunkQueue.isNotEmpty()) {
+                Log.d("ChatFragment", "MediaPlayer queue active - routing audio to fallback to prevent dual playback")
+                playRealtimeAudioFallback(audioData)
+                return
+            }
+
             // OpenAI Realtime API sends PCM16 audio at 24kHz mono
             val sampleRate = 24000
             val channelConfig = android.media.AudioFormat.CHANNEL_OUT_MONO
             val audioFormat = android.media.AudioFormat.ENCODING_PCM_16BIT
-            
-            // Move AudioTrack operations to background thread to reduce main thread load
-            lifecycleScope.launch(Dispatchers.IO) {
-                try {
-                    // Create streaming AudioTrack if it doesn't exist
-                    if (streamingAudioTrack == null) {
-                        val bufferSize = android.media.AudioTrack.getMinBufferSize(
-                            sampleRate, channelConfig, audioFormat
+
+            // Use synchronized block to prevent concurrent access
+            audioTrackLock.lock()
+            try {
+                // Validate and create AudioTrack if needed
+                if (streamingAudioTrack == null || 
+                    streamingAudioTrack?.state == android.media.AudioTrack.STATE_UNINITIALIZED) {
+                    
+                    // Clean up any existing track first
+                    streamingAudioTrack?.release()
+                    streamingAudioTrack = null
+                    
+                    val bufferSize = android.media.AudioTrack.getMinBufferSize(
+                        sampleRate, channelConfig, audioFormat
+                    )
+
+                    if (bufferSize <= 0) {
+                        Log.e("ChatFragment", "Invalid buffer size: $bufferSize")
+                        return
+                    }
+
+                    streamingAudioTrack = android.media.AudioTrack.Builder()
+                        .setAudioAttributes(
+                            android.media.AudioAttributes.Builder()
+                                .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                                .setFlags(android.media.AudioAttributes.FLAG_LOW_LATENCY)
+                                .build()
                         )
-                        
-                        if (bufferSize == android.media.AudioTrack.ERROR_BAD_VALUE || 
-                            bufferSize == android.media.AudioTrack.ERROR) {
-                            Log.e("ChatFragment", "Invalid buffer size for AudioTrack")
-                            return@launch
-                        }
-                        
-                        streamingAudioTrack = android.media.AudioTrack.Builder()
-                            .setAudioAttributes(
-                                android.media.AudioAttributes.Builder()
-                                    .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
-                                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
-                                    .build()
-                            )
-                            .setAudioFormat(
-                                android.media.AudioFormat.Builder()
-                                    .setEncoding(audioFormat)
-                                    .setSampleRate(sampleRate)
-                                    .setChannelMask(channelConfig)
-                                    .build()
-                            )
-                            .setBufferSizeInBytes(bufferSize * 8) // Larger buffer to prevent underruns
-                            .setTransferMode(android.media.AudioTrack.MODE_STREAM) // STREAM mode for real-time
-                            .build()
-                            
-                        streamingAudioTrack?.play()
-                        Log.d("ChatFragment", "Created and started streaming AudioTrack")
-                    }
-                    
-                    // Write audio data to the streaming track - ONLY when playing
-                    streamingAudioTrack?.let { track ->
-                        if (track.state == android.media.AudioTrack.STATE_INITIALIZED &&
-                            track.playState == android.media.AudioTrack.PLAYSTATE_PLAYING) {
-                            try {
-                                val bytesWritten = track.write(audioData, 0, audioData.size, android.media.AudioTrack.WRITE_NON_BLOCKING)
-                                if (bytesWritten > 0) {
-                                    // Reduce logging frequency to improve performance - only log every 10th write
-                                    if ((System.currentTimeMillis() / 100) % 10 == 0L) {
-                                        Log.d("ChatFragment", "Written $bytesWritten bytes to streaming AudioTrack")
-                                    } else {
-                                        // Silent success - no logging needed for most writes
-                                    }
-                                } else if (bytesWritten < 0) {
-                                    Log.w("ChatFragment", "AudioTrack write error: $bytesWritten")
-                                } else {
-                                    // Buffer full, skip this chunk to avoid crashes
-                                    Log.v("ChatFragment", "AudioTrack buffer full, skipping chunk")
-                                }
-                            } catch (e: Exception) {
-                                Log.e("ChatFragment", "Error writing to AudioTrack", e)
-                            }
+                        .setAudioFormat(
+                            android.media.AudioFormat.Builder()
+                                .setEncoding(audioFormat)
+                                .setSampleRate(sampleRate)
+                                .setChannelMask(channelConfig)
+                                .build()
+                        )
+                        .setBufferSizeInBytes(bufferSize * 32) // Much larger buffer to prevent partial writes and audio cutting
+                        .setTransferMode(android.media.AudioTrack.MODE_STREAM)
+                        .build()
+
+                    // Validate creation and start playback
+                    val track = streamingAudioTrack
+                    if (track != null) {
+                        // Set maximum volume for better audibility
+                        track.setVolume(1.0f)
+                        if (track.state == android.media.AudioTrack.STATE_INITIALIZED) {
+                            track.play()
+                            Log.d("ChatFragment", "Created and started streaming AudioTrack (buffer: ${bufferSize * 32} bytes)")
                         } else {
-                            // Don't write to paused or stopped tracks - this prevents the crash
-                            if ((System.currentTimeMillis() / 1000) % 5 == 0L) {
-                                Log.v("ChatFragment", "Skipping audio write - track not playing (state: ${track.state}, playState: ${track.playState})")
-                            } else {
-                                // Silent - no logging needed for most state errors
-                            }
+                            Log.e("ChatFragment", "AudioTrack failed to initialize, state: ${track.state}")
+                            track.release()
+                            streamingAudioTrack = null
+                            return
                         }
                     }
-                    
+                }
+
+                // Write audio data with proper validation
+                val track = streamingAudioTrack
+                if (track != null) {
+                    if (track.state == android.media.AudioTrack.STATE_INITIALIZED) {
+                        when (track.playState) {
+                            android.media.AudioTrack.PLAYSTATE_PLAYING -> {
+                                // Retry mechanism for smooth audio playback
+                                var totalBytesWritten = 0
+                                var remainingData = audioData
+                                var retryCount = 0
+                                val maxRetries = 3
+                                
+                                while (totalBytesWritten < audioData.size && retryCount < maxRetries) {
+                                    val bytesWritten = track.write(remainingData, 0, remainingData.size, android.media.AudioTrack.WRITE_BLOCKING)
+                                    
+                                    if (bytesWritten > 0) {
+                                        totalBytesWritten += bytesWritten
+                                        if (bytesWritten < remainingData.size) {
+                                            // Partial write - prepare remaining data for retry
+                                            remainingData = remainingData.sliceArray(bytesWritten until remainingData.size)
+                                            retryCount++
+                                            Log.d("ChatFragment", "Partial AudioTrack write: $bytesWritten bytes, $totalBytesWritten/${audioData.size} total, retry $retryCount")
+                                            
+                                            // Small delay to allow buffer to drain
+                                            Thread.sleep(10)
+                                        } else {
+                                            // Complete write
+                                            break
+                                        }
+                                    } else {
+                                        retryCount++
+                                        Thread.sleep(20) // Wait for buffer space
+                                    }
+                                }
+                                
+                                if (totalBytesWritten >= audioData.size) {
+                                    // Complete success
+                                    consecutiveAudioTrackFailures = 0
+                                    Log.d("ChatFragment", "Successfully wrote all $totalBytesWritten bytes to AudioTrack")
+                                } else {
+                                    // Failed after retries - use MediaPlayer fallback
+                                    consecutiveAudioTrackFailures++
+                                    Log.w("ChatFragment", "AudioTrack write failed after $retryCount retries ($totalBytesWritten/${audioData.size} bytes) - using MediaPlayer fallback")
+                                    playRealtimeAudioFallback(remainingData)
+                                }
+                            }
+                            android.media.AudioTrack.PLAYSTATE_STOPPED,
+                            android.media.AudioTrack.PLAYSTATE_PAUSED -> {
+                                // Try to restart
+                                track.play()
+                                Log.d("ChatFragment", "Restarted AudioTrack from stopped/paused state")
+                            }
+                            else -> {
+                                Log.w("ChatFragment", "AudioTrack in unexpected state: ${track.playState}")
+                            }
+                        }
+                    } else {
+                        Log.e("ChatFragment", "AudioTrack not initialized: ${track.state}")
+                        track.release()
+                        streamingAudioTrack = null
+                    }
+                }
+
+            } finally {
+                audioTrackLock.unlock()
+            }
+
+        } catch (e: Exception) {
+            Log.e("ChatFragment", "Error in audio playback", e)
+            // Clean up and use fallback
+            audioTrackLock.lock()
+            try {
+                val track = streamingAudioTrack
+                track?.release()
+                streamingAudioTrack = null
+            } finally {
+                audioTrackLock.unlock()
+            }
+            playRealtimeAudioFallback(audioData)
+        }
+    }
+
+    /**
+     * Stop and cleanup the streaming AudioTrack with thread safety
+     */
+    private fun stopStreamingAudio() {
+        audioTrackLock.lock()
+        try {
+            val track = streamingAudioTrack
+            if (track != null) {
+                try {
+                    if (track.state == android.media.AudioTrack.STATE_INITIALIZED) {
+                        if (track.playState == android.media.AudioTrack.PLAYSTATE_PLAYING) {
+                            track.stop()
+                        }
+                        track.release()
+                        Log.d("ChatFragment", "Stopped and released streaming AudioTrack")
+                    } else {
+                        // Track not initialized, but still try to release
+                        track.release()
+                        Log.d("ChatFragment", "Released uninitialized streaming AudioTrack")
+                    }
                 } catch (e: Exception) {
-                    Log.e("ChatFragment", "Error creating/using AudioTrack", e)
-                    // Fallback: Save to temp file and use existing MediaPlayer approach
-                    playRealtimeAudioFallback(audioData)
+                    Log.e("ChatFragment", "Error stopping streaming AudioTrack", e)
+                    // Force release even on error
+                    try {
+                        track.release()
+                    } catch (releaseError: Exception) {
+                        Log.e("ChatFragment", "Error releasing AudioTrack", releaseError)
+                    }
+                } finally {
+                    streamingAudioTrack = null
                 }
             }
+        } finally {
+            audioTrackLock.unlock()
+        }
+    }
+
+    /**
+     * Fallback method for audio playback using sequential MediaPlayer
+     * Prevents multiple concurrent MediaPlayers from overlapping
+     */
+    private fun playRealtimeAudioFallback(audioData: ByteArray) {
+        synchronized(audioChunkQueue) {
+            // Add audio chunk to queue
+            audioChunkQueue.add(audioData)
+            Log.d("ChatFragment", "Added ${audioData.size} bytes to audio queue (queue size: ${audioChunkQueue.size})")
             
-        } catch (e: Exception) {
-            Log.e("ChatFragment", "Error playing realtime audio", e)
+            // Start processing queue if not already processing
+            if (!isProcessingAudioQueue) {
+                processAudioQueue()
+            }
         }
     }
     
     /**
-     * Fallback method for audio playback using MediaPlayer
+     * Process audio chunks sequentially to prevent overlapping playback
      */
-    private fun playRealtimeAudioFallback(audioData: ByteArray) {
-        try {
-            // Create temporary WAV file from PCM data
-            val tempFile = File(requireContext().cacheDir, "temp_voice_${System.currentTimeMillis()}.wav")
+    private fun processAudioQueue() {
+        if (isProcessingAudioQueue) return
+        
+        lifecycleScope.launch(Dispatchers.IO) {
+            isProcessingAudioQueue = true
             
-            // Create WAV header for PCM16, 24kHz, mono
-            val wavHeader = createWavHeader(audioData.size, 24000, 1, 16)
-            val wavData = wavHeader + audioData
-            
-            tempFile.writeBytes(wavData)
-            Log.d("ChatFragment", "Created temporary WAV file: ${tempFile.absolutePath}")
-            
-            // Use existing audio playback infrastructure
-            lifecycleScope.launch {
-                try {
-                    val audioHandler = AudioApiHandler(requireContext())
-                    val mediaPlayer = audioHandler.playAudioFile(tempFile)
+            try {
+                while (audioChunkQueue.isNotEmpty()) {
+                    val audioData = synchronized(audioChunkQueue) {
+                        if (audioChunkQueue.isNotEmpty()) audioChunkQueue.removeAt(0) else null
+                    } ?: break
                     
-                    // Clean up temp file after playback
-                    mediaPlayer.setOnCompletionListener {
-                        it.release()
-                        if (tempFile.exists()) {
-                            tempFile.delete()
-                            Log.d("ChatFragment", "Cleaned up temporary audio file")
-                        }
+                    // Create and play single audio chunk
+                    playAudioChunkSequentially(audioData)
+                }
+            } catch (e: Exception) {
+                Log.e("ChatFragment", "Error processing audio queue", e)
+            } finally {
+                isProcessingAudioQueue = false
+                
+                // CRITICAL FIX: Resume AudioTrack when MediaPlayer queue is empty
+                if (isAudioTrackMode && audioChunkQueue.isEmpty()) {
+                    try {
+                        resumeStreamingAudio()
+                        Log.d("ChatFragment", "Resumed AudioTrack after MediaPlayer queue completed")
+                    } catch (e: Exception) {
+                        Log.e("ChatFragment", "Error resuming AudioTrack after MediaPlayer completion", e)
                     }
-                    
-                } catch (e: Exception) {
-                    Log.e("ChatFragment", "Error in fallback audio playback", e)
-                    if (tempFile.exists()) tempFile.delete()
                 }
             }
-            
-        } catch (e: Exception) {
-            Log.e("ChatFragment", "Error in audio fallback method", e)
         }
     }
     
+    /**
+     * Play a single audio chunk and wait for completion
+     */
+    private suspend fun playAudioChunkSequentially(audioData: ByteArray) = withContext(Dispatchers.IO) {
+        try {
+            // Create temporary WAV file with optimized caching
+            val tempFile = File(requireContext().cacheDir, "temp_voice_${System.currentTimeMillis()}.wav")
+            val wavHeader = createWavHeader(audioData.size, 24000, 1, 16)
+            val wavData = wavHeader + audioData
+            tempFile.writeBytes(wavData)
+            
+            Log.d("ChatFragment", "Playing audio chunk: ${audioData.size} bytes")
+            
+            // Create and configure MediaPlayer with optimized settings
+            val mediaPlayer = android.media.MediaPlayer().apply {
+                setDataSource(tempFile.absolutePath)
+                setAudioAttributes(
+                    android.media.AudioAttributes.Builder()
+                        .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                )
+                // Set maximum volume for better audibility
+                setVolume(1.0f, 1.0f)
+                prepare()
+            }
+            
+            // Play and wait for completion
+            suspendCancellableCoroutine<Unit> { continuation ->
+                mediaPlayer.setOnCompletionListener {
+                    it.release()
+                    if (tempFile.exists()) {
+                        tempFile.delete()
+                        Log.d("ChatFragment", "Completed playing audio chunk")
+                    }
+                    continuation.resume(Unit)
+                }
+                
+                mediaPlayer.setOnErrorListener { mp, what, extra ->
+                    Log.e("ChatFragment", "MediaPlayer error: what=$what, extra=$extra")
+                    mp.release()
+                    if (tempFile.exists()) tempFile.delete()
+                    continuation.resume(Unit)
+                    true
+                }
+                
+                mediaPlayer.start()
+            }
+            
+        } catch (e: Exception) {
+            Log.e("ChatFragment", "Error playing audio chunk", e)
+        }
+    }
+
     /**
      * Create WAV file header for PCM audio data
      */
@@ -8534,124 +9946,124 @@ class ChatFragment : Fragment() {
         val header = ByteArray(44)
         val totalDataLen = dataSize + 36
         val byteRate = sampleRate * channels * bitsPerSample / 8
-        
+
         // RIFF header
         header[0] = 'R'.code.toByte()
         header[1] = 'I'.code.toByte()
         header[2] = 'F'.code.toByte()
         header[3] = 'F'.code.toByte()
-        
+
         // File size
         header[4] = (totalDataLen and 0xff).toByte()
         header[5] = (totalDataLen shr 8 and 0xff).toByte()
         header[6] = (totalDataLen shr 16 and 0xff).toByte()
         header[7] = (totalDataLen shr 24 and 0xff).toByte()
-        
+
         // WAVE header
         header[8] = 'W'.code.toByte()
         header[9] = 'A'.code.toByte()
         header[10] = 'V'.code.toByte()
         header[11] = 'E'.code.toByte()
-        
+
         // fmt subchunk
         header[12] = 'f'.code.toByte()
         header[13] = 'm'.code.toByte()
         header[14] = 't'.code.toByte()
         header[15] = ' '.code.toByte()
-        
+
         // Subchunk1Size (16 for PCM)
         header[16] = 16
         header[17] = 0
         header[18] = 0
         header[19] = 0
-        
+
         // AudioFormat (1 for PCM)
         header[20] = 1
         header[21] = 0
-        
+
         // NumChannels
         header[22] = channels.toByte()
         header[23] = 0
-        
+
         // SampleRate
         header[24] = (sampleRate and 0xff).toByte()
         header[25] = (sampleRate shr 8 and 0xff).toByte()
         header[26] = (sampleRate shr 16 and 0xff).toByte()
         header[27] = (sampleRate shr 24 and 0xff).toByte()
-        
+
         // ByteRate
         header[28] = (byteRate and 0xff).toByte()
         header[29] = (byteRate shr 8 and 0xff).toByte()
         header[30] = (byteRate shr 16 and 0xff).toByte()
         header[31] = (byteRate shr 24 and 0xff).toByte()
-        
+
         // BlockAlign
         val blockAlign = channels * bitsPerSample / 8
         header[32] = blockAlign.toByte()
         header[33] = 0
-        
+
         // BitsPerSample
         header[34] = bitsPerSample.toByte()
         header[35] = 0
-        
+
         // data subchunk
         header[36] = 'd'.code.toByte()
         header[37] = 'a'.code.toByte()
         header[38] = 't'.code.toByte()
         header[39] = 'a'.code.toByte()
-        
+
         // Subchunk2Size
         header[40] = (dataSize and 0xff).toByte()
         header[41] = (dataSize shr 8 and 0xff).toByte()
         header[42] = (dataSize shr 16 and 0xff).toByte()
         header[43] = (dataSize shr 24 and 0xff).toByte()
-        
+
         return header
     }
-    
+
     /**
      * Check if in realtime voice mode
      */
     fun isInRealtimeMode(): Boolean = isRealtimeMode
-    
+
     /**
      * Get current voice agent
      */
     fun getCurrentVoiceAgent(): RealtimeVoiceAgent.VoiceAgentConfig? = currentVoiceAgent
-    
+
     /**
      * Show voice agent selection dialog with fallback options
      */
     private fun showVoiceAgentSelectionDialog() {
         try {
             Log.d("ChatFragment", "Showing voice agent selection dialog")
-            
+
             // Simple hardcoded options for testing
             val agentOptions = arrayOf(
                 "🤖 AI Chat Assistant",
                 "📋 Meeting Specialist",
                 "🎓 Educational Tutor"
             )
-            
+
             val agentKeys = arrayOf(
                 "general_assistant",
-                "meeting_specialist", 
+                "meeting_specialist",
                 "educational_tutor"
             )
-            
+
             Log.d("ChatFragment", "Agent options: ${agentOptions.contentToString()}")
             Log.d("ChatFragment", "Creating AlertDialog with ${agentOptions.size} items")
-            
+
             // Try using setSingleChoiceItems for better visibility
             val builder = AlertDialog.Builder(requireContext(), android.R.style.Theme_DeviceDefault_Light_Dialog_Alert)
             builder.setTitle("Choose Voice Agent")
-            
+
             var selectedIndex = -1
             builder.setSingleChoiceItems(agentOptions, -1) { _, which ->
                 selectedIndex = which
                 Log.d("ChatFragment", "Agent selected at index: $which")
             }
-            
+
             builder.setPositiveButton("Start Chat") { dialog, _ ->
                 if (selectedIndex >= 0) {
                     val selectedAgentKey = agentKeys[selectedIndex]
@@ -8662,12 +10074,12 @@ class ChatFragment : Fragment() {
                 }
                 dialog.dismiss()
             }
-            
+
             builder.setNegativeButton("Cancel") { dialog, _ ->
                 Log.d("ChatFragment", "Voice agent selection cancelled")
                 dialog.dismiss()
             }
-            
+
             // Fallback: if setSingleChoiceItems doesn't work, use simple buttons
             builder.setNeutralButton("Quick Start") { dialog, _ ->
                 Log.d("ChatFragment", "Quick start with default agent")
@@ -8675,13 +10087,13 @@ class ChatFragment : Fragment() {
                 startRealtimeVoiceChat("general_assistant")
                 dialog.dismiss()
             }
-            
+
             // Create and show dialog
             val dialog = builder.create()
             Log.d("ChatFragment", "About to show dialog")
             dialog.show()
             Log.d("ChatFragment", "Dialog shown successfully")
-                
+
         } catch (e: Exception) {
             Log.e("ChatFragment", "Error showing voice agent selection dialog", e)
             showCustomToast("Error loading voice agents: ${e.message}")
@@ -8690,41 +10102,41 @@ class ChatFragment : Fragment() {
             showSimpleVoiceAgentDialog()
         }
     }
-    
+
     /**
      * Fallback dialog using simple buttons - guaranteed to work
      */
     private fun showSimpleVoiceAgentDialog() {
         try {
             Log.d("ChatFragment", "Showing simple button-based voice agent dialog")
-            
+
             val builder = AlertDialog.Builder(requireContext())
             builder.setTitle("Choose Voice Agent")
             builder.setMessage("Select your AI assistant type:")
-            
+
             // Use three separate buttons in positive/neutral/negative positions
             builder.setPositiveButton("🤖 AI Assistant") { _, _ ->
                 Log.d("ChatFragment", "Selected: AI Assistant")
                 showCustomToast("Starting conversation with AI Chat Assistant...")
                 startRealtimeVoiceChat("general_assistant")
             }
-            
+
             builder.setNeutralButton("📋 Meeting") { _, _ ->
                 Log.d("ChatFragment", "Selected: Meeting Specialist")
                 showCustomToast("Starting conversation with Meeting Specialist...")
                 startRealtimeVoiceChat("meeting_specialist")
             }
-            
+
             builder.setNegativeButton("🎓 Tutor") { _, _ ->
                 Log.d("ChatFragment", "Selected: Educational Tutor")
                 showCustomToast("Starting conversation with Educational Tutor...")
                 startRealtimeVoiceChat("educational_tutor")
             }
-            
+
             val dialog = builder.create()
             dialog.show()
             Log.d("ChatFragment", "Simple dialog shown successfully")
-            
+
         } catch (e: Exception) {
             Log.e("ChatFragment", "Error in simple dialog", e)
             // Final fallback - just start with default
@@ -8733,19 +10145,19 @@ class ChatFragment : Fragment() {
             startRealtimeVoiceChat("general_assistant")
         }
     }
-    
+
     private fun toggleMeetingRecording() {
         try {
             // Toggle meeting recording state
             val isCurrentlyRecording = binding.meetingRecordButton.text.contains("Stop")
-            
+
             if (isCurrentlyRecording) {
                 // Stop recording
                 binding.meetingRecordButton.text = "🔴 Record Meeting"
                 showCustomToast("Meeting recording stopped")
                 // TODO: Stop actual recording functionality
             } else {
-                // Start recording  
+                // Start recording
                 binding.meetingRecordButton.text = "⏹️ Stop Recording"
                 showCustomToast("Meeting recording started")
                 // TODO: Start actual recording functionality
@@ -8755,12 +10167,12 @@ class ChatFragment : Fragment() {
             showCustomToast("Error toggling recording")
         }
     }
-    
+
     private fun toggleLiveChat() {
         try {
             // Toggle live chat state
             val isCurrentlyActive = binding.realtimeVoiceButton.text.contains("Stop")
-            
+
             if (isCurrentlyActive) {
                 // Stop live chat
                 binding.realtimeVoiceButton.text = "🟢 Live Chat"
@@ -8777,17 +10189,17 @@ class ChatFragment : Fragment() {
             showCustomToast("Error toggling live chat")
         }
     }
-    
+
     // Extension support methods for structured outputs
     internal fun getCurrentModel(): String {
         return currentModel
     }
-    
-    internal fun saveConversation() { 
+
+    internal fun saveConversation() {
         saveChatHistory()
     }
-    
-    
+
+
 }
 // --- Request Data Classes ---
 data class GeminiTtsRequest(

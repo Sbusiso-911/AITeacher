@@ -10,15 +10,40 @@ import androidx.work.Configuration as WorkManagerConfiguration
 import androidx.work.WorkManager
 import com.google.ar.core.Config
 import com.playstudio.aiteacher.history.DatabaseProvider
+import com.playstudio.aiteacher.security.FirestoreKeyManager
+import com.google.firebase.FirebaseApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 class MyApplication : MultiDexApplication() {
 
     override fun onCreate() {
         super.onCreate()
+        
+        Log.e("MyApplication", "🚀 MyApplication onCreate() called!")
+
+        // Initialize Firebase first
+        try {
+            FirebaseApp.initializeApp(this)
+            Log.e("MyApplication", "Firebase initialized successfully")
+        } catch (e: Exception) {
+            Log.e("MyApplication", "Firebase initialization failed", e)
+        }
 
         // Initialize your database here - changed from initialize() to init()
         DatabaseProvider.init(this)
+
+        // Initialize API keys from Firestore
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                FirestoreKeyManager.getInstance().fetchAndCacheKeys()
+                Log.e("MyApplication", "Successfully fetched API keys from Firestore")
+            } catch (e: Exception) {
+                Log.e("MyApplication", "Failed to fetch API keys from Firestore, using fallback", e)
+            }
+        }
 
         // Rest of your initialization code
         val workManagerConfig = WorkManagerConfiguration.Builder()

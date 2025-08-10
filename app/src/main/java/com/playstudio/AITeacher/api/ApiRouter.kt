@@ -1,6 +1,7 @@
 package com.playstudio.aiteacher.api
 
 import com.playstudio.aiteacher.pricing.AIModel
+import com.playstudio.aiteacher.security.FirestoreKeyManager
 
 /**
  * API Router for handling different AI model providers and their endpoints
@@ -44,6 +45,11 @@ object ApiRouter {
                 baseUrl = "https://generativelanguage.googleapis.com/v1beta",
                 authHeaderName = "x-goog-api-key",
                 authHeaderPrefix = ""
+            )
+            "xAI" -> ApiConfig(
+                baseUrl = "https://api.x.ai/v1",
+                authHeaderName = "Authorization",
+                authHeaderPrefix = "Bearer"
             )
             else -> ApiConfig(
                 baseUrl = "https://api.openai.com/v1", // Default to OpenAI
@@ -105,11 +111,54 @@ object ApiRouter {
     }
     
     /**
+     * Get API key for a model from Firestore (with BuildConfig fallback)
+     */
+    fun getApiKey(model: AIModel): String? {
+        val keyManager = FirestoreKeyManager.getInstance()
+        
+        return when (model.provider) {
+            "OpenAI" -> keyManager.getApiKeyWithFallback("openai")
+            "Anthropic" -> keyManager.getApiKeyWithFallback("anthropic")
+            "Google" -> keyManager.getApiKeyWithFallback("google")
+            "xAI" -> keyManager.getApiKeyWithFallback("grok")
+            "DeepSeek" -> keyManager.getApiKeyWithFallback("deepseek")
+            else -> keyManager.getApiKeyWithFallback("openai")
+        }
+    }
+    
+    /**
+     * Get authorization header for a model (using Firestore keys)
+     */
+    fun getAuthHeaderWithFirestore(model: AIModel): Pair<String, String>? {
+        val apiKey = getApiKey(model) ?: return null
+        return getAuthHeader(model, apiKey)
+    }
+    
+    /**
      * Get additional headers for a model
      */
     fun getAdditionalHeaders(model: AIModel): Map<String, String> {
         val config = getApiConfig(model)
         return config.additionalHeaders
+    }
+    
+    /**
+     * Get function calling responses endpoint for a model
+     */
+    fun getFunctionCallingUrl(model: AIModel): String {
+        val config = getApiConfig(model)
+        return when (model.provider) {
+            "OpenAI" -> "${config.baseUrl}/responses"
+            else -> "${config.baseUrl}/chat/completions" // Fallback to regular chat
+        }
+    }
+    
+    /**
+     * Get web search endpoint for a model
+     */
+    fun getWebSearchUrl(model: AIModel): String {
+        val config = getApiConfig(model)
+        return "${config.baseUrl}/responses" // OpenAI responses endpoint supports web search
     }
     
     /**
@@ -121,8 +170,12 @@ object ApiRouter {
             ApiFeature.IMAGE_GENERATION -> model.modelId.contains("dall-e", ignoreCase = true)
             ApiFeature.AUDIO_TRANSCRIPTION -> model.provider == "OpenAI"
             ApiFeature.TEXT_TO_SPEECH -> model.provider == "OpenAI"
+            ApiFeature.FUNCTION_CALLING -> model.provider == "OpenAI" && 
+                (model.modelId.contains("gpt-4", ignoreCase = true) || 
+                 model.modelId.contains("gpt-3.5", ignoreCase = true))
+            ApiFeature.WEB_SEARCH -> model.provider == "OpenAI"
             ApiFeature.STREAMING -> when (model.provider) {
-                "OpenAI", "DeepSeek", "Anthropic" -> true
+                "OpenAI", "DeepSeek", "Anthropic", "xAI" -> true
                 else -> false
             }
         }
@@ -137,5 +190,7 @@ enum class ApiFeature {
     IMAGE_GENERATION,
     AUDIO_TRANSCRIPTION,
     TEXT_TO_SPEECH,
+    FUNCTION_CALLING,
+    WEB_SEARCH,
     STREAMING
 }

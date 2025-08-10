@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="3dp"
+    app:cardBackgroundColor="@color/glass_message_received">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Question Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:id="@+id/questionNumberText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/chip_question_number"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/montserrat"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                android:text="Question 1" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <!-- Question Text -->
+        <TextView
+            android:id="@+id/questionText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/glass_text_primary"
+            android:textSize="16sp"
+            android:lineSpacingExtra="4dp"
+            android:fontFamily="@font/montserrat"
+            android:layout_marginBottom="16dp"
+            android:text="Question text appears here..." />
+
+        <!-- Options Container (for multiple choice, true/false) -->
+        <LinearLayout
+            android:id="@+id/optionsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Open Answer Input (for open-ended questions) -->
+        <EditText
+            android:id="@+id/openAnswerEditText"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:background="@drawable/rounded_edittext_background"
+            android:padding="16dp"
+            android:gravity="top"
+            android:hint="Type your answer here..."
+            android:textColor="@color/glass_text_primary"
+            android:textColorHint="@color/glass_text_secondary"
+            android:textSize="14sp"
+            android:fontFamily="@font/montserrat"
+            android:visibility="gone"
+            android:layout_marginBottom="12dp"
+            android:inputType="textMultiLine|textCapSentences" />
+
+        <!-- Submit Button (for open-ended questions) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/submitButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Submit Answer"
+            android:textSize="14sp"
+            android:textColor="@color/white"
+            android:background="@drawable/button_gradient_background"
+            android:layout_gravity="end"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp"
+            app:cornerRadius="8dp" />
+
+        <!-- Explanation Section -->
+        <LinearLayout
+            android:id="@+id/explanationSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_explanation_section"
+            android:padding="16dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/feedbackText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/montserrat"
+                android:layout_marginBottom="8dp"
+                android:text="✅ Well done!" />
+
+            <TextView
+                android:id="@+id/explanationText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="14sp"
+                android:lineSpacingExtra="2dp"
+                android:fontFamily="@font/montserrat"
+                android:text="Explanation appears here..." />
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

@@ -4,151 +4,148 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 
 /**
- * JSON Schema definitions for OpenAI Structured Outputs
- * These schemas ensure consistent, reliable educational content formatting
+ * NEW Learning-Focused Schema Definitions
+ * Redesigned for comprehensive subject teaching like textbooks and experienced teachers
  */
 object StructuredOutputSchemas {
 
     /**
-     * Simplified educational response schema that's guaranteed to work with OpenAI
+     * MAIN: Comprehensive Learning Content Schema
+     * Structured like a textbook chapter with natural knowledge flow
      */
-    fun getEducationalResponseSchema(): JsonObject {
+    fun getLearningContentSchema(): JsonObject {
         val schemaJson = """
         {
           "type": "json_schema",
           "json_schema": {
-            "name": "educational_response",
-            "description": "Structured educational content for AI Teacher",
+            "name": "learning_content",
             "strict": true,
             "schema": {
               "type": "object",
               "properties": {
-                "response_type": {
+                "topic_title": {
                   "type": "string",
-                  "description": "Type of educational response",
+                  "description": "Clear, engaging title for the topic"
+                },
+                "subject_area": {
+                  "type": "string",
+                  "description": "Subject like mathematics, science, programming, history"
+                },
+                "content_type": {
+                  "type": "string",
+                  "description": "Type of educational content",
                   "enum": [
-                    "explanation",
-                    "step_by_step",
-                    "quiz",
-                    "lesson",
-                    "practice",
-                    "summary",
-                    "code_tutorial"
+                    "comprehensive_explanation",
+                    "concept_overview",
+                    "detailed_guide",
+                    "practical_tutorial"
                   ]
                 },
-                "subject": {
-                  "type": "string",
-                  "description": "Subject area like mathematics, programming, science"
-                },
-                "difficulty_level": {
-                  "type": "string",
-                  "description": "Difficulty level of the content",
-                  "enum": ["beginner", "intermediate", "advanced", "expert"]
-                },
-                "content": {
+                "introduction": {
                   "type": "object",
-                  "description": "Structured content, including explanation, steps, examples, code snippets, and formulas",
+                  "description": "Opening section to engage and orient learners",
                   "properties": {
-                    "main_explanation": {"type": "string"},
-                    "steps": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "step_number": {"type": "integer"},
-                          "title": {"type": "string"},
-                          "explanation": {"type": "string"}
-                        },
-                        "required": ["step_number", "title", "explanation"],
-                        "additionalProperties": false
-                      }
+                    "hook": {
+                      "type": "string",
+                      "description": "Engaging opening that captures interest"
                     },
-                    "examples": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "title": {"type": "string"},
-                          "problem": {"type": "string"},
-                          "solution": {"type": "string"}
-                        },
-                        "required": ["title", "problem", "solution"],
-                        "additionalProperties": false
-                      }
+                    "overview": {
+                      "type": "string",
+                      "description": "What this topic covers and why it matters"
                     },
-                    "practice_questions": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "question": {"type": "string"},
-                          "answer": {"type": "string"}
-                        },
-                        "required": ["question", "answer"],
-                        "additionalProperties": false
-                      }
-                    },
-                    "key_concepts": {"type": "array", "items": {"type": "string"}},
-                    "estimated_reading_time": {"type": "integer"}
+                    "real_world_relevance": {
+                      "type": "string",
+                      "description": "How this applies in real life"
+                    }
                   },
-                  "required": [
-                    "main_explanation",
-                    "steps",
-                    "examples",
-                    "practice_questions",
-                    "key_concepts",
-                    "estimated_reading_time"
-                  ],
+                  "required": ["hook", "overview", "real_world_relevance"],
                   "additionalProperties": false
                 },
-                "metadata": {
+                "core_content": {
                   "type": "object",
+                  "description": "Main educational content organized logically",
                   "properties": {
-                    "estimated_reading_time": {"type": "integer"},
-                    "prerequisites": {"type": "array", "items": {"type": "string"}},
-                    "next_topics": {"type": "array", "items": {"type": "string"}},
-                    "learning_objectives": {"type": "array", "items": {"type": "string"}},
-                    "tags": {"type": "array", "items": {"type": "string"}},
-                    "confidence_score": {"type": "number"}
+                    "fundamental_concepts": {
+                      "type": "string",
+                      "description": "Core ideas explained clearly and thoroughly"
+                    },
+                    "detailed_explanation": {
+                      "type": "string",
+                      "description": "Comprehensive explanation building on fundamentals"
+                    },
+                    "key_principles": {
+                      "type": "array",
+                      "description": "Important principles to understand",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "principle": {"type": "string"},
+                          "explanation": {"type": "string"},
+                          "importance": {"type": "string"}
+                        },
+                        "required": ["principle", "explanation", "importance"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "advanced_concepts": {
+                      "type": "string",
+                      "description": "More sophisticated ideas for deeper understanding"
+                    }
                   },
-                  "required": [
-                    "estimated_reading_time",
-                    "prerequisites",
-                    "next_topics",
-                    "learning_objectives",
-                    "tags",
-                    "confidence_score"
-                  ],
+                  "required": ["fundamental_concepts", "detailed_explanation", "key_principles", "advanced_concepts"],
                   "additionalProperties": false
                 },
-                "interactive_elements": {
+                "practical_examples": {
                   "type": "array",
+                  "description": "Real-world examples showing practical application",
                   "items": {
                     "type": "object",
                     "properties": {
-                      "element_type": {"type": "string", "enum": [
-                        "progress_tracker",
-                        "interactive_diagram",
-                        "code_playground",
-                        "formula_renderer",
-                        "quiz_widget"
-                      ]},
-                      "title": {"type": "string"},
-                      "description": {"type": "string"},
-                      "data": {"type": "string"}
+                      "example_title": {"type": "string"},
+                      "context": {"type": "string", "description": "Real-world situation"},
+                      "application": {"type": "string", "description": "How the concept applies"},
+                      "outcome": {"type": "string", "description": "What this achieves"}
                     },
-                    "required": ["element_type", "title", "description", "data"],
+                    "required": ["example_title", "context", "application", "outcome"],
                     "additionalProperties": false
                   }
+                },
+                "applications": {
+                  "type": "object",
+                  "description": "How this knowledge is used in practice",
+                  "properties": {
+                    "common_uses": {
+                      "type": "array",
+                      "description": "Typical ways this is applied",
+                      "items": {"type": "string"}
+                    },
+                    "professional_applications": {
+                      "type": "array",
+                      "description": "How professionals use this knowledge",
+                      "items": {"type": "string"}
+                    },
+                    "everyday_relevance": {
+                      "type": "string",
+                      "description": "How this affects daily life"
+                    }
+                  },
+                  "required": ["common_uses", "professional_applications", "everyday_relevance"],
+                  "additionalProperties": false
+                },
+                "reading_time_minutes": {
+                  "type": "integer",
+                  "description": "Estimated reading time in minutes"
                 }
               },
               "required": [
-                "response_type",
-                "subject",
-                "difficulty_level",
-                "content",
-                "metadata",
-                "interactive_elements"
+                "topic_title",
+                "subject_area",
+                "content_type",
+                "introduction",
+                "core_content",
+                "practical_examples",
+                "applications",
+                "reading_time_minutes"
               ],
               "additionalProperties": false
             }
@@ -160,7 +157,82 @@ object StructuredOutputSchemas {
     }
 
     /**
-     * Simplified schema for quick explanations
+     * INTERACTIVE SESSION Schema - Separate dedicated Q&A mode
+     * Used when users explicitly want to test their knowledge
+     */
+    fun getInteractiveSessionSchema(): JsonObject {
+        val schemaJson = """
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "interactive_session",
+            "description": "Dedicated interactive Q&A session for knowledge testing",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "session_type": {
+                  "type": "string",
+                  "description": "Type of interactive session",
+                  "enum": [
+                    "knowledge_check",
+                    "practice_quiz",
+                    "discussion_questions",
+                    "application_scenarios"
+                  ]
+                },
+                "topic_focus": {
+                  "type": "string",
+                  "description": "The specific topic being tested"
+                },
+                "session_intro": {
+                  "type": "string",
+                  "description": "Brief introduction to this interactive session"
+                },
+                "questions": {
+                  "type": "array",
+                  "description": "Interactive questions for the user",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "question_id": {"type": "string"},
+                      "question_text": {"type": "string"},
+                      "question_type": {
+                        "type": "string",
+                        "enum": ["multiple_choice", "open_ended", "true_false", "scenario_based"]
+                      },
+                      "options": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Options for multiple choice questions"
+                      },
+                      "correct_answer": {"type": "string"},
+                      "explanation": {
+                        "type": "string",
+                        "description": "Why this answer is correct"
+                      }
+                    },
+                    "required": ["question_id", "question_text", "question_type", "correct_answer", "explanation"],
+                    "additionalProperties": false
+                  }
+                },
+                "encouragement": {
+                  "type": "string",
+                  "description": "Encouraging message for the session"
+                }
+              },
+              "required": ["session_type", "topic_focus", "session_intro", "questions", "encouragement"],
+              "additionalProperties": false
+            }
+          }
+        }
+        """.trimIndent()
+
+        return JsonParser.parseString(schemaJson).asJsonObject
+    }
+
+    /**
+     * Quick explanation schema for simple questions
      */
     fun getQuickExplanationSchema(): JsonObject {
         val schemaJson = """
@@ -202,7 +274,7 @@ object StructuredOutputSchemas {
             }
         }
         """.trimIndent()
-        
+
         return JsonParser.parseString(schemaJson).asJsonObject
     }
 
@@ -262,48 +334,263 @@ object StructuredOutputSchemas {
             }
         }
         """.trimIndent()
-        
+
         return JsonParser.parseString(schemaJson).asJsonObject
     }
 
     /**
-     * Get system prompt for structured educational responses
+     * Schema for UI generation responses
      */
-    fun getEducationalSystemPrompt(): String {
+    fun getUiSchema(): JsonObject {
+        val schemaJson = """
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "ui_response",
+            "description": "Generated UI structure",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "ui": { "${'$'}ref": "#/${'$'}defs/ui" }
+              },
+              "required": ["ui"],
+              "${'$'}defs": {
+                "ui": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["div", "button", "header", "section", "field", "form"]
+                    },
+                    "label": {"type": "string"},
+                    "children": {
+                      "type": "array",
+                      "items": { "${'$'}ref": "#/${'$'}defs/ui" }
+                    },
+                    "attributes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {"type": "string"},
+                          "value": {"type": "string"}
+                        },
+                        "required": ["name", "value"],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": ["type", "label", "children", "attributes"],
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+        """.trimIndent()
+
+        return JsonParser.parseString(schemaJson).asJsonObject
+    }
+
+    /**
+     * NEW: Simplified Security Analysis Schema
+     * Clear, user-friendly problem-solution format
+     */
+    fun getSecurityAnalysisSchema(): JsonObject {
+        val schemaJson = """
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "security_analysis",
+            "description": "Simplified security analysis using clear problem-solution format",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "analysis_type": {
+                  "type": "string",
+                  "description": "Type of security analysis",
+                  "enum": [
+                    "account_security",
+                    "data_protection", 
+                    "network_security",
+                    "system_vulnerability"
+                  ]
+                },
+                "problem": {
+                  "type": "object",
+                  "description": "What was broken or vulnerable",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "description": "Simple, clear problem title"
+                    },
+                    "description": {
+                      "type": "string", 
+                      "description": "Plain English explanation of what was wrong"
+                    },
+                    "severity": {
+                      "type": "string",
+                      "description": "How serious the problem is",
+                      "enum": ["low", "medium", "high", "critical"]
+                    },
+                    "impact": {
+                      "type": "string",
+                      "description": "What could happen because of this problem"
+                    }
+                  },
+                  "required": ["title", "description", "severity", "impact"],
+                  "additionalProperties": false
+                },
+                "solution": {
+                  "type": "object", 
+                  "description": "What we fixed or implemented",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "description": "Simple, clear solution title"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Plain English explanation of what was done"
+                    },
+                    "how_it_works": {
+                      "type": "string",
+                      "description": "Simple explanation of how the solution works"
+                    }
+                  },
+                  "required": ["title", "description", "how_it_works"],
+                  "additionalProperties": false
+                },
+                "result": {
+                  "type": "object",
+                  "description": "Clear before/after comparison", 
+                  "properties": {
+                    "before": {
+                      "type": "string",
+                      "description": "What the situation was like before"
+                    },
+                    "after": {
+                      "type": "string", 
+                      "description": "What the situation is like now"
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "description": "The clear, positive outcome"
+                    }
+                  },
+                  "required": ["before", "after", "outcome"],
+                  "additionalProperties": false
+                },
+                "next_action": {
+                  "type": "object",
+                  "description": "One clear action for the user (optional)",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "description": "Clear action title"
+                    },
+                    "description": {
+                      "type": "string", 
+                      "description": "Simple explanation of what the user should do"
+                    },
+                    "is_urgent": {
+                      "type": "boolean",
+                      "description": "Whether this action is urgent"
+                    }
+                  },
+                  "required": ["title", "description"],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "analysis_type",
+                "problem", 
+                "solution",
+                "result"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+        """.trimIndent()
+
+        return JsonParser.parseString(schemaJson).asJsonObject
+    }
+
+    /**
+     * NEW: System prompt for comprehensive learning content
+     */
+    fun getLearningContentSystemPrompt(): String {
         return """
-        You are AI Teacher, an advanced educational AI assistant. Your responses must be structured, comprehensive, and pedagogically sound.
+        You are AI Teacher, providing comprehensive educational content like an experienced teacher or textbook author.
 
-        IMPORTANT: Always respond using the provided JSON schema format.
+        CRITICAL APPROACH: Think like a textbook chapter, not a problem solver.
 
-        Guidelines for educational responses:
-        1. Always assess the difficulty level appropriate for the user's question
-        2. Break down complex topics into manageable steps
-        3. Provide practical examples when possible
-        4. Include practice questions for reinforcement
-        5. Suggest prerequisites if the topic is advanced
-        6. Recommend next topics for continued learning
-        7. Estimate reading time accurately
-        8. Use clear, encouraging language suitable for learning
+        CORE PRINCIPLES:
+        1. COMPREHENSIVE COVERAGE: Provide full, thorough information about the topic
+        2. NATURAL FLOW: Start with engaging introduction → build core understanding → show real applications
+        3. PRACTICAL FOCUS: Emphasize real-world relevance and applications
+        4. PROGRESSIVE DEPTH: Begin with fundamentals, naturally build to more sophisticated concepts
+        5. ENGAGING TEACHING: Use compelling examples and clear explanations
 
-        For mathematics:
-        - Show step-by-step solutions
-        - Explain the reasoning behind each step
-        - Provide verification methods
-        - Include relevant formulas with explanations
+        CONTENT STRUCTURE:
+        - Introduction: Hook interest, explain relevance, overview what's covered
+        - Core Content: Comprehensive explanation building from basics to advanced
+        - Examples: Real-world situations showing practical application
+        - Applications: How this knowledge is actually used in life and work
 
-        For programming:
-        - Include working code examples
-        - Explain code line by line when helpful
-        - Show expected outputs
-        - Suggest improvements or variations
+        WRITING STYLE:
+        - Write like an engaging textbook or experienced teacher
+        - Use clear, accessible language appropriate for the topic
+        - Include relevant analogies and comparisons
+        - Show enthusiasm for the subject
+        - Focus on understanding, not just mechanics
 
-        For science topics:
-        - Use analogies to explain complex concepts
-        - Include real-world applications
-        - Break down processes into clear steps
-        - Connect to prior knowledge
+        AVOID:
+        - Step-by-step problem solving unless specifically requested
+        - Academic jargon like "learning objectives" or "prerequisites"
+        - Breaking content into disconnected pieces
+        - Formula-heavy responses without context
+        - Abstract concepts without practical grounding
 
-        Always maintain an encouraging, patient tone that promotes learning and curiosity.
+        GOAL: Help users develop comprehensive understanding of topics, not just solve specific problems.
+        """.trimIndent()
+    }
+
+    /**
+     * NEW: System prompt for simplified security analysis
+     */
+    fun getSecurityAnalysisSystemPrompt(): String {
+        return """
+        You are a security analysis assistant. Your goal is to make security issues crystal clear to users who are NOT security experts.
+
+        CRITICAL RULES:
+        1. Start with the PROBLEM in plain English - What was broken?
+        2. Explain the SOLUTION simply - What did we fix?  
+        3. Show the RESULT clearly - What works now?
+        4. Give ONE clear action (if any) - What should the user do?
+
+        NEVER USE:
+        - Technical jargon without context
+        - Complex role-based sections  
+        - Code snippets users can't understand
+        - Tables with unclear meaning
+        - Multiple action items
+        - Industry compliance language
+
+        ALWAYS USE:
+        - Clear problem statement 
+        - Simple solution explanation
+        - Obvious before/after comparison
+        - One clear outcome
+        - Simple language anyone can understand
+
+        Your goal: Make the user say "Oh, I get it!" instead of "What is this?"
+
+        Focus on making security understandable, not impressive.
         """.trimIndent()
     }
 }

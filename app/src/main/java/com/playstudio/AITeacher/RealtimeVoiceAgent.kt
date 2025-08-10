@@ -14,6 +14,7 @@ import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.TimeUnit
 import com.playstudio.aiteacher.pricing.AIModel
+import com.playstudio.aiteacher.security.FirestoreKeyManager
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -43,7 +44,7 @@ class RealtimeVoiceAgent(private val context: Context) {
         const val STATE_INTERRUPTED = "interrupted"
     }
     
-    private val apiKey = BuildConfig.API_KEY
+    private val keyManager = FirestoreKeyManager.getInstance()
     private var webSocket: WebSocket? = null
     private var sessionToken: String? = null
     private var currentState = STATE_IDLE
@@ -122,15 +123,48 @@ class RealtimeVoiceAgent(private val context: Context) {
     /**
      * Create ephemeral session token for secure client connection
      */
-    suspend fun createEphemeralToken(model: String = "gpt-4o-realtime-preview-2024-10-01"): String = withContext(Dispatchers.IO) {
+    suspend fun createEphemeralToken(model: String = "gpt-4o-realtime-preview"): String = withContext(Dispatchers.IO) {
+        // Get OpenAI API key from Firestore
+        val apiKey = keyManager.getApiKeyWithFallback("openai")
+        if (apiKey.isNullOrBlank()) {
+            throw Exception("OpenAI API key not found in Firestore or BuildConfig")
+        }
+        
         val client = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(60, TimeUnit.SECONDS)  // Increased for GPT-4o realtime API
+            .readTimeout(90, TimeUnit.SECONDS)     // Increased for voice processing
             .build()
         
         val requestBody = JSONObject().apply {
             put("model", model)
+            put("modalities", JSONArray().apply {
+                put("text")
+                put("audio")
+            })
+            put("instructions", currentAgent?.let { buildAgentPrompt(it) } ?: "You are a helpful AI assistant.")
             put("voice", currentAgent?.personality?.voiceModel ?: "alloy")
+            put("input_audio_format", "pcm16")
+            put("output_audio_format", "pcm16")
+            put("input_audio_transcription", JSONObject().apply {
+                put("model", "whisper-1")
+            })
+            put("turn_detection", JSONObject().apply {
+                put("type", "server_vad")
+                put("threshold", 0.4) // Slightly higher threshold for more reliable speech detection
+                put("prefix_padding_ms", 400) // Increased padding to capture more speech start
+                put("silence_duration_ms", 1000) // Longer silence duration for better audio buffer accumulation
+                put("create_response", true)
+                put("interrupt_response", true)
+            })
+            put("temperature", 0.8)
+            put("max_response_output_tokens", 4096)
+            put("tool_choice", "auto")
+            put("speed", 1.0)
+            currentAgent?.tools?.let { tools ->
+                if (tools.isNotEmpty()) {
+                    put("tools", buildToolsArray(tools))
+                }
+            }
         }
         
         val request = Request.Builder()
@@ -156,11 +190,22 @@ class RealtimeVoiceAgent(private val context: Context) {
     }
     
     /**
-     * Initialize voice agent with configuration
+     * Initialize voice agent with configuration and ensure API keys are loaded
      */
-    fun initializeAgent(config: VoiceAgentConfig, callback: VoiceAgentCallback) {
+    suspend fun initializeAgent(config: VoiceAgentConfig, callback: VoiceAgentCallback) {
         this.currentAgent = config
         this.callback = callback
+        
+        // Ensure API keys are loaded from Firestore
+        if (!keyManager.hasValidCache()) {
+            Log.d(TAG, "Loading API keys from Firestore...")
+            val success = keyManager.fetchAndCacheKeys()
+            if (!success) {
+                callback.onError("Failed to load API keys from Firestore")
+                return
+            }
+        }
+        
         Log.d(TAG, "Initialized voice agent: ${config.name}")
     }
     
@@ -176,7 +221,7 @@ class RealtimeVoiceAgent(private val context: Context) {
                 .build()
             
             val request = Request.Builder()
-                .url("$REALTIME_API_URL?model=gpt-4o-realtime-preview-2024-10-01")
+                .url("$REALTIME_API_URL?model=gpt-4o-realtime-preview")
                 .header("Authorization", "Bearer $token")
                 .header("OpenAI-Beta", "realtime=v1")
                 .build()
@@ -259,13 +304,17 @@ class RealtimeVoiceAgent(private val context: Context) {
                 })
                 put("turn_detection", JSONObject().apply {
                     put("type", "server_vad")
-                    put("threshold", 0.5)
-                    put("prefix_padding_ms", 300)
-                    put("silence_duration_ms", 200)
+                    put("threshold", 0.4) // Match the session creation threshold
+                    put("prefix_padding_ms", 400) // Increased padding for better speech capture
+                    put("silence_duration_ms", 1000) // Longer silence for better buffer accumulation
+                    put("create_response", true)
+                    put("interrupt_response", true)
                 })
                 put("tools", buildToolsArray(agent.tools))
-                put("temperature", 0.7)
+                put("temperature", 0.8)
                 put("max_response_output_tokens", 4096)
+                put("tool_choice", "auto")
+                put("speed", 1.0)
             })
         }
         
@@ -398,14 +447,18 @@ class RealtimeVoiceAgent(private val context: Context) {
                 }
                 "input_audio_buffer.speech_started" -> {
                     updateState(STATE_LISTENING)
-                    Log.d(TAG, "User started speaking")
+                    Log.i(TAG, "🎙️ OPENAI VAD: User started speaking - server detected speech!")
                 }
                 "input_audio_buffer.speech_stopped" -> {
                     updateState(STATE_THINKING)
-                    Log.d(TAG, "User stopped speaking")
+                    Log.i(TAG, "🛑 OPENAI VAD: User stopped speaking - processing response...")
+                }
+                "input_audio_buffer.committed" -> {
+                    Log.d(TAG, "Audio buffer committed successfully")
                 }
                 "response.created" -> {
                     updateState(STATE_THINKING)
+                    Log.d(TAG, "Response created by OpenAI")
                 }
                 "response.output_item.added" -> {
                     handleOutputItem(json.getJSONObject("item"))
@@ -434,7 +487,18 @@ class RealtimeVoiceAgent(private val context: Context) {
                 }
                 "error" -> {
                     val error = json.getJSONObject("error")
-                    callback?.onError("API Error: ${error.getString("message")}")
+                    val errorMessage = error.getString("message")
+                    val errorType = error.optString("type", "unknown")
+                    
+                    // Special handling for buffer size errors
+                    if (errorMessage.contains("buffer too small") || errorMessage.contains("Expected at least")) {
+                        Log.e(TAG, "Audio buffer size error - this indicates insufficient audio data was sent to OpenAI")
+                        Log.e(TAG, "Error details: type=$errorType, message=$errorMessage")
+                        callback?.onError("Audio buffer error: Not enough speech detected. Please speak longer and clearer.")
+                    } else {
+                        Log.e(TAG, "OpenAI API Error: type=$errorType, message=$errorMessage")
+                        callback?.onError("API Error: $errorMessage")
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -605,6 +669,48 @@ class RealtimeVoiceAgent(private val context: Context) {
             put("type", "response.create")
         }
         webSocket?.send(responseMessage.toString())
+    }
+
+    /**
+     * Manually commit audio buffer and trigger response (for testing/fallback)
+     */
+    fun commitAudioAndTriggerResponse() {
+        if (webSocket == null) {
+            Log.e(TAG, "Cannot commit audio buffer - WebSocket is null")
+            return
+        }
+        
+        try {
+            // Commit the audio buffer first
+            val commitMessage = JSONObject().apply {
+                put("type", "input_audio_buffer.commit")
+                put("event_id", java.util.UUID.randomUUID().toString()) // Add event ID for tracking
+            }
+            webSocket?.send(commitMessage.toString())
+            Log.w(TAG, "🔄 FALLBACK: Manually committed audio buffer - event: ${commitMessage.optString("event_id")}")
+            
+            // Small delay to ensure commit is processed before response creation
+            Thread.sleep(50)
+            
+            // Trigger response creation
+            val responseMessage = JSONObject().apply {
+                put("type", "response.create")
+                put("event_id", java.util.UUID.randomUUID().toString()) // Add event ID for tracking
+                // Specify output modalities to ensure we get audio response
+                put("response", JSONObject().apply {
+                    put("modalities", org.json.JSONArray().apply {
+                        put("text")
+                        put("audio")
+                    })
+                })
+            }
+            webSocket?.send(responseMessage.toString())
+            Log.w(TAG, "🚀 FALLBACK: Manually triggered response creation - event: ${responseMessage.optString("event_id")}")
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in fallback audio commit and response trigger", e)
+            callback?.onError("Failed to trigger fallback response: ${e.message}")
+        }
     }
     
     /**

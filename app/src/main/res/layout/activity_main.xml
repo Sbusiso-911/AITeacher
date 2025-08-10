@@ -12,31 +12,114 @@
         android:id="@+id/root_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/transparent"
-        android:fitsSystemWindows="true"
+        android:background="@drawable/ocean_background_gradient"
+        android:fitsSystemWindows="false"
         tools:context=".MainActivity">
 
-        <!-- Fixed AI Theme Background -->
+        <!-- Fixed AI Theme Background (KEEP AS IS) -->
         <ImageView
             android:id="@+id/ai_theme_background"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:scaleType="centerCrop"
-            android:alpha="1.0"
+            android:alpha="0.3"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Blended Header -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/ocean_header"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@color/ocean_surface"
+            android:paddingHorizontal="24dp"
+            android:paddingTop="40dp"
+            android:paddingBottom="20dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <!-- Hamburger Menu Button -->
+            <ImageView
+                android:id="@+id/hamburger_menu"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_menu"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:padding="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:tint="@color/ocean_primary"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+            <!-- Logo Section -->
+            <LinearLayout
+                android:id="@+id/logo_section"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                app:layout_constraintStart_toEndOf="@id/hamburger_menu"
+                app:layout_constraintEnd_toStartOf="@id/profile_icon"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_marginStart="16dp">
+
+                <!-- Logo Icon -->
+                <ImageView
+                    android:id="@+id/logo_icon"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@drawable/ic_ai"
+                    android:layout_marginEnd="12dp"
+                    app:tint="@color/ocean_primary" />
+
+                <!-- App Title -->
+                <TextView
+                    android:id="@+id/app_title_ocean"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="AI Teacher"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/ocean_primary"
+                    android:fontFamily="@font/montserrat_bold" />
+
+            </LinearLayout>
+
+            <!-- Profile Icon with Robot View -->
+            <ImageView
+                android:id="@+id/profile_icon"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ai_robot_icon"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:padding="4dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:tint="@color/ocean_primary"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <!-- ScrollView to make the content scrollable -->
         <ScrollView
             android:id="@+id/mainScrollView"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:fillViewport="true"
+            android:fillViewport="false"
             android:background="@android:color/transparent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/adContainer"
+            android:padding="8dp"
+            android:clipToPadding="false"
+            app:layout_constraintTop_toBottomOf="@id/ocean_header"
+            app:layout_constraintBottom_toTopOf="@id/bottom_nav"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
@@ -45,99 +128,18 @@
                 android:id="@+id/non_chat_elements"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="16dp"
+                android:padding="8dp"
                 android:background="@android:color/transparent"
-                android:fitsSystemWindows="true"
                 tools:context=".MainActivity">
 
-                <!-- Badge Container -->
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/badge_container"
-                    android:layout_width="0dp"
-                    android:layout_height="96dp"
-                    android:layout_marginTop="8dp"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent">
 
-                    <!-- Outer Badge Background -->
-                    <View
-                        android:id="@+id/badgeBackground"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/subscription_option_popular"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent" />
-
-                    <!-- Badge ImageView (now on the right) -->
-                    <ImageView
-                        android:id="@+id/badgeImageView"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:src="@drawable/bronze_badge"
-                        android:contentDescription="@string/badge_image_desc"
-                        android:layout_marginEnd="16dp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent" />
-
-                    <!-- "Pro" Text (middle-left) -->
-                    <TextView
-                        android:id="@+id/badgeTextView"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:text="Pro"
-                        android:textColor="@android:color/white"
-                        android:gravity="center"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:background="@drawable/pro_background"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        android:layout_marginStart="16dp"/>
-                    <!-- "Premium Active" Text (middle top, bold) -->
-                    <TextView
-                        android:id="@+id/subscriptionStatusText"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:text="Premium Active"
-                        android:textColor="@color/green"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:gravity="center"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintEnd_toStartOf="@id/badgeImageView"
-                        android:layout_marginTop="16dp"/>
-
-                    <!-- Timer Text (middle bottom) -->
-                    <TextView
-                        android:id="@+id/subscriptionTimer"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:text="12 days remaining"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp"
-                        android:gravity="center"
-                        app:layout_constraintTop_toBottomOf="@id/subscriptionStatusText"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintEnd_toStartOf="@id/badgeImageView"
-                        android:layout_marginBottom="16dp"/>
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-
-
-
+                <!-- Premium Banner -->
                 <com.playstudio.aiteacher.GradientButton
                     android:id="@+id/buyButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="✨ UNLOCK PREMIUM ✨\nRemove Ads • GET All AI Models - More accurate responses + Image generator • unlimited chat"
-                    android:textColor="@android:color/white"
+                    android:text="UNLOCK PREMIUM\nRemove Ads • GET All AI Models - More accurate responses + Image generator • unlimited chat"
+                    android:textColor="@color/ocean_text_dark"
                     android:textSize="18sp"
                     android:letterSpacing="0.03"
                     android:lineSpacingExtra="2sp"
@@ -146,89 +148,295 @@
                     android:padding="24dp"
                     android:layout_marginTop="16dp"
                     android:layout_marginHorizontal="24dp"
-                    android:elevation="8dp"
+                    android:elevation="12dp"
                     android:stateListAnimator="@null"
                     android:outlineProvider="background"
-                    app:layout_constraintTop_toBottomOf="@id/badge_container"
+                    app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintWidth_percent="0.9"
-                    app:buttonCornerRadius="32dp"
+                    app:buttonCornerRadius="16dp"
                     android:textAllCaps="false"
-                    android:shadowColor="#80000000"
-                    android:shadowDx="1"
-                    android:shadowDy="1"
-                    android:shadowRadius="2"
-                    app:startColor="@color/premium_gradient_start"
-                    app:endColor="@color/premium_gradient_end"
+                    android:shadowColor="@color/shadow_medium"
+                    android:shadowDx="2"
+                    android:shadowDy="2"
+                    android:shadowRadius="4"
+                    app:startColor="@color/ocean_primary"
+                    app:endColor="@color/ocean_primary_light"
                     app:strokeWidth="2dp"
-                    app:strokeColor="@android:color/white"/>
-                <!-- HorizontalScrollView for recent conversation icons -->
-                <HorizontalScrollView
-                    android:id="@+id/recentConversationsLayout"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:scrollbars="none"
-                    app:layout_constraintTop_toBottomOf="@+id/buyButton"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    android:layout_marginTop="8dp"
-                    android:contentDescription="@string/recent_conversations_desc">
+                    app:strokeColor="@color/ocean_text_dark"/>
 
 
 
-                    <LinearLayout
-                        android:id="@+id/recentConversationsContainer"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-                        <!-- Dynamic buttons will be added here -->
-                    </LinearLayout>
-                </HorizontalScrollView>
-
-                <!-- Subjects Section -->
+                <!-- Quick Actions Section -->
                 <LinearLayout
-                    android:id="@+id/subjectsTitleContainer"
+                    android:id="@+id/quickActionsContainer"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:paddingStart="16dp"
                     android:paddingTop="16dp"
                     android:paddingEnd="16dp"
-                    app:layout_constraintTop_toBottomOf="@id/recentConversationsLayout"
+                    app:layout_constraintTop_toBottomOf="@id/buyButton"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent">
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Elite Tools"
-                        android:textColor="#FFFFFF"
-                        android:textSize="22sp"
-                        android:fontFamily="@font/montserrat_bold"
-                        android:layout_marginBottom="16dp"/>
-
+                    <!-- Category Tabs -->
                     <HorizontalScrollView
-                        android:id="@+id/subjectsScrollView"
+                        android:id="@+id/category_tabs_scroll"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:scrollbars="none"
-                        android:paddingVertical="8dp"
-                        android:importantForAccessibility="yes"
-                        android:contentDescription="@string/subjects_scroll_desc">
+                        android:layout_marginBottom="20dp">
 
                         <LinearLayout
-                            android:id="@+id/subjectsLayout"
+                            android:id="@+id/category_tabs_container"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
-                            android:paddingEnd="16dp">
-                            <!-- Subject cards will be added programmatically -->
+                            android:padding="8dp">
+
+                            <TextView
+                                android:id="@+id/tab_all_tools"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="All Tools"
+                                android:textSize="14sp"
+                                android:textStyle="normal"
+                                android:textColor="@color/ocean_text_dark"
+                                android:fontFamily="@font/montserrat"
+                                android:background="@drawable/category_tab_background"
+                                android:padding="12dp"
+                                android:layout_marginEnd="12dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:foreground="?android:attr/selectableItemBackground" />
+
+                            <TextView
+                                android:id="@+id/tab_creative"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Creative"
+                                android:textSize="14sp"
+                                android:textStyle="normal"
+                                android:textColor="@color/ocean_text_secondary"
+                                android:fontFamily="@font/montserrat"
+                                android:background="@drawable/category_tab_inactive_background"
+                                android:padding="12dp"
+                                android:layout_marginEnd="12dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:foreground="?android:attr/selectableItemBackground" />
+
+                            <TextView
+                                android:id="@+id/tab_academic"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Academic"
+                                android:textSize="14sp"
+                                android:textStyle="normal"
+                                android:textColor="@color/ocean_text_secondary"
+                                android:fontFamily="@font/montserrat"
+                                android:background="@drawable/category_tab_inactive_background"
+                                android:padding="12dp"
+                                android:layout_marginEnd="12dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:foreground="?android:attr/selectableItemBackground" />
+
+                            <TextView
+                                android:id="@+id/tab_productivity"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Productivity"
+                                android:textSize="14sp"
+                                android:textStyle="normal"
+                                android:textColor="@color/ocean_text_secondary"
+                                android:fontFamily="@font/montserrat"
+                                android:background="@drawable/category_tab_inactive_background"
+                                android:padding="12dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:foreground="?android:attr/selectableItemBackground" />
+
                         </LinearLayout>
                     </HorizontalScrollView>
+
+                    <!-- Quick Actions Title -->
+                    <TextView
+                        android:id="@+id/quickActionsTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Quick Actions"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/ocean_text_primary"
+                        android:fontFamily="@font/montserrat_bold"
+                        android:layout_marginBottom="16dp" />
+
+
+                    <!-- AI Image Generator (Large Card) -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/buttonNew3"
+                        android:layout_width="match_parent"
+                        android:layout_height="140dp"
+                        android:layout_marginBottom="16dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="8dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?android:attr/selectableItemBackground">
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/floating_card_primary"
+                            android:padding="20dp">
+
+                            <!-- NEW Badge -->
+                            <TextView
+                                android:id="@+id/new_badge_1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="NEW"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/ocean_text_primary"
+                                android:background="@color/ocean_accent_coral"
+                                android:paddingHorizontal="12dp"
+                                android:paddingVertical="4dp"
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent" />
+
+                            <!-- Tool Icon -->
+                            <ImageView
+                                android:id="@+id/aiImageIcon"
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                android:src="@drawable/ic_ai"
+                                app:tint="@color/ocean_text_primary"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                            <!-- Content -->
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintEnd_toStartOf="@id/new_badge_1"
+                                app:layout_constraintBottom_toBottomOf="parent">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="AI Image Generator"
+                                    android:textSize="18sp"
+                                    android:textStyle="bold"
+                                    android:textColor="@color/ocean_text_primary"
+                                    android:fontFamily="@font/montserrat_bold"
+                                    android:layout_marginBottom="6dp" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="Create &amp; transform images with AI"
+                                    android:textSize="14sp"
+                                    android:textColor="@color/ocean_text_secondary"
+                                    android:fontFamily="@font/montserrat" />
+
+                            </LinearLayout>
+
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- Voice Chat (Large Card) -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/buttonNew2"
+                        android:layout_width="match_parent"
+                        android:layout_height="140dp"
+                        android:layout_marginBottom="16dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="8dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?android:attr/selectableItemBackground">
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/floating_card_secondary"
+                            android:padding="20dp">
+
+                            <!-- NEW Badge -->
+                            <TextView
+                                android:id="@+id/new_badge_2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="NEW"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/ocean_text_primary"
+                                android:background="@color/ocean_accent_coral"
+                                android:paddingHorizontal="12dp"
+                                android:paddingVertical="4dp"
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent" />
+
+                            <!-- Notification Dot -->
+                            <View
+                                android:layout_width="8dp"
+                                android:layout_height="8dp"
+                                android:background="@color/ocean_notification"
+                                app:layout_constraintTop_toBottomOf="@id/new_badge_2"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                android:layout_marginTop="8dp" />
+
+                            <!-- Tool Icon -->
+                            <ImageView
+                                android:id="@+id/voiceChatIcon"
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                android:src="@drawable/ic_mic"
+                                app:tint="@color/ocean_text_primary"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                            <!-- Content -->
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintEnd_toStartOf="@id/new_badge_2"
+                                app:layout_constraintBottom_toBottomOf="parent">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="Voice Chat"
+                                    android:textSize="18sp"
+                                    android:textStyle="bold"
+                                    android:textColor="@color/ocean_text_primary"
+                                    android:fontFamily="@font/montserrat_bold"
+                                    android:layout_marginBottom="6dp" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="Talk with Chat &amp; Ask AI about anything"
+                                    android:textSize="14sp"
+                                    android:textColor="@color/ocean_text_secondary"
+                                    android:fontFamily="@font/montserrat" />
+
+                            </LinearLayout>
+
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+                    </androidx.cardview.widget.CardView>
+
                 </LinearLayout>
 
-                <!-- Chapters Section -->
+                <!-- Academic Content Hidden - Chapters, Topics, Subtopics moved to Academic button functionality -->
                 <LinearLayout
                     android:id="@+id/chaptersLayout"
                     android:layout_width="0dp"
@@ -236,11 +444,10 @@
                     android:orientation="vertical"
                     android:padding="16dp"
                     android:visibility="gone"
-                    app:layout_constraintTop_toBottomOf="@id/subjectsTitleContainer"
+                    app:layout_constraintTop_toBottomOf="@id/quickActionsContainer"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent">
 
-                    <!-- Chapter title -->
                     <TextView
                         android:id="@+id/chaptersTitle"
                         android:layout_width="match_parent"
@@ -250,11 +457,8 @@
                         android:textSize="22sp"
                         android:fontFamily="@font/montserrat_bold"
                         android:layout_marginBottom="16dp"/>
-
-                    <!-- Chapter Buttons will be added dynamically -->
                 </LinearLayout>
 
-                <!-- Topics Section -->
                 <LinearLayout
                     android:id="@+id/topicsLayout"
                     android:layout_width="0dp"
@@ -266,7 +470,6 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent">
 
-                    <!-- Topic title -->
                     <TextView
                         android:id="@+id/topicsTitle"
                         android:layout_width="match_parent"
@@ -276,8 +479,6 @@
                         android:textSize="22sp"
                         android:fontFamily="@font/montserrat_bold"
                         android:layout_marginBottom="16dp"/>
-
-                    <!-- Topic Buttons will be added dynamically -->
                 </LinearLayout>
 
                 <LinearLayout
@@ -292,26 +493,14 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     android:clipToPadding="false">
 
-                    <!-- Title will be added here programmatically -->
-
-                    <HorizontalScrollView
-                        android:layout_width="match_parent"
+                    <GridLayout
+                        android:id="@+id/subtopicsGrid"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:scrollbars="none"
-                        android:fillViewport="true">
-
-                        <GridLayout
-                            android:id="@+id/subtopicsGrid"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:columnCount="2"
-                            android:rowCount="0"
-                            android:padding="8dp"/>
-                    </HorizontalScrollView>
+                        android:columnCount="2"
+                        android:rowCount="0"
+                        android:padding="8dp"/>
                 </LinearLayout>
-
-
-
 
                 <!-- Modern Elite Tools Section -->
                 <LinearLayout
@@ -320,7 +509,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp"
-                    app:layout_constraintTop_toBottomOf="@id/subtopicsLayout"
+                    app:layout_constraintTop_toBottomOf="@id/quickActionsContainer"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent">
 
@@ -363,147 +552,106 @@
                             android:orientation="horizontal"
                             android:layout_marginBottom="16dp">
 
-                            <!-- AI Image Generator Card -->
+                            <!-- Math Tool -->
                             <androidx.cardview.widget.CardView
-                                android:id="@+id/buttonNew3"
+                                android:id="@+id/cardAnalyzeImage"
                                 android:layout_width="0dp"
-                                android:layout_height="160dp"
+                                android:layout_height="120dp"
                                 android:layout_weight="1"
                                 android:layout_marginEnd="8dp"
                                 app:cardCornerRadius="16dp"
-                                app:cardElevation="0dp"
+                                app:cardElevation="8dp"
                                 android:clickable="true"
                                 android:focusable="true"
                                 android:foreground="?android:attr/selectableItemBackground">
 
-                                <RelativeLayout
+                                <LinearLayout
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
-                                    android:background="@drawable/gradient_ai_image_bg"
-                                    android:padding="16dp">
+                                    android:background="@drawable/floating_card_background"
+                                    android:padding="16dp"
+                                    android:orientation="vertical"
+                                    android:gravity="center">
 
-                                    <!-- NEW Badge -->
+                                    <ImageView
+                                        android:layout_width="32dp"
+                                        android:layout_height="32dp"
+                                        android:src="@drawable/ic_scan"
+                                        app:tint="@color/ocean_text_primary"
+                                        android:layout_marginBottom="12dp" />
+
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:layout_alignParentTop="true"
-                                        android:layout_alignParentEnd="true"
-                                        android:text="NEW"
-                                        android:textSize="12sp"
-                                        android:textStyle="bold"
-                                        android:textColor="#000000"
-                                        android:background="@drawable/new_badge_background"
-                                        android:paddingHorizontal="8dp"
-                                        android:paddingVertical="4dp"/>
-
-                                    <!-- Icon -->
-                                    <ImageView
-                                        android:id="@+id/aiImageIcon"
-                                        android:layout_width="32dp"
-                                        android:layout_height="32dp"
-                                        android:layout_alignParentStart="true"
-                                        android:layout_alignParentTop="true"
-                                        android:src="@drawable/ic_ai"
-                                        android:contentDescription="AI Image Generator"
-                                        app:tint="#FFFFFF"/>
-
-                                    <!-- Title -->
-                                    <TextView
-                                        android:id="@+id/aiImageTitle"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_below="@id/aiImageIcon"
-                                        android:layout_marginTop="16dp"
-                                        android:text="AI Image Generator"
-                                        android:textColor="#FFFFFF"
+                                        android:text="Analyze Image"
                                         android:textSize="16sp"
                                         android:textStyle="bold"
-                                        android:fontFamily="@font/montserrat_bold"/>
+                                        android:textColor="@color/ocean_text_primary"
+                                        android:fontFamily="@font/montserrat_bold"
+                                        android:layout_marginBottom="4dp" />
 
-                                    <!-- Description -->
                                     <TextView
-                                        android:layout_width="match_parent"
+                                        android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:layout_below="@id/aiImageTitle"
-                                        android:layout_marginTop="4dp"
-                                        android:text="Create &amp; transform images with AI"
-                                        android:textColor="#FFFFFF"
-                                        android:textSize="14sp"
-                                        android:alpha="0.7"
-                                        android:fontFamily="@font/montserrat"/>
-                                </RelativeLayout>
+                                        android:text="AI image analysis"
+                                        android:textSize="12sp"
+                                        android:textColor="@color/ocean_text_secondary"
+                                        android:gravity="center"
+                                        android:fontFamily="@font/montserrat" />
+
+                                </LinearLayout>
                             </androidx.cardview.widget.CardView>
 
-                            <!-- Voice Chat Card -->
+                            <!-- Science Tool -->
                             <androidx.cardview.widget.CardView
-                                android:id="@+id/buttonNew2"
+                                android:id="@+id/cardScienceTool"
                                 android:layout_width="0dp"
-                                android:layout_height="160dp"
+                                android:layout_height="120dp"
                                 android:layout_weight="1"
                                 android:layout_marginStart="8dp"
                                 app:cardCornerRadius="16dp"
-                                app:cardElevation="0dp"
-                                app:cardBackgroundColor="#2A3B4A"
+                                app:cardElevation="8dp"
                                 android:clickable="true"
                                 android:focusable="true"
                                 android:foreground="?android:attr/selectableItemBackground">
 
-                                <RelativeLayout
+                                <LinearLayout
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
-                                    android:padding="16dp">
+                                    android:background="@drawable/floating_card_background"
+                                    android:padding="16dp"
+                                    android:orientation="vertical"
+                                    android:gravity="center">
 
-                                    <!-- NEW Badge -->
+                                    <ImageView
+                                        android:layout_width="32dp"
+                                        android:layout_height="32dp"
+                                        android:src="@drawable/ic_info"
+                                        app:tint="@color/ocean_text_primary"
+                                        android:layout_marginBottom="12dp" />
+
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:layout_alignParentTop="true"
-                                        android:layout_alignParentEnd="true"
-                                        android:text="NEW"
-                                        android:textSize="12sp"
-                                        android:textStyle="bold"
-                                        android:textColor="#000000"
-                                        android:background="@drawable/new_badge_background"
-                                        android:paddingHorizontal="8dp"
-                                        android:paddingVertical="4dp"/>
-
-                                    <!-- Icon -->
-                                    <ImageView
-                                        android:id="@+id/voiceChatIcon"
-                                        android:layout_width="32dp"
-                                        android:layout_height="32dp"
-                                        android:layout_alignParentStart="true"
-                                        android:layout_alignParentTop="true"
-                                        android:src="@drawable/ic_mic"
-                                        android:contentDescription="Voice Chat"
-                                        app:tint="#FFFFFF"/>
-
-                                    <!-- Title -->
-                                    <TextView
-                                        android:id="@+id/voiceChatTitle"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_below="@id/voiceChatIcon"
-                                        android:layout_marginTop="16dp"
-                                        android:text="Voice Chat"
-                                        android:textColor="#FFFFFF"
+                                        android:text="Science"
                                         android:textSize="16sp"
                                         android:textStyle="bold"
-                                        android:fontFamily="@font/montserrat_bold"/>
+                                        android:textColor="@color/ocean_text_primary"
+                                        android:fontFamily="@font/montserrat_bold"
+                                        android:layout_marginBottom="4dp" />
 
-                                    <!-- Description -->
                                     <TextView
-                                        android:layout_width="match_parent"
+                                        android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:layout_below="@id/voiceChatTitle"
-                                        android:layout_marginTop="4dp"
-                                        android:text="Talk with Chat &amp; Ask AI about anything"
-                                        android:textColor="#FFFFFF"
-                                        android:textSize="14sp"
-                                        android:alpha="0.7"
-                                        android:fontFamily="@font/montserrat"/>
-                                </RelativeLayout>
+                                        android:text="Scientific analysis"
+                                        android:textSize="12sp"
+                                        android:textColor="@color/ocean_text_secondary"
+                                        android:gravity="center"
+                                        android:fontFamily="@font/montserrat" />
+
+                                </LinearLayout>
                             </androidx.cardview.widget.CardView>
+
                         </LinearLayout>
 
                         <!-- Bottom Row -->
@@ -512,180 +660,174 @@
                             android:layout_height="wrap_content"
                             android:orientation="horizontal">
 
-                            <!-- Text Extractor Card -->
+                            <!-- Text Extractor -->
                             <androidx.cardview.widget.CardView
-                                android:id="@+id/buttonNew1"
+                                android:id="@+id/cardHomeworkHelper"
                                 android:layout_width="0dp"
-                                android:layout_height="160dp"
+                                android:layout_height="120dp"
                                 android:layout_weight="1"
                                 android:layout_marginEnd="8dp"
                                 app:cardCornerRadius="16dp"
-                                app:cardElevation="0dp"
-                                app:cardBackgroundColor="#354555"
+                                app:cardElevation="8dp"
                                 android:clickable="true"
                                 android:focusable="true"
                                 android:foreground="?android:attr/selectableItemBackground">
 
-                                <RelativeLayout
+                                <LinearLayout
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
-                                    android:padding="16dp">
+                                    android:background="@drawable/floating_card_background"
+                                    android:padding="16dp"
+                                    android:orientation="vertical"
+                                    android:gravity="center">
 
-                                    <!-- Icon -->
                                     <ImageView
-                                        android:id="@+id/textExtractIcon"
                                         android:layout_width="32dp"
                                         android:layout_height="32dp"
-                                        android:layout_alignParentStart="true"
-                                        android:layout_alignParentTop="true"
-                                        android:src="@drawable/ic_scan"
-                                        android:contentDescription="Text Extractor"
-                                        app:tint="#FFFFFF"/>
+                                        android:src="@drawable/ic_baseline_article_24"
+                                        app:tint="@color/ocean_text_primary"
+                                        android:layout_marginBottom="12dp" />
 
-                                    <!-- Title -->
                                     <TextView
-                                        android:id="@+id/textExtractTitle"
-                                        android:layout_width="match_parent"
+                                        android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:layout_below="@id/textExtractIcon"
-                                        android:layout_marginTop="16dp"
-                                        android:text="Text Extractor"
-                                        android:textColor="#FFFFFF"
+                                        android:text="Homework Helper"
                                         android:textSize="16sp"
                                         android:textStyle="bold"
-                                        android:fontFamily="@font/montserrat_bold"/>
+                                        android:textColor="@color/ocean_text_primary"
+                                        android:fontFamily="@font/montserrat_bold"
+                                        android:layout_marginBottom="4dp" />
 
-                                    <!-- Description -->
                                     <TextView
-                                        android:layout_width="match_parent"
+                                        android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:layout_below="@id/textExtractTitle"
-                                        android:layout_marginTop="4dp"
-                                        android:text="Extract text from images, PDFs &amp; documents"
-                                        android:textColor="#FFFFFF"
-                                        android:textSize="14sp"
-                                        android:alpha="0.7"
-                                        android:fontFamily="@font/montserrat"/>
-                                </RelativeLayout>
+                                        android:text="Extract text from docs"
+                                        android:textSize="12sp"
+                                        android:textColor="@color/ocean_text_secondary"
+                                        android:gravity="center"
+                                        android:fontFamily="@font/montserrat" />
+
+                                </LinearLayout>
                             </androidx.cardview.widget.CardView>
 
-                            <!-- Email Assistant Card -->
+                            <!-- Email Assistant -->
                             <androidx.cardview.widget.CardView
                                 android:id="@+id/btnExtractEmail"
                                 android:layout_width="0dp"
-                                android:layout_height="160dp"
+                                android:layout_height="120dp"
                                 android:layout_weight="1"
                                 android:layout_marginStart="8dp"
                                 app:cardCornerRadius="16dp"
-                                app:cardElevation="0dp"
-                                app:cardBackgroundColor="#2A3B4A"
+                                app:cardElevation="8dp"
                                 android:clickable="true"
                                 android:focusable="true"
                                 android:foreground="?android:attr/selectableItemBackground">
 
-                                <RelativeLayout
+                                <LinearLayout
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
-                                    android:padding="16dp">
+                                    android:background="@drawable/floating_card_background"
+                                    android:padding="16dp"
+                                    android:orientation="vertical"
+                                    android:gravity="center">
 
-                                    <!-- Icon -->
                                     <ImageView
-                                        android:id="@+id/emailAssistantIcon"
                                         android:layout_width="32dp"
                                         android:layout_height="32dp"
-                                        android:layout_alignParentStart="true"
-                                        android:layout_alignParentTop="true"
                                         android:src="@drawable/ic_email"
-                                        android:contentDescription="Email Assistant"
-                                        app:tint="#FFFFFF"/>
+                                        app:tint="@color/ocean_text_primary"
+                                        android:layout_marginBottom="12dp" />
 
-                                    <!-- Title -->
                                     <TextView
-                                        android:id="@+id/emailAssistantTitle"
-                                        android:layout_width="match_parent"
+                                        android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:layout_below="@id/emailAssistantIcon"
-                                        android:layout_marginTop="16dp"
                                         android:text="Email Assistant"
-                                        android:textColor="#FFFFFF"
                                         android:textSize="16sp"
                                         android:textStyle="bold"
-                                        android:fontFamily="@font/montserrat_bold"/>
+                                        android:textColor="@color/ocean_text_primary"
+                                        android:fontFamily="@font/montserrat_bold"
+                                        android:layout_marginBottom="4dp" />
 
-                                    <!-- Description -->
                                     <TextView
-                                        android:layout_width="match_parent"
+                                        android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:layout_below="@id/emailAssistantTitle"
-                                        android:layout_marginTop="4dp"
-                                        android:text="Smart email management &amp; responses"
-                                        android:textColor="#FFFFFF"
-                                        android:textSize="14sp"
-                                        android:alpha="0.7"
-                                        android:fontFamily="@font/montserrat"/>
-                                </RelativeLayout>
+                                        android:text="Smart responses"
+                                        android:textSize="12sp"
+                                        android:textColor="@color/ocean_text_secondary"
+                                        android:gravity="center"
+                                        android:fontFamily="@font/montserrat" />
+
+                                </LinearLayout>
                             </androidx.cardview.widget.CardView>
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
-                <!-- Placeholder View -->
+
+                <!-- Bottom Spacer for content -->
                 <View
-                    android:id="@+id/someOtherView"
+                    android:id="@+id/content_bottom_spacer"
+                    android:layout_width="0dp"
+                    android:layout_height="24dp"
+                    app:layout_constraintTop_toBottomOf="@id/additionalButtonsLayout"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent" />
+
+                <!-- Chat UI is hidden in MainActivity - it's handled by ChatFragment -->
+                <View
+                    android:id="@+id/chat_placeholder"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
                     android:visibility="gone"
-                    app:layout_constraintTop_toBottomOf="@id/additionalButtonsLayout"
+                    app:layout_constraintTop_toBottomOf="@id/content_bottom_spacer"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent" />
-
-                <!-- RecyclerView for displaying chat messages -->
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recyclerView"
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:scrollbars="vertical"
-                    app:layout_constraintTop_toBottomOf="@id/someOtherView"
-                    app:layout_constraintBottom_toTopOf="@id/messageInputLayout"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
-                    android:background="@drawable/conversation_background"
-                    android:padding="8dp" />
-
-                <!-- Message Input Layout -->
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/messageInputLayout"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    android:padding="14dp"
-                    android:layout_marginBottom="14dp">
-
-                    <EditText
-                        android:id="@+id/messageEditText"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="24dp"
-                        android:layout_marginEnd="24dp"
-                        android:hint="Write your message"
-                        android:inputType="textMultiLine"
-                        android:maxLines="8"
-                        android:padding="20dp"
-                        android:textColor="#FFFFFF"
-                        android:textColorHint="#999999"
-                        android:background="@drawable/modern_input_background"
-                        android:gravity="start|center_vertical"
-                        android:textSize="16sp"
-                        android:fontFamily="@font/montserrat"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
             </androidx.constraintlayout.widget.ConstraintLayout>
         </ScrollView>
+
+        <!-- Floating Action Button -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/floating_action_button"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginBottom="120dp"
+            android:backgroundTint="@color/ocean_accent_coral"
+            android:src="@drawable/ic_lightning"
+            app:tint="@color/ocean_text_primary"
+            app:elevation="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/bottom_nav" />
+
+        <!-- Bottom Navigation Bar - Chat Input -->
+        <LinearLayout
+            android:id="@+id/bottom_nav"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bottom_nav_background"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:visibility="visible"
+            app:layout_constraintBottom_toTopOf="@id/adContainer"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <EditText
+                android:id="@+id/search_bar"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/search_bar_background"
+                android:hint="Write your message"
+                android:textColorHint="@color/ocean_text_secondary"
+                android:textColor="@color/ocean_text_primary"
+                android:textSize="16sp"
+                android:fontFamily="@font/montserrat"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="12dp"
+                android:imeOptions="actionSend"
+                android:inputType="textMultiLine|textCapSentences" />
+
+        </LinearLayout>
 
         <!-- Ad Container -->
         <FrameLayout
@@ -706,25 +848,30 @@
                 ads:adUnitId="ca-app-pub-9180832030816304/6496270014"/>
         </FrameLayout>
 
-        <!-- Fragment Container -->
+        <!-- Fragment Container - Only visible when showing fragments -->
         <FrameLayout
             android:id="@+id/fragment_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="visible"
+            android:visibility="gone"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
+        <!-- Subjects Layout (hidden compatibility) - REMOVED -->
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/emailRecyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
             android:padding="8dp"
             android:clipToPadding="false"
-            android:visibility="gone" />  <!-- Initially hidden -->
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/ocean_header"
+            app:layout_constraintBottom_toTopOf="@id/bottom_nav"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

@@ -45,14 +45,18 @@ android {
         } else {
             throw GradleException("GOOGLE_VISION_API_KEY not found in gradle.properties")
         }
-        
+
         // Read DeepSeek API key from gradle.properties
         val deepseekApiKey: String? = project.findProperty("DEEPSEEK_API_KEY") as String?
         buildConfigField("String", "DEEPSEEK_API_KEY", "\"${deepseekApiKey ?: ""}\"")
-        
+
         // Read Gemini API key from gradle.properties
-        val geminiApiKey: String? = project.findProperty("GEMINI_API_KEY") as String?
-        buildConfigField("String", "GEMINI_API_KEY", "\"${geminiApiKey ?: ""}\"")
+        val geminiApiKey: String? = project.findProperty("GOOGLE_API_KEY") as String?
+        buildConfigField("String", "GOOGLE_API_KEY", "\"${geminiApiKey ?: ""}\"")
+
+        // Read Grok API key from gradle.properties
+        val grokApiKey: String? = project.findProperty("GROK_API_KEY") as String?
+        buildConfigField("String", "GROK_API_KEY", "\"${grokApiKey ?: ""}\"")
     }
 
     buildFeatures {
@@ -69,6 +73,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -109,7 +114,7 @@ configurations.all {
     resolutionStrategy {
         // Force Firebase BOM version management
         force("com.google.firebase:firebase-bom:34.0.0")
-        
+
         // Handle specific version conflicts
         eachDependency {
             if (requested.group == "com.google.firebase") {
@@ -124,6 +129,7 @@ configurations.all {
 }
 
 dependencies {
+    coreLibraryDesugaring(libs.desugarJdkLibs)
     implementation(libs.kotlin.stdlib)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -138,6 +144,7 @@ dependencies {
     implementation(libs.gson.v2101)
     implementation(libs.car.ui.lib)
     implementation(libs.play.services.ads.v2320)
+    implementation(libs.interactivemedia)
     implementation(libs.androidx.preference.ktx)
     implementation(libs.androidx.annotation)
     implementation(libs.billingclient.billing.ktx)
@@ -191,10 +198,13 @@ dependencies {
     implementation("androidx.room:room-runtime:$room_version")
     implementation("androidx.room:room-ktx:$room_version")
     ksp("androidx.room:room-compiler:$room_version")
-    
+
     // Firebase BOM ensures all Firebase dependencies use compatible versions
     implementation(platform("com.google.firebase:firebase-bom:34.0.0"))
-    
+
+    implementation("com.google.firebase:firebase-firestore-ktx:24.10.0")
+
+
     // Firebase services - no version specified, BOM manages versions
     // Using main modules instead of KTX (as per Firebase BoM v34.0.0+ recommendations)
     implementation("com.google.firebase:firebase-auth")
@@ -207,10 +217,10 @@ dependencies {
     implementation("com.google.firebase:firebase-messaging")
     implementation("com.google.firebase:firebase-database")
     implementation("com.google.firebase:firebase-ai") // Updated from firebase-vertexai
-    
+
     // Google Play Services
     implementation("com.google.android.gms:play-services-auth:20.7.0")
-    
+
     // Security crypto for encrypted preferences
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 

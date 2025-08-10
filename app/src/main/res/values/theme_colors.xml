@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 
+    AI TEACHER APP COLOR SYSTEM
+    Based on Navy Blue Primary + Trust Blue Secondary + Premium Gold Accent
+    Following Material Design 3 and accessibility guidelines
+    -->
+
+    <!-- PRIMARY COLOR SYSTEM (Navy Blue) -->
+    <color name="theme_primary">#0F2257</color>           <!-- Main brand navy -->
+    <color name="theme_primary_light">#1A3A8F</color>     <!-- Lighter navy for hover -->
+    <color name="theme_primary_dark">#000051</color>      <!-- Darker navy for active -->
+    <color name="theme_primary_variant">#1A237E</color>   <!-- Navy variant -->
+
+    <!-- SECONDARY COLOR SYSTEM (Transparent) -->
+    <color name="theme_secondary">@android:color/transparent</color>         <!-- Transparent -->
+    <color name="theme_secondary_light">@android:color/transparent</color>   <!-- Transparent -->
+    <color name="theme_secondary_dark">@android:color/transparent</color>    <!-- Transparent -->
+
+    <!-- ACCENT COLOR SYSTEM (Premium Gold) -->
+    <color name="theme_accent">#FFD700</color>            <!-- Premium gold -->
+    <color name="theme_accent_light">#FFF176</color>      <!-- Light gold -->
+    <color name="theme_accent_dark">#FFC000</color>       <!-- Dark gold -->
+
+    <!-- SURFACE COLORS (Glassmorphism) -->
+    <color name="theme_surface">#1A2A3A</color>           <!-- Dark surface -->
+    <color name="theme_surface_variant">#1A3A4A</color>   <!-- Surface variant -->
+    <color name="theme_surface_light">#2A4A5A</color>     <!-- Lighter surface -->
+
+    <!-- BACKGROUND COLORS -->
+    <color name="theme_background">#0A1A2F</color>        <!-- Main background -->
+    <color name="theme_background_variant">#142950</color> <!-- Background variant -->
+
+    <!-- TEXT COLORS (High Contrast) -->
+    <color name="theme_text_primary">#FFFFFF</color>      <!-- Primary text (white) -->
+    <color name="theme_text_secondary">#B3FFFFFF</color>  <!-- Secondary text (70% white) -->
+    <color name="theme_text_tertiary">#80FFFFFF</color>   <!-- Tertiary text (50% white) -->
+    <color name="theme_text_disabled">#4DFFFFFF</color>   <!-- Disabled text (30% white) -->
+
+    <!-- BUTTON COLOR HIERARCHY -->
+    <!-- Primary Buttons (Call-to-action) -->
+    <color name="btn_primary_bg">@android:color/transparent</color>          <!-- Transparent background -->
+    <color name="btn_primary_hover">@android:color/transparent</color>       <!-- Transparent hover state -->
+    <color name="btn_primary_pressed">@android:color/transparent</color>     <!-- Transparent pressed state -->
+    <color name="btn_primary_text">#FFFFFF</color>        <!-- Text color -->
+
+    <!-- Secondary Buttons (Less important actions) -->
+    <color name="btn_secondary_bg">#1A2A3A</color>        <!-- Dark surface background -->
+    <color name="btn_secondary_hover">#2A3A4A</color>     <!-- Hover state -->
+    <color name="btn_secondary_pressed">#0A1A2A</color>   <!-- Pressed state -->
+    <color name="btn_secondary_text">#FFFFFF</color>      <!-- Text color -->
+    <color name="btn_secondary_border">#40FFFFFF</color>  <!-- Border color -->
+
+    <!-- Premium/Gold Buttons (Special actions) -->
+    <color name="btn_premium_bg">#FFD700</color>          <!-- Gold background -->
+    <color name="btn_premium_hover">#FFC000</color>       <!-- Hover state -->
+    <color name="btn_premium_pressed">#FFB300</color>     <!-- Pressed state -->
+    <color name="btn_premium_text">#0F2257</color>        <!-- Navy text for contrast -->
+
+    <!-- Danger/Warning Buttons -->
+    <color name="btn_danger_bg">#F44336</color>           <!-- Red background -->
+    <color name="btn_danger_hover">#D32F2F</color>        <!-- Hover state -->
+    <color name="btn_danger_pressed">#C62828</color>      <!-- Pressed state -->
+    <color name="btn_danger_text">#FFFFFF</color>         <!-- Text color -->
+
+    <!-- SUCCESS/POSITIVE BUTTONS -->
+    <color name="btn_success_bg">#4CAF50</color>          <!-- Green background -->
+    <color name="btn_success_hover">#45A049</color>       <!-- Hover state -->
+    <color name="btn_success_pressed">#388E3C</color>     <!-- Pressed state -->
+    <color name="btn_success_text">#FFFFFF</color>        <!-- Text color -->
+
+    <!-- FLOATING ACTION BUTTON -->
+    <color name="fab_bg">@android:color/transparent</color>                  <!-- Transparent -->
+    <color name="fab_hover">@android:color/transparent</color>               <!-- Transparent hover state -->
+    <color name="fab_pressed">@android:color/transparent</color>             <!-- Transparent pressed state -->
+
+    <!-- GLASSMORPHISM OVERLAY COLORS -->
+    <color name="glass_overlay_light">#1AFFFFFF</color>   <!-- 10% white -->
+    <color name="glass_overlay_medium">#33FFFFFF</color>  <!-- 20% white -->
+    <color name="glass_overlay_strong">#4DFFFFFF</color> <!-- 30% white -->
+    <color name="glass_border">#40FFFFFF</color>         <!-- 25% white border -->
+
+    <!-- STATE COLORS -->
+    <color name="state_success">#4CAF50</color>          <!-- Success state -->
+    <color name="state_warning">#FF9800</color>          <!-- Warning state -->
+    <color name="state_error">#F44336</color>            <!-- Error state -->
+    <color name="state_info">@android:color/transparent</color>             <!-- Transparent info state -->
+
+    <!-- ELEVATION SHADOWS -->
+    <color name="shadow_light">#1A000000</color>         <!-- 10% black -->
+    <color name="shadow_medium">#33000000</color>        <!-- 20% black -->
+    <color name="shadow_strong">#4D000000</color>        <!-- 30% black -->
+
+</resources>

@@ -20,7 +20,7 @@ class ProrationManager(private val context: Context) {
         SubscriptionTier.BASIC to 999,      // $9.99
         SubscriptionTier.PRO to 1999,       // $19.99
         SubscriptionTier.PREMIUM to 2999,   // $29.99
-        SubscriptionTier.ULTRA_PREMIUM to 4999  // $49.99
+        SubscriptionTier.ENTERPRISE to 4999  // $49.99
     )
     
     /**

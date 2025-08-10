@@ -15,7 +15,7 @@
         android:orientation="horizontal"
         android:gravity="start|top"
         android:layout_marginStart="8dp"
-        android:layout_marginEnd="48dp">
+        android:layout_marginEnd="12dp">
 
         <!-- AI Avatar - positioned at top left, smaller and non-intrusive -->
         <ImageView
@@ -93,13 +93,29 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- Toggle structured content visibility -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/toggleStructuredButton"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="Hide Details ▲"
+                android:textSize="13sp"
+                android:textColor="@color/ai_robot_primary"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="16dp"
+                android:minWidth="0dp"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                app:cornerRadius="16dp" />
+
             <!-- Structured Content Container -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
+                app:cardElevation="0.5dp"
                 app:cardBackgroundColor="@color/glass_message_received">
 
                 <LinearLayout
@@ -107,7 +123,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="4dp" />
+                    android:padding="16dp" />
             </androidx.cardview.widget.CardView>
 
             <!-- Learning Progress Indicator (if applicable) -->
@@ -140,57 +156,6 @@
                     android:text="Progress: 3/5" />
             </LinearLayout>
 
-            <!-- Quick Actions Bar -->
-            <LinearLayout
-                android:id="@+id/quickActionsBar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="start"
-                android:layout_marginTop="8dp"
-                android:visibility="gone">
-
-                <!-- Expand All Steps Button -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/expandAllButton"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="32dp"
-                    android:text="Expand All"
-                    android:textSize="12sp"
-                    android:textColor="@color/ai_robot_primary"
-                    android:layout_marginEnd="8dp"
-                    android:minWidth="0dp"
-                    android:paddingHorizontal="12dp"
-                    app:cornerRadius="16dp" />
-
-                <!-- Quiz Mode Button -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/quizModeButton"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="32dp"
-                    android:text="Quiz Me"
-                    android:textSize="12sp"
-                    android:textColor="@color/ai_robot_primary"
-                    android:layout_marginEnd="8dp"
-                    android:minWidth="0dp"
-                    android:paddingHorizontal="12dp"
-                    app:cornerRadius="16dp" />
-
-                <!-- More Examples Button -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/moreExamplesButton"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="32dp"
-                    android:text="More Examples"
-                    android:textSize="12sp"
-                    android:textColor="@color/ai_robot_primary"
-                    android:minWidth="0dp"
-                    android:paddingHorizontal="12dp"
-                    app:cornerRadius="16dp" />
-            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 
@@ -208,14 +173,14 @@
             android:id="@+id/followUpHeaderButton"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
             android:text="Suggested Follow-ups ▼"
             android:textAllCaps="false"
             android:textColor="@color/glass_text_secondary"
-            android:textSize="12sp"
-            android:minHeight="0dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp"/>
+            android:textSize="13sp"
+            android:minHeight="40dp"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp"/>
 
         <LinearLayout
             android:id="@+id/followUpButtonsContainer"

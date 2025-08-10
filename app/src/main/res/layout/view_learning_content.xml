@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:scrollbars="vertical"
+    android:fadeScrollbars="true"
+    android:scrollbarStyle="outsideOverlay">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Header Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:id="@+id/subjectAreaChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/chip_subject_background"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:fontFamily="@font/montserrat"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                android:layout_marginEnd="8dp"
+                android:text="Mathematics" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/readingTimeText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/glass_text_secondary"
+                android:textSize="12sp"
+                android:fontFamily="@font/montserrat"
+                android:drawableStart="@drawable/ic_time"
+                android:drawablePadding="4dp"
+                android:gravity="center_vertical"
+                android:text="8 min read" />
+        </LinearLayout>
+
+        <!-- Topic Title -->
+        <TextView
+            android:id="@+id/topicTitleText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/glass_text_primary"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:lineSpacingExtra="4dp"
+            android:fontFamily="@font/montserrat"
+            android:layout_marginBottom="20dp"
+            android:text="Understanding Quadratic Equations" />
+
+        <!-- Introduction Section -->
+        <LinearLayout
+            android:id="@+id/introductionSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_introduction_section"
+            android:padding="16dp"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/hookText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="18sp"
+                android:textStyle="italic"
+                android:lineSpacingExtra="4dp"
+                android:fontFamily="@font/montserrat"
+                android:layout_marginBottom="12dp"
+                android:text="Hook content appears here..." />
+
+            <TextView
+                android:id="@+id/overviewText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="16sp"
+                android:lineSpacingExtra="4dp"
+                android:fontFamily="@font/montserrat"
+                android:layout_marginBottom="12dp"
+                android:text="Overview content appears here..." />
+
+            <TextView
+                android:id="@+id/realWorldRelevanceText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="16sp"
+                android:lineSpacingExtra="4dp"
+                android:fontFamily="@font/montserrat"
+                android:text="Real-world relevance appears here..." />
+        </LinearLayout>
+
+        <!-- Core Content Section -->
+        <LinearLayout
+            android:id="@+id/coreContentSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="📚 Core Understanding"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/montserrat"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:id="@+id/fundamentalConceptsText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="16sp"
+                android:lineSpacingExtra="4dp"
+                android:fontFamily="@font/montserrat"
+                android:layout_marginBottom="16dp"
+                android:text="Fundamental concepts content..." />
+
+            <TextView
+                android:id="@+id/detailedExplanationText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="16sp"
+                android:lineSpacingExtra="4dp"
+                android:fontFamily="@font/montserrat"
+                android:layout_marginBottom="16dp"
+                android:text="Detailed explanation content..." />
+
+            <!-- Key Principles Container -->
+            <LinearLayout
+                android:id="@+id/keyPrinciplesContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="🔑 Key Principles"
+                    android:textColor="@color/glass_text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/montserrat"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Key principles will be added dynamically -->
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/advancedConceptsText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="16sp"
+                android:lineSpacingExtra="4dp"
+                android:fontFamily="@font/montserrat"
+                android:visibility="gone"
+                android:text="Advanced concepts content..." />
+        </LinearLayout>
+
+        <!-- Practical Examples Section -->
+        <LinearLayout
+            android:id="@+id/practicalExamplesSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🌍 Real-World Examples"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/montserrat"
+                android:layout_marginBottom="12dp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/practicalExamplesRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false" />
+        </LinearLayout>
+
+        <!-- Applications Section -->
+        <LinearLayout
+            android:id="@+id/applicationsSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_applications_section"
+            android:padding="16dp"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="⚡ How This is Used"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/montserrat"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Common Uses -->
+            <LinearLayout
+                android:id="@+id/commonUsesContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Common Applications:"
+                    android:textColor="@color/glass_text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/montserrat"
+                    android:layout_marginBottom="6dp" />
+                
+                <!-- Common uses will be added dynamically -->
+            </LinearLayout>
+
+            <!-- Professional Applications -->
+            <LinearLayout
+                android:id="@+id/professionalApplicationsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Professional Use:"
+                    android:textColor="@color/glass_text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/montserrat"
+                    android:layout_marginBottom="6dp" />
+                
+                <!-- Professional applications will be added dynamically -->
+            </LinearLayout>
+
+            <!-- Everyday Relevance -->
+            <TextView
+                android:id="@+id/everydayRelevanceText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/glass_text_primary"
+                android:textSize="16sp"
+                android:lineSpacingExtra="4dp"
+                android:fontFamily="@font/montserrat"
+                android:text="Everyday relevance content..." />
+        </LinearLayout>
+
+        <!-- Interactive Session Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/startInteractiveSessionButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="💭 Test Your Understanding"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:background="@drawable/button_gradient_background"
+            android:layout_marginTop="16dp"
+            app:cornerRadius="12dp"
+            android:paddingVertical="12dp" />
+
+    </LinearLayout>
+</ScrollView>

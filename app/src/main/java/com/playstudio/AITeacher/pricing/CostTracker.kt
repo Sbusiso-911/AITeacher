@@ -249,7 +249,7 @@ class RealTimeCostTracker(private val context: Context) {
             projectedCost <= SubscriptionPlans.BASIC_PLAN.maxDailyCostLimit -> SubscriptionTier.BASIC
             projectedCost <= SubscriptionPlans.PRO_PLAN.maxDailyCostLimit -> SubscriptionTier.PRO
             projectedCost <= SubscriptionPlans.PREMIUM_PLAN.maxDailyCostLimit -> SubscriptionTier.PREMIUM
-            else -> SubscriptionTier.ULTRA_PREMIUM
+            else -> SubscriptionTier.ENTERPRISE
         }
     }
     

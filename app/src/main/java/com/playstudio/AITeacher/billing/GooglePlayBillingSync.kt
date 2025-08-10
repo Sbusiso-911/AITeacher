@@ -401,7 +401,7 @@ class GooglePlayBillingSync(private val context: Context) : PurchasesUpdatedList
                 "basic" to "BASIC", 
                 "pro" to "PRO",
                 "premium" to "PREMIUM",
-                "ultra_premium" to "ULTRA_PREMIUM"
+                "ultra_premium" to "ENTERPRISE"
             )
             
             val updates = mapOf(

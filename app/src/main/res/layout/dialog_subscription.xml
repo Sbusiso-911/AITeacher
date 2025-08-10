@@ -53,6 +53,76 @@
                     android:letterSpacing="0.02"/>
             </LinearLayout>
 
+            <!-- FREE TIER -->
+            <LinearLayout
+                android:id="@+id/freeSubscription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:background="@drawable/subscription_option_unselected"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_free_tier"
+                        app:tint="@color/premium_gold"/>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:text="Free Tier"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/montserrat_bold"
+                        android:textColor="@color/white"/>
+
+                    <TextView
+                        android:id="@+id/freePrice"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="$0/month"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/montserrat_bold"
+                        android:textColor="@color/premium_gold"/>
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="• 1,000 tokens daily\n• ALL AI models available\n• Higher pricing (3x markup)\n• Best for trying the app\n• Community support"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/montserrat_medium"
+                    android:textColor="@color/white_70"
+                    android:lineSpacingExtra="2dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="🆓 GET STARTED"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/montserrat_bold"
+                    android:textColor="@color/premium_gold"
+                    android:background="@drawable/popular_badge"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="2dp"/>
+            </LinearLayout>
+
             <!-- BASIC TIER -->
             <LinearLayout
                 android:id="@+id/basicSubscription"
@@ -103,7 +173,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="• 100 messages per day\n• GPT-4o mini &amp; GPT-4.1 mini access\n• Gemini Voice Chat\n• 2 image generations daily\n• 3 web searches\n• Email support"
+                    android:text="• 2,000 tokens daily\n• ALL AI models available\n• Better pricing on expensive models\n• 2.5x markup factor\n• Email support"
                     android:textSize="14sp"
                     android:fontFamily="@font/montserrat_medium"
                     android:textColor="@color/white_70"
@@ -173,7 +243,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="• 300 messages per day\n• GPT-4o &amp; Claude Sonnet 4 access\n• Search-enabled models\n• 8 image generations daily\n• 15 web searches\n• Priority support"
+                    android:text="• 8,000 tokens daily\n• ALL AI models available\n• Professional pricing (1.8x markup)\n• More affordable for heavy usage\n• Priority support"
                     android:textSize="14sp"
                     android:fontFamily="@font/montserrat_medium"
                     android:textColor="@color/white_70"
@@ -243,7 +313,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="• 500 messages per day\n• Access to O1, O1-Mini, O3-Mini\n• GPT-4o Realtime &amp; Audio features\n• DALL-E 3 image generation\n• 20 image generations daily\n• 40 web searches\n• Advanced AI features"
+                    android:text="• 4,000 tokens daily\n• ALL AI models available\n• Balanced pricing (2.0x markup)\n• Good value for regular users\n• Advanced AI features\n• Priority support"
                     android:textSize="14sp"
                     android:fontFamily="@font/montserrat_medium"
                     android:textColor="@color/white_70"
@@ -313,7 +383,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="• 1000 messages per day\n• ACCESS TO ALL MODELS\n• Claude Opus 4: 3 uses/day\n• All OpenAI models including O1\n• Realtime Audio features\n• 50 image generations daily\n• Enterprise support"
+                    android:text="• 16,000 tokens daily\n• ALL AI models available\n• Best pricing (1.5x markup)\n• Most economical for power users\n• o1-pro, GPT-4.5, Claude Opus 4.1\n• Enterprise support"
                     android:textSize="14sp"
                     android:fontFamily="@font/montserrat_medium"
                     android:textColor="@color/white_70"
@@ -337,7 +407,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="🛡️ Cost protection: Strict usage limits prevent overages"
+                android:text="🛡️ Token-based system: All models available, expensive ones cost more tokens"
                 android:textSize="12sp"
                 android:fontFamily="@font/montserrat_medium"
                 android:textColor="@color/white_70"
@@ -370,7 +440,7 @@
             android:id="@+id/tv_subscription_status"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Free Plan - Limited Access"
+            android:text="Free Plan - 1,000 tokens/day (3x markup)"
             android:textSize="14sp"
             android:fontFamily="@font/montserrat_medium"
             android:textColor="@color/white_70"

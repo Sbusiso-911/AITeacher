@@ -35,10 +35,22 @@ class ChatActivity : AppCompatActivity(), ChatFragment.OnSubscriptionClickListen
             val isAdFree = intent.getBooleanExtra("is_ad_free", false)
             val expirationTime = intent.getLongExtra("expiration_time", 0)
             val suggestedMessage = intent.getStringExtra("suggested_message")
+            val selectedModel = intent.getStringExtra("selected_model")
+            val autoShowImagePicker = intent.getBooleanExtra("auto_show_image_picker", false)
+            val autoShowDocumentPicker = intent.getBooleanExtra("auto_show_document_picker", false)
+            val autoSelectModel = intent.getBooleanExtra("auto_select_model", false)
+            val autoStartLiveVoice = intent.getBooleanExtra("auto_start_live_voice", false)
+            val voiceAgentType = intent.getStringExtra("voice_agent_type")
             val bundle = Bundle().apply {
                 putBoolean("is_ad_free", isAdFree)
                 putLong("expiration_time", expirationTime)
                 putString("suggested_message", suggestedMessage)
+                putString("selected_model", selectedModel)
+                putBoolean("auto_show_image_picker", autoShowImagePicker)
+                putBoolean("auto_show_document_picker", autoShowDocumentPicker)
+                putBoolean("auto_select_model", autoSelectModel)
+                putBoolean("auto_start_live_voice", autoStartLiveVoice)
+                putString("voice_agent_type", voiceAgentType)
             }
             chatFragment.arguments = bundle
 

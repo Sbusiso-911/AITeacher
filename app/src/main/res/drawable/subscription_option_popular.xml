@@ -2,8 +2,14 @@
     android:color="#1E3A6B">
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#1E3A6B"/>
-            <corners android:radius="12dp"/>
+            <!-- Enhanced gradient for depth -->
+            <gradient
+                android:startColor="#1E3A6B"
+                android:centerColor="#2A4A7B"
+                android:endColor="#1E3A6B"
+                android:angle="135"/>
+            <corners android:radius="16dp"/>
+            <!-- Premium gold border with glow effect -->
             <stroke android:width="2dp" android:color="@color/premium_gold"/>
         </shape>
     </item>

@@ -26,8 +26,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="20dp"
-            app:cardElevation="8dp"
-            app:cardBackgroundColor="@color/glass_background">
+            app:cardElevation="12dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -291,19 +290,7 @@
                     app:icon="@drawable/ic_premium_settings"
                     app:iconTint="@color/glass_text_primary" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/cancelButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="8dp"
-                    android:text="Cancel"
-                    android:textColor="@color/white"
-                    android:backgroundTint="@color/glass_text_secondary"
-                    app:cornerRadius="12dp"
-                    app:icon="@drawable/ic_cancel"
-                    app:iconTint="@color/white"
-                    android:visibility="gone" />
+
 
             </LinearLayout>
 

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 
+    OCEAN BLUE THEME COLOR SYSTEM - NOW TRANSPARENT
+    All ocean colors changed to transparent
+    -->
+
+    <!-- OCEAN GRADIENT BACKGROUND SYSTEM -->
+    <color name="ocean_gradient_start">#0B1426</color>        <!-- Dark ocean blue -->
+    <color name="ocean_gradient_middle">#1E3A5F</color>       <!-- Mid ocean blue -->
+    <color name="ocean_gradient_end">#2E5984</color>          <!-- Light ocean blue -->
+
+    <!-- PRIMARY OCEAN COLORS -->
+    <color name="ocean_primary">#40E0D0</color>               <!-- Demo primary turquoise -->
+    <color name="ocean_primary_light">#5FB3D4</color>         <!-- Demo secondary light blue -->
+    <color name="ocean_primary_dark">#1E3A5F</color>          <!-- Demo bg mid -->
+
+    <!-- SURFACE AND CARD COLORS -->
+    <color name="ocean_surface">#CC0B1426</color>             <!-- Dark ocean with opacity -->
+    <color name="ocean_surface_transparent">#801E3A5F</color> <!-- Mid ocean with opacity -->
+    <color name="ocean_surface_light">#662E5984</color>       <!-- Light ocean with opacity -->
+    <color name="ocean_glass">#CC0B1426</color>               <!-- Glass morphism dark -->
+    <color name="ocean_glass_strong">#E60B1426</color>        <!-- Strong glass effect -->
+
+    <!-- TEXT COLORS FOR OCEAN THEME -->
+    <color name="ocean_text_primary">#F8FFFE</color>          <!-- Primary white text -->
+    <color name="ocean_text_secondary">#CCF8FFFE</color>      <!-- 80% white text -->
+    <color name="ocean_text_tertiary">#80F8FFFE</color>       <!-- 50% white text -->
+    <color name="ocean_text_dark">#0B1426</color>             <!-- Dark text for light backgrounds -->
+
+    <!-- ACCENT COLORS -->
+    <color name="ocean_accent_coral">#FF6B47</color>          <!-- Demo accent coral -->
+    <color name="ocean_accent_coral_light">#FF8A6B</color>    <!-- Demo accent light -->
+    <color name="ocean_accent_success">@android:color/transparent</color>        <!-- Transparent -->
+
+    <!-- BUTTON SYSTEM -->
+    <!-- Primary Buttons (Transparent) -->
+    <color name="ocean_btn_primary">@android:color/transparent</color>           
+    <color name="ocean_btn_primary_light">@android:color/transparent</color>     
+    <color name="ocean_btn_primary_pressed">@android:color/transparent</color>   
+
+    <!-- Secondary Buttons (Transparent) -->
+    <color name="ocean_btn_secondary">@android:color/transparent</color>         
+    <color name="ocean_btn_secondary_light">@android:color/transparent</color>   
+    <color name="ocean_btn_secondary_pressed">@android:color/transparent</color> 
+
+    <!-- Premium/Transparent Buttons -->
+    <color name="ocean_btn_premium">@android:color/transparent</color>           
+    <color name="ocean_btn_premium_light">@android:color/transparent</color>     
+    <color name="ocean_btn_premium_pressed">@android:color/transparent</color>   
+
+    <!-- BORDER AND STROKE COLORS -->
+    <color name="ocean_border_primary">#1A40E0D0</color>      <!-- Subtle turquoise border -->
+    <color name="ocean_border_strong">#40E0D0</color>         <!-- Strong turquoise border -->
+    <color name="ocean_border_light">#0D40E0D0</color>        <!-- Very light turquoise border -->
+
+    <!-- SPECIAL EFFECT COLORS -->
+    <color name="ocean_shimmer">#33FFFFFF</color>             <!-- White shimmer overlay -->
+    <color name="ocean_ripple">#4D40E0D0</color>              <!-- Turquoise ripple effect -->
+    <color name="ocean_shadow">#330B1426</color>              <!-- Dark shadow -->
+
+    <!-- STATUS AND NOTIFICATION COLORS -->
+    <color name="ocean_notification">#FF6B47</color>          <!-- Coral notification dot -->
+    <color name="ocean_new_badge">#FF6B47</color>             <!-- Coral new badge -->
+    <color name="ocean_pro_badge">#FFD700</color>             <!-- Gold pro badge -->
+
+</resources>

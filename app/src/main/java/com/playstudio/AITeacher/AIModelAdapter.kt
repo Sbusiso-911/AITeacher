@@ -33,7 +33,6 @@ class AIModelAdapter(
         val providerName: TextView = view.findViewById(R.id.tv_provider)
         val tierBadge: TextView = view.findViewById(R.id.tv_tier_badge)
         val capabilities: TextView = view.findViewById(R.id.tv_capabilities)
-        val dailyLimit: TextView = view.findViewById(R.id.tv_daily_limit)
         val costPerMessage: TextView = view.findViewById(R.id.tv_cost_per_message)
         val cardView: CardView = view as CardView
     }
@@ -46,29 +45,26 @@ class AIModelAdapter(
 
     override fun onBindViewHolder(holder: ModelViewHolder, position: Int) {
         val model = models[position]
-        
+
         // Set model data
         holder.modelName.text = model.name
         holder.providerName.text = model.provider
-        
+
         // Set tier badge
         holder.tierBadge.text = model.category.uppercase()
-        
+
         // Set capabilities (simplified for basic model)
         holder.capabilities.text = "Basic AI Model"
-        
-        // Set daily limit
-        holder.dailyLimit.text = "Limited daily usage"
-        
+
         // Set cost per message
         holder.costPerMessage.text = "Free tier"
-        
+
         // Set colors
         try {
             val bgColor = android.graphics.Color.parseColor(model.backgroundColor)
             val textColor = android.graphics.Color.parseColor(model.textColor)
             val providerColor = android.graphics.Color.parseColor(model.providerColor)
-            
+
             holder.cardView.setCardBackgroundColor(bgColor)
             holder.modelName.setTextColor(textColor)
             holder.providerName.setTextColor(providerColor)
@@ -84,20 +80,20 @@ class AIModelAdapter(
                 ContextCompat.getColor(holder.itemView.context, R.color.dark_grey)
             )
         }
-        
+
         // Handle selection
         holder.itemView.setOnClickListener {
             val previousPosition = selectedPosition
             selectedPosition = holder.adapterPosition
-            
+
             if (previousPosition != -1) {
                 notifyItemChanged(previousPosition)
             }
             notifyItemChanged(selectedPosition)
-            
+
             onModelSelected(model)
         }
-        
+
         // Update selection state
         if (position == selectedPosition) {
             // Add a subtle highlight for selected item

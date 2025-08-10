@@ -6,6 +6,7 @@ import android.widget.LinearLayout
 import androidx.lifecycle.lifecycleScope
 import com.playstudio.aiteacher.api.StructuredAPIHandler
 import com.playstudio.aiteacher.models.*
+import kotlinx.coroutines.flow.collect
 import com.playstudio.aiteacher.ui.StructuredContentView
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
@@ -34,12 +35,11 @@ fun ChatFragment.initializeStructuredOutputs(okHttpClient: OkHttpClient) {
 }
 
 /**
- * Enhanced message processing with structured outputs
+ * NEW: Streaming message processing for better UX - no timeouts!
  */
 fun ChatFragment.processStructuredMessage(
     userMessage: String,
-    requestSpecificType: Boolean = false,
-    responseType: ResponseType = ResponseType.EXPLANATION
+    requestSpecificType: Boolean = false
 ) {
     val handler = structuredAPIHandler ?: run {
         Log.e("StructuredChat", "StructuredAPIHandler not initialized")
@@ -48,41 +48,21 @@ fun ChatFragment.processStructuredMessage(
 
     lifecycleScope.launch {
         try {
-            // Show typing indicator
-            showTypingIndicator()
+            // Determine if we should use enhanced rendering (much more selective)
+            val useEnhancedRendering = shouldUseEnhancedRendering(userMessage) || requestSpecificType
 
-            // Determine if we should use structured output based on message content
-            val useStructuredOutput = shouldUseStructuredOutput(userMessage) || requestSpecificType
-
-            if (useStructuredOutput) {
+            if (useEnhancedRendering) {
                 // Get chat history for context
                 val chatHistory = getChatHistoryForAPI()
                 
-                // Request structured response
-                val result = handler.getStructuredEducationalResponse(
+                // Start streaming with adaptive content rendering
+                processStreamingAdaptiveContent(
+                    handler = handler,
                     userMessage = userMessage,
-                    chatHistory = chatHistory,
-                    model = getCurrentModelForStructured(),
-                    requestQuiz = responseType == ResponseType.QUIZ,
-                    requestStepByStep = responseType == ResponseType.STEP_BY_STEP
-                )
-
-                result.fold(
-                    onSuccess = { educationalResponse ->
-                        try {
-                            handleStructuredResponse(educationalResponse, userMessage)
-                        } catch (e: Exception) {
-                            Log.e("StructuredChat", "Structured rendering failed, falling back", e)
-                            fallbackToRegularChat(userMessage)
-                        }
-                    },
-                    onFailure = { error ->
-                        Log.e("StructuredChat", "Failed to get structured response", error)
-                        fallbackToRegularChat(userMessage)
-                    }
+                    chatHistory = chatHistory
                 )
             } else {
-                // Use regular chat completion for simple questions
+                // Use regular chat completion for most questions
                 fallbackToRegularChat(userMessage)
             }
         } catch (e: Exception) {
@@ -94,20 +74,173 @@ fun ChatFragment.processStructuredMessage(
 }
 
 /**
- * Handle structured educational response by creating appropriate UI.
- * If rendering fails, falls back to regular chat for the original user message.
+ * NEW: Handle streaming adaptive content with real-time updates
  */
-private fun ChatFragment.handleStructuredResponse(
-    response: EducationalResponse,
+private suspend fun ChatFragment.processStreamingAdaptiveContent(
+    handler: StructuredAPIHandler,
+    userMessage: String,
+    chatHistory: List<Pair<String, String>>
+) {
+    // Create a streaming message that will be updated in real-time
+    val streamingMessage = ChatMessage(
+        id = java.util.UUID.randomUUID().toString(),
+        content = "🤔 Thinking...", // Initial content
+        isUser = false,
+        timestamp = System.currentTimeMillis(),
+        isTyping = false,
+        containsRichContent = true
+    )
+    
+    // Add the streaming message to chat immediately
+    chatMessages.add(streamingMessage)
+    updateChatUI()
+    
+    try {
+        // Collect streaming updates - use structured outputs following OpenAI guidelines
+        handler.getStructuredStreamingResponse(
+            userMessage = userMessage,
+            chatHistory = chatHistory,
+            model = getCurrentModelForStreaming()
+        ).collect { update ->
+            when (update) {
+                is SimpleStreamingUpdate.Progress -> {
+                    // Update message with progress
+                    updateStreamingMessage(streamingMessage, "⏳ ${update.message}")
+                }
+                is SimpleStreamingUpdate.ContentChunk -> {
+                    // Update message with accumulated content
+                    updateStreamingMessage(streamingMessage, update.accumulatedContent)
+                }
+                is SimpleStreamingUpdate.Complete -> {
+                    // Final update - render with adaptive content renderer
+                    Log.d("StructuredChat", "✅ Received SimpleStreamingUpdate.Complete")
+                    handleFinalAdaptiveContent(streamingMessage, update.finalContent, userMessage)
+                }
+                is SimpleStreamingUpdate.Error -> {
+                    // Handle error and show in the same message (no duplication)
+                    Log.e("StructuredChat", "Streaming error: ${update.message}")
+                    val errorMessage = if (update.message.contains("400")) {
+                        "I upgraded your request to use a compatible model. Please try your question again."
+                    } else {
+                        "Sorry, I encountered an error: ${update.message}"
+                    }
+                    updateStreamingMessage(streamingMessage, "⚠️ $errorMessage")
+                    // Don't call fallbackToRegularChat - it creates duplicate messages
+                }
+            }
+        }
+    } catch (e: Exception) {
+        Log.e("StructuredChat", "Streaming failed", e)
+        updateStreamingMessage(streamingMessage, "⚠️ Failed to get response. Please try again.")
+        // Don't call fallbackToRegularChat to avoid duplicate messages
+    }
+}
+
+/**
+ * Update streaming message content in real-time
+ */
+private fun ChatFragment.updateStreamingMessage(message: ChatMessage, newContent: String) {
+    // Find and update the message
+    val index = chatMessages.indexOfFirst { it.id == message.id }
+    if (index != -1) {
+        Log.d("StructuredChat", "🔄 Updating streaming message ${message.id} at index $index. Content length: ${newContent.length}")
+        val existingMessage = chatMessages[index]
+        
+        // Create updated message preserving all structured content fields
+        val updatedMessage = message.copy(
+            content = newContent,
+            // Preserve structured content from existing message if it exists
+            structuredContentJson = existingMessage.structuredContentJson ?: message.structuredContentJson,
+            structuredContent = existingMessage.structuredContent ?: message.structuredContent,
+            learningContent = existingMessage.learningContent ?: message.learningContent
+        )
+        chatMessages[index] = updatedMessage
+        
+        Log.d("StructuredChat", "🔄 Updated message preserved JSON length: ${updatedMessage.structuredContentJson?.length ?: 0}")
+        
+        // Update UI
+        updateChatUI()
+    } else {
+        Log.w("StructuredChat", "⚠️ Could not find streaming message ${message.id} to update")
+    }
+}
+
+/**
+ * Handle final adaptive content with dynamic rendering
+ */
+private fun ChatFragment.handleFinalAdaptiveContent(
+    streamingMessage: ChatMessage,
+    finalContent: String,
     originalUserMessage: String
 ) {
-    Log.d("StructuredChat", "▶️ handleStructuredResponse(responseType=${response.responseType}, subject=${response.subject})")
+    try {
+        val index = chatMessages.indexOfFirst { it.id == streamingMessage.id }
+        if (index != -1) {
+            val existingMessage = chatMessages[index]
+            
+            // Store final content for adaptive rendering
+            Log.d("StructuredChat", "📝 Storing adaptive content for message ${streamingMessage.id}")
+            
+            // Update with final content and mark as containing rich content for adaptive rendering
+            val updatedMessage = existingMessage.copy(
+                content = finalContent,
+                containsRichContent = true // This triggers adaptive rendering in ChatAdapter
+            )
+            chatMessages[index] = updatedMessage
+            
+            // Force UI update for final content (bypass throttling)
+            Log.d("StructuredChat", "📱 Force updating UI for final adaptive content")
+            val newList = ArrayList(chatMessages)
+            chatAdapter.submitList(newList) {
+                binding.recyclerView.scrollToPosition(chatMessages.size - 1)
+            }
+        }
+        
+        Log.d("StructuredChat", "✅ Streaming adaptive content completed successfully")
+        
+    } catch (e: Exception) {
+        Log.e("StructuredChat", "Error finalizing adaptive content", e)
+        updateStreamingMessage(streamingMessage, "⚠️ Failed to display content")
+    }
+}
+
+// Add throttling for UI updates - lighter throttling since we fixed batching
+private var lastUIUpdateTime = 0L
+private const val UI_UPDATE_THROTTLE_MS = 200L // Max 5 updates per second, since batching is now fixed
+
+/**
+ * Update chat UI efficiently with throttling to prevent infinite loops
+ */
+private fun ChatFragment.updateChatUI() {
+    val currentTime = System.currentTimeMillis()
+    if (currentTime - lastUIUpdateTime < UI_UPDATE_THROTTLE_MS) {
+        Log.d("StructuredChat", "⏰ UI update throttled, skipping")
+        return
+    }
+    lastUIUpdateTime = currentTime
+    
+    Log.d("StructuredChat", "📱 Updating chat UI with ${chatMessages.size} messages")
+    val newList = ArrayList(chatMessages)
+    chatAdapter.submitList(newList) {
+        binding.recyclerView.scrollToPosition(chatMessages.size - 1)
+    }
+}
+
+/**
+ * Handle NEW learning content response by creating appropriate UI.
+ * If rendering fails, falls back to regular chat for the original user message.
+ */
+private fun ChatFragment.handleLearningContentResponse(
+    content: LearningContent,
+    originalUserMessage: String
+) {
+    Log.d("StructuredChat", "▶️ handleLearningContentResponse(topic=${content.topicTitle}, subject=${content.subjectArea})")
     try {
         hideTypingIndicator()
 
         // Create structured content view
         val structuredContentView = StructuredContentView(requireContext())
-        structuredContentView.setEducationalResponse(response)
+        structuredContentView.setLearningContent(content)
         
         // Set up interaction listener for analytics and progress tracking
         structuredContentView.setOnContentInteractionListener(object : StructuredContentView.OnContentInteractionListener {
@@ -132,27 +265,27 @@ private fun ChatFragment.handleStructuredResponse(
             }
         })
 
-        // Create a chat message with structured content
-        val structuredMessage = ChatMessage(
+        // Create a chat message with learning content
+        val learningMessage = ChatMessage(
             id = java.util.UUID.randomUUID().toString(),
-            content = response.content.mainExplanation,
+            content = "${content.topicTitle}\n\n${content.introduction.hook}",
             isUser = false,
             timestamp = System.currentTimeMillis(),
             isTyping = false,
             containsRichContent = true
         ).apply {
-            // Store structured content for persistence
-            storeStructuredContent(response)
+            // Store learning content for persistence
+            storeLearningContent(content)
         }
 
         // Add to chat and update UI
-        addMessageToChat(structuredMessage, structuredContentView)
+        addMessageToChat(learningMessage, structuredContentView)
         
         // Track usage for analytics
-        trackStructuredResponse(response)
+        trackLearningContent(content)
 
     } catch (e: Exception) {
-        Log.e("StructuredChat", "Error handling structured response", e)
+        Log.e("StructuredChat", "Error handling learning content", e)
         showError("Failed to display educational content")
         fallbackToRegularChat(originalUserMessage)
         return
@@ -181,44 +314,42 @@ private fun ChatFragment.addMessageToChat(message: ChatMessage, contentView: Str
 }
 
 /**
- * Determine if message should use structured output
+ * Determine if message should use enhanced rendering (based on content type, not forced triggers)
  */
-fun shouldUseStructuredOutput(message: String): Boolean {
-    val structuredTriggers = setOf(
-        // Educational keywords
-        "explain", "how to", "what is", "why does", "teach me", "learn about",
-        "solve", "calculate", "find", "prove", "demonstrate",
-        
-        // Subject-specific keywords
-        "math", "mathematics", "algebra", "geometry", "calculus",
-        "programming", "code", "function", "algorithm",
-        "science", "physics", "chemistry", "biology",
-        "history", "literature", "grammar",
-        
-        // Request types
-        "step by step", "example", "practice", "quiz", "test",
-        "exercise", "problem", "solution", "tutorial"
+fun shouldUseEnhancedRendering(message: String): Boolean {
+    // Let AI decide - only use enhanced rendering for specific content patterns
+    val enhancedTriggers = setOf(
+        "step by step", "tutorial", "lesson", "guide",
+        "explain in detail", "comprehensive", "detailed explanation"
     )
     
     val messageLower = message.lowercase()
-    return structuredTriggers.any { messageLower.contains(it) } ||
-           message.contains(Regex("[+\\-*/=<>^√∫∑π]")) || // Math symbols
-           message.length > 50 // Longer questions likely benefit from structure
+    val result = enhancedTriggers.any { messageLower.contains(it) } ||
+           message.length > 100 // Only longer, complex questions
+    
+    Log.d("StructuredChat", "🤔 shouldUseEnhancedRendering('$message') = $result")
+    return result
 }
 
 /**
- * Get current model suitable for structured outputs
+ * Get current model suitable for structured outputs (must support json_schema)
  */
-private fun ChatFragment.getCurrentModelForStructured(): String {
+private fun ChatFragment.getCurrentModelForStreaming(): String {
     val currentModel = getCurrentModel()
+    Log.d("StructuredChat", "🔧 getCurrentModel() returned: '$currentModel'")
     
-    // Map current model to structured output compatible model
-    return when {
-        currentModel.contains("gpt-4o") -> currentModel
-        currentModel.contains("gpt-4") -> "gpt-4o-2024-08-06"
-        currentModel.contains("gpt-3.5") -> "gpt-4o-mini"
-        else -> "gpt-4o-mini" // Default fallback
+    // Only use models that support structured outputs as per OpenAI docs
+    val selectedModel = when {
+        currentModel.contains("gpt-4o-2024-08-06") -> "gpt-4o-2024-08-06"
+        currentModel.contains("gpt-4o-mini") -> "gpt-4o-mini" 
+        currentModel.contains("gpt-4o") -> "gpt-4o-mini" // Use mini for speed but with structured support
+        currentModel.contains("gpt-4") -> "gpt-4o-mini" // Fallback to supported model
+        currentModel.contains("gpt-3.5") -> "gpt-4o-mini" // IMPORTANT: gpt-3.5 doesn't support structured outputs
+        else -> "gpt-4o-mini" // Default: fastest model with structured output support
     }
+    
+    Log.d("StructuredChat", "🔧 Mapped '$currentModel' -> '$selectedModel' for structured outputs")
+    return selectedModel
 }
 
 /**
@@ -272,10 +403,13 @@ private fun ChatFragment.trackCodeExecution(codeLanguage: String, codeTitle: Str
     // Implement code execution tracking
 }
 
-private fun ChatFragment.trackStructuredResponse(response: EducationalResponse) {
-    Log.d("Analytics", "Structured response: ${response.responseType}, subject: ${response.subject}")
-    // Implement comprehensive response tracking
+private fun ChatFragment.trackLearningContent(content: LearningContent) {
+    Log.d("Analytics", "Learning content: ${content.topicTitle}, subject: ${content.subjectArea}")
+    // Implement learning content tracking
 }
+
+// Extension to store learning content in chat message is already implemented in ChatMessage.kt
+// Remove this duplicate empty implementation
 
 /**
  * Show/hide typing indicator methods

@@ -172,8 +172,8 @@ object SubscriptionPlans {
         )
     )
     
-    val ULTRA_PREMIUM_PLAN = CostAwareSubscriptionPlan(
-        tier = SubscriptionTier.ULTRA_PREMIUM,
+    val ENTERPRISE_PLAN = CostAwareSubscriptionPlan(
+        tier = SubscriptionTier.ENTERPRISE,
         name = "Enterprise Max",
         price = 299.99,
         billingCycle = BillingCycle.MONTHLY,
@@ -209,7 +209,7 @@ object SubscriptionPlans {
         BASIC_PLAN, 
         PRO_PLAN,
         PREMIUM_PLAN,
-        ULTRA_PREMIUM_PLAN
+        ENTERPRISE_PLAN
     )
     
     /**
@@ -255,7 +255,7 @@ object SubscriptionPlans {
             averageDailyMessages <= 50 && !usesAdvancedFeatures -> BASIC_PLAN
             averageDailyMessages <= 200 -> PRO_PLAN
             averageDailyMessages <= 500 -> PREMIUM_PLAN
-            else -> ULTRA_PREMIUM_PLAN
+            else -> ENTERPRISE_PLAN
         }
     }
 }

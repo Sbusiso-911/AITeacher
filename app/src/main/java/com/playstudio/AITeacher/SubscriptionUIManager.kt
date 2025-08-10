@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.ads.AdView
@@ -46,6 +47,9 @@ class SubscriptionUIManager(private val context: Context) {
             R.id.premium_button,
             R.id.upgrade_button
         )
+        
+        // Alias for subscription button IDs (used in security fixes)
+        private val SUBSCRIPTION_BUTTON_IDS = BUY_BUTTON_IDS
         
         /**
          * Static method to ensure suggested questions are always visible
@@ -92,10 +96,10 @@ class SubscriptionUIManager(private val context: Context) {
      */
     suspend fun updateUIForSubscriptionStatus(activity: Activity) {
         try {
-            // Check if user is authenticated
+            // SECURITY FIX: Block subscription UI access for unauthenticated users
             if (!firebaseAuthService.isSignedIn()) {
-                Log.d(TAG, "User not authenticated, showing free tier UI")
-                updateUIForFreeTier(activity)
+                Log.d(TAG, "User not authenticated, hiding subscription UI and showing authentication prompt")
+                hideSubscriptionUIForUnauthenticatedUser(activity)
                 return
             }
             
@@ -321,6 +325,8 @@ class SubscriptionUIManager(private val context: Context) {
         if (viewIdName.contains("question") ||
             viewIdName.contains("suggest") ||
             viewIdName.contains("chat") ||
+
+
             viewIdName.contains("message") ||
             viewIdName.contains("conversation") ||
             viewClassName.contains("recycler") ||
@@ -646,11 +652,86 @@ class SubscriptionUIManager(private val context: Context) {
             "basic", "essential" -> SubscriptionTier.BASIC  // Map "essential" to BASIC tier
             "pro" -> SubscriptionTier.PRO
             "premium" -> SubscriptionTier.PREMIUM
-            "ultra_premium" -> SubscriptionTier.ULTRA_PREMIUM
+            "ultra_premium" -> SubscriptionTier.ENTERPRISE
             else -> SubscriptionTier.FREE
         }
     }
     
+    /**
+     * SECURITY FIX: Hide subscription UI and show authentication prompt for unauthenticated users
+     */
+    private fun hideSubscriptionUIForUnauthenticatedUser(activity: Activity) {
+        try {
+            // Hide all subscription-related buy buttons
+            SUBSCRIPTION_BUTTON_IDS.forEach { buttonId ->
+                try {
+                    val button = activity.findViewById<Button>(buttonId)
+                    if (button != null) {
+                        button.visibility = View.GONE
+                        Log.d(TAG, "Hidden subscription button for unauthenticated user: ${button.text}")
+                    }
+                } catch (e: Exception) {
+                    // Button not found in this activity, continue
+                }
+            }
+            
+            // Show authentication prompt instead of subscription options
+            showAuthenticationPrompt(activity)
+            
+            // Show free tier features only
+            updateUIForFreeTier(activity)
+            
+            Log.d(TAG, "Successfully hidden subscription UI for unauthenticated user")
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error hiding subscription UI for unauthenticated user", e)
+        }
+    }
+    
+    /**
+     * Show authentication prompt to user
+     */
+    private fun showAuthenticationPrompt(activity: Activity) {
+        try {
+            // Try to find common text view IDs to show authentication message
+            val possibleTextViewIds = listOf(
+                "subscription_status_text",
+                "status_text", 
+                "current_plan_text",
+                "subscription_message"
+            )
+            
+            var messageView: TextView? = null
+            
+            // Try to find any of these text views
+            for (idName in possibleTextViewIds) {
+                try {
+                    val resourceId = activity.resources.getIdentifier(idName, "id", activity.packageName)
+                    if (resourceId != 0) {
+                        messageView = activity.findViewById<TextView>(resourceId)
+                        if (messageView != null) break
+                    }
+                } catch (e: Exception) {
+                    // Continue to next ID
+                }
+            }
+            
+            messageView?.apply {
+                text = "Sign in to access premium features and subscriptions"
+                visibility = View.VISIBLE
+                try {
+                    setTextColor(ContextCompat.getColor(activity, R.color.glass_text_secondary))
+                } catch (e: Exception) {
+                    // Use default text color if resource not found
+                    setTextColor(0x80FFFFFF.toInt()) // Semi-transparent white
+                }
+            }
+            
+        } catch (e: Exception) {
+            Log.d(TAG, "Could not show authentication prompt text: ${e.message}")
+        }
+    }
+
     /**
      * Setup subscription UI manager for an Activity
      * Call this in onCreate() or onResume()

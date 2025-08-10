@@ -1,4 +1,4 @@
-package com.playstudio.AITeacher
+package com.playstudio.aiteacher
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -10,7 +10,7 @@ import android.widget.ImageView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.playstudio.AITeacher.models.*
+import com.playstudio.aiteacher.models.*
 import kotlinx.coroutines.*
 
 /**
@@ -98,6 +98,13 @@ class AIThemeManager private constructor(private val context: Context) {
     }
     
     /**
+     * Get all available themes
+     */
+    fun getAllThemes(): List<AITheme> {
+        return ThemeFactory.getAllThemes()
+    }
+    
+    /**
      * Set new theme with optional animation
      */
     fun setTheme(theme: AITheme, animate: Boolean = true) {
@@ -114,13 +121,6 @@ class AIThemeManager private constructor(private val context: Context) {
                 .putString(KEY_CURRENT_THEME, theme.id)
                 .apply()
         }
-    }
-    
-    /**
-     * Get all available themes
-     */
-    fun getAllThemes(): List<AITheme> {
-        return ThemeFactory.getAllThemes()
     }
     
     /**

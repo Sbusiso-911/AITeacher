@@ -15,12 +15,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import com.google.android.material.button.MaterialButton
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter // Import ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -58,6 +58,9 @@ class ChatAdapter(
         private const val VIEW_TYPE_STRUCTURED = 4
         // PAGE_SIZE can be defined in the Fragment or ViewModel if it drives the fetch logic
     }
+
+    private val expandedStructuredMessages = mutableSetOf<String>()
+    private var isLoadingTriggered = false
 
     // isLoading state should be managed by the Fragment/ViewModel that handles data fetching
     // private var isLoading = false
@@ -110,11 +113,14 @@ class ChatAdapter(
             is StructuredMessageViewHolder -> holder.bind(chatMessage)
         }
 
-        // Pagination: Trigger load more if near the end of the list (for loading older messages at the top)
-        // This typically means checking if position is close to 0
-        if (position < 5 && currentList.isNotEmpty() && !getItem(0).isTyping) { // Example threshold: 5 items from the top
-            onLoadMoreRequested()
-        }
+        // Pagination: DISABLED temporarily to fix infinite loop
+        // TODO: Re-implement pagination without causing infinite loops during streaming
+        // if (position < 5 && currentList.isNotEmpty() && !getItem(0).isTyping && !isLoadingTriggered) {
+        //     isLoadingTriggered = true
+        //     onLoadMoreRequested()
+        //     // Reset flag after a delay to allow for more requests
+        //     holder.itemView.postDelayed({ isLoadingTriggered = false }, 1000)
+        // }
     }
 
     // getItemCount() is handled by ListAdapter
@@ -150,7 +156,7 @@ class ChatAdapter(
     class ReceivedMessageViewHolder(
         private val binding: ItemMessageReceivedBinding, // Use ViewBinding
         private val onCitationClickedCallback: (citation: com.playstudio.aiteacher.ChatFragment.Citation) -> Unit,
-        private val onFollowUpQuestionClickedCallback: (question: String) -> Unit
+        private val onFollowUpQuestionClicked: (question: String) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
         // The views for follow-up questions (headerButton, questionsContainer)
@@ -220,14 +226,18 @@ class ChatAdapter(
                     // It's better to have a separate layout for follow-up buttons (e.g., item_follow_up_button.xml)
                     // and inflate it, rather than creating Buttons programmatically for styling consistency.
                     // For now, programmatic creation:
-                    val button = Button(itemView.context).apply {
-                        text = question
-                        // Add styling (e.g., from a style resource)
-                        // setTextColor(Color.parseColor("#E1DFDF")) // Example
-                        // background = null // Example
-                        setOnClickListener {
-                            onFollowUpQuestionClickedCallback(question)
+                    val button = MaterialButton(itemView.context, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                        layoutParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        ).apply {
+                            setMargins(0, 4, 0, 4)
                         }
+                        text = question
+                        textSize = 12f
+                        setPadding(16, 8, 16, 8)
+                        minWidth = 0
+                        setOnClickListener { onFollowUpQuestionClicked(question) }
                     }
                     binding.followUpButtonsContainer.addView(button)
                 }
@@ -280,40 +290,99 @@ class ChatAdapter(
         }
     }
 
-    class StructuredMessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    inner class StructuredMessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val structuredContentContainer: LinearLayout = view.findViewById(R.id.structuredContentContainer)
-        private var currentStructuredView: com.playstudio.aiteacher.ui.StructuredContentView? = null
+        private val toggleButton: MaterialButton = view.findViewById(R.id.toggleStructuredButton)
         private var currentMessageId: String? = null
+        private var previousContent: String? = null
+        private var adaptiveRenderer: com.playstudio.aiteacher.ui.AdaptiveContentRenderer? = null
 
         fun bind(chatMessage: ChatMessage) {
             Log.d("StructuredHolder", "Binding message ${chatMessage.id}, current: $currentMessageId")
+
+            // Check if content has changed (important for streaming updates)
+            val contentChanged = currentMessageId != chatMessage.id || 
+                                previousContent != chatMessage.content
             
-            // Only recreate the view if this is a different message
-            if (currentMessageId != chatMessage.id) {
-                Log.d("StructuredHolder", "Creating new view for message ${chatMessage.id}")
-                
+            if (contentChanged) {
+                Log.d("StructuredHolder", "Content changed for message ${chatMessage.id}, re-rendering")
+
                 // Clear any existing content
                 structuredContentContainer.removeAllViews()
-                currentStructuredView = null
                 
-                // Create and add the structured content view if it exists
-                chatMessage.loadStructuredContent()?.let { educationalResponse ->
-                    Log.d("StructuredHolder", "Loaded structured content: ${educationalResponse.responseType}")
-                    val context = itemView.context
-                    val structuredContentView = com.playstudio.aiteacher.ui.StructuredContentView(context)
-                    structuredContentView.setEducationalResponse(educationalResponse)
-                    structuredContentContainer.addView(structuredContentView)
-                    
-                    // Store reference to reuse
-                    currentStructuredView = structuredContentView
+                // Initialize adaptive renderer if needed
+                if (adaptiveRenderer == null) {
+                    adaptiveRenderer = com.playstudio.aiteacher.ui.AdaptiveContentRenderer(itemView.context)
+                }
+
+                var contentLoaded = false
+                
+                // First try to render content adaptively (NEW approach)
+                if (chatMessage.content.isNotBlank()) {
+                    Log.d("StructuredHolder", "Rendering adaptive content for message ${chatMessage.id}")
+                    adaptiveRenderer?.renderContent(chatMessage.content, structuredContentContainer)
                     currentMessageId = chatMessage.id
-                    Log.d("StructuredHolder", "Added structured content view to container")
-                } ?: run {
-                    Log.w("StructuredHolder", "No structured content found for message ${chatMessage.id}")
+                    previousContent = chatMessage.content
+                    contentLoaded = true
+                    Log.d("StructuredHolder", "Added adaptive content to container")
+                }
+                
+                // Fallback to legacy structured content if adaptive fails
+                if (!contentLoaded) {
+                    // Try new learning content format first
+                    chatMessage.loadLearningContent()?.let { learningContent ->
+                        Log.d("StructuredHolder", "Fallback: Loaded learning content: ${learningContent.topicTitle}")
+                        val context = itemView.context
+                        val structuredContentView = com.playstudio.aiteacher.ui.StructuredContentView(context)
+                        structuredContentView.setLearningContent(learningContent)
+                        structuredContentContainer.addView(structuredContentView)
+                        currentMessageId = chatMessage.id
+                        contentLoaded = true
+                        Log.d("StructuredHolder", "Added legacy learning content view to container")
+                    }
+                }
+                
+                // Last fallback to old format
+                if (!contentLoaded) {
+                    chatMessage.loadStructuredContent()?.let { educationalResponse ->
+                        Log.d("StructuredHolder", "Fallback: Loaded OLD structured content: ${educationalResponse.responseType}")
+                        val context = itemView.context
+                        val structuredContentView = com.playstudio.aiteacher.ui.StructuredContentView(context)
+                        structuredContentView.setEducationalResponse(educationalResponse)
+                        structuredContentContainer.addView(structuredContentView)
+                        currentMessageId = chatMessage.id
+                        contentLoaded = true
+                        Log.d("StructuredHolder", "Added OLD structured content view to container")
+                    }
+                }
+                
+                if (!contentLoaded) {
+                    Log.w("StructuredHolder", "No content found for message ${chatMessage.id}")
                 }
             } else {
-                Log.d("StructuredHolder", "Reusing existing view for message ${chatMessage.id}")
+                Log.d("StructuredHolder", "Content unchanged for message ${chatMessage.id}, keeping existing view")
             }
+
+            // Auto-expand structured content by default
+            if (!expandedStructuredMessages.contains(chatMessage.id)) {
+                expandedStructuredMessages.add(chatMessage.id)
+            }
+            val expanded = expandedStructuredMessages.contains(chatMessage.id)
+            structuredContentContainer.visibility = if (expanded) View.VISIBLE else View.GONE
+            toggleButton.text = if (expanded) "Hide Details ▲" else "Show Details ▼"
+
+            toggleButton.setOnClickListener {
+                if (expandedStructuredMessages.contains(chatMessage.id)) {
+                    expandedStructuredMessages.remove(chatMessage.id)
+                    structuredContentContainer.visibility = View.GONE
+                    toggleButton.text = "Show Details ▼"
+                } else {
+                    expandedStructuredMessages.add(chatMessage.id)
+                    structuredContentContainer.visibility = View.VISIBLE
+                    toggleButton.text = "Hide Details ▲"
+                }
+            }
+
         }
     }
 }

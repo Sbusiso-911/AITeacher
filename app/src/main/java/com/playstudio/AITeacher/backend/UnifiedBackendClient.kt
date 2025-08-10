@@ -47,9 +47,9 @@ class UnifiedBackendClient(private val context: Context) {
     private val subscriptionManager = SubscriptionManager(context)
     
     private val httpClient = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(60, TimeUnit.SECONDS)
-        .writeTimeout(60, TimeUnit.SECONDS)
+        .connectTimeout(60, TimeUnit.SECONDS)  // Increased for better reliability
+        .readTimeout(120, TimeUnit.SECONDS)    // Increased to 2 minutes for API processing
+        .writeTimeout(90, TimeUnit.SECONDS)    // Increased for large data uploads
         .addInterceptor { chain ->
             val request = chain.request().newBuilder()
                 .header("Content-Type", "application/json")

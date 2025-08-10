@@ -3,10 +3,179 @@ package com.playstudio.aiteacher.models
 import com.google.gson.annotations.SerializedName
 
 /**
- * Structured response models for AI Teacher educational content
- * Based on OpenAI Structured Outputs for consistent, reliable formatting
+ * NEW: Learning-focused response models
+ * Redesigned for comprehensive subject teaching like textbooks and experienced teachers
  */
 
+// MAIN: Comprehensive Learning Content Model
+data class LearningContent(
+    @SerializedName("topic_title")
+    val topicTitle: String,
+    
+    @SerializedName("subject_area")
+    val subjectArea: String,
+    
+    @SerializedName("content_type")
+    val contentType: ContentType,
+    
+    @SerializedName("introduction")
+    val introduction: Introduction,
+    
+    @SerializedName("core_content")
+    val coreContent: CoreContent,
+    
+    @SerializedName("practical_examples")
+    val practicalExamples: List<PracticalExample>,
+    
+    @SerializedName("applications")
+    val applications: Applications,
+    
+    @SerializedName("reading_time_minutes")
+    val readingTimeMinutes: Int
+)
+
+data class Introduction(
+    @SerializedName("hook")
+    val hook: String,
+    
+    @SerializedName("overview")
+    val overview: String,
+    
+    @SerializedName("real_world_relevance")
+    val realWorldRelevance: String
+)
+
+data class CoreContent(
+    @SerializedName("fundamental_concepts")
+    val fundamentalConcepts: String,
+    
+    @SerializedName("detailed_explanation")
+    val detailedExplanation: String,
+    
+    @SerializedName("key_principles")
+    val keyPrinciples: List<KeyPrinciple>,
+    
+    @SerializedName("advanced_concepts")
+    val advancedConcepts: String? = null
+)
+
+data class KeyPrinciple(
+    @SerializedName("principle")
+    val principle: String,
+    
+    @SerializedName("explanation")
+    val explanation: String,
+    
+    @SerializedName("importance")
+    val importance: String
+)
+
+data class PracticalExample(
+    @SerializedName("example_title")
+    val exampleTitle: String,
+    
+    @SerializedName("context")
+    val context: String,
+    
+    @SerializedName("application")
+    val application: String,
+    
+    @SerializedName("outcome")
+    val outcome: String
+)
+
+data class Applications(
+    @SerializedName("common_uses")
+    val commonUses: List<String>,
+    
+    @SerializedName("professional_applications")
+    val professionalApplications: List<String>? = null,
+    
+    @SerializedName("everyday_relevance")
+    val everydayRelevance: String
+)
+
+enum class ContentType {
+    @SerializedName("comprehensive_explanation")
+    COMPREHENSIVE_EXPLANATION,
+    
+    @SerializedName("concept_overview")
+    CONCEPT_OVERVIEW,
+    
+    @SerializedName("detailed_guide")
+    DETAILED_GUIDE,
+    
+    @SerializedName("practical_tutorial")
+    PRACTICAL_TUTORIAL
+}
+
+// INTERACTIVE SESSION Model - Separate from educational content
+data class InteractiveSession(
+    @SerializedName("session_type")
+    val sessionType: SessionType,
+    
+    @SerializedName("topic_focus")
+    val topicFocus: String,
+    
+    @SerializedName("session_intro")
+    val sessionIntro: String,
+    
+    @SerializedName("questions")
+    val questions: List<InteractiveQuestion>,
+    
+    @SerializedName("encouragement")
+    val encouragement: String
+)
+
+data class InteractiveQuestion(
+    @SerializedName("question_id")
+    val questionId: String,
+    
+    @SerializedName("question_text")
+    val questionText: String,
+    
+    @SerializedName("question_type")
+    val questionType: InteractiveQuestionType,
+    
+    @SerializedName("options")
+    val options: List<String>? = null,
+    
+    @SerializedName("correct_answer")
+    val correctAnswer: String,
+    
+    @SerializedName("explanation")
+    val explanation: String
+)
+
+enum class SessionType {
+    @SerializedName("knowledge_check")
+    KNOWLEDGE_CHECK,
+    
+    @SerializedName("practice_quiz")
+    PRACTICE_QUIZ,
+    
+    @SerializedName("discussion_questions")
+    DISCUSSION_QUESTIONS,
+    
+    @SerializedName("application_scenarios")
+    APPLICATION_SCENARIOS
+}
+
+enum class InteractiveQuestionType {
+    @SerializedName("multiple_choice")
+    MULTIPLE_CHOICE,
+    
+    @SerializedName("open_ended")
+    OPEN_ENDED,
+    
+    @SerializedName("true_false")
+    TRUE_FALSE,
+    
+    @SerializedName("scenario_based")
+    SCENARIO_BASED
+}
+
+// LEGACY: Keep old models for backward compatibility during transition
 data class EducationalResponse(
     @SerializedName("response_type")
     val responseType: ResponseType,
@@ -27,6 +196,7 @@ data class EducationalResponse(
     val interactiveElements: List<InteractiveElement>? = null
 )
 
+// LEGACY: Old structured content model (keep for compatibility)
 data class StructuredContent(
     @SerializedName("main_explanation")
     val mainExplanation: String,
@@ -258,4 +428,97 @@ enum class InteractiveElementType {
     
     @SerializedName("quiz_widget")
     QUIZ_WIDGET
+}
+
+// NEW: Simplified Security Analysis Models
+data class SecurityAnalysisResponse(
+    @SerializedName("analysis_type")
+    val analysisType: SecurityAnalysisType,
+    
+    @SerializedName("problem")
+    val problem: SecurityProblem,
+    
+    @SerializedName("solution")
+    val solution: SecuritySolution,
+    
+    @SerializedName("result")
+    val result: SecurityResult,
+    
+    @SerializedName("next_action")
+    val nextAction: SecurityAction? = null
+)
+
+data class SecurityProblem(
+    @SerializedName("title")
+    val title: String,
+    
+    @SerializedName("description")
+    val description: String,
+    
+    @SerializedName("severity")
+    val severity: SecuritySeverity,
+    
+    @SerializedName("impact")
+    val impact: String
+)
+
+data class SecuritySolution(
+    @SerializedName("title")
+    val title: String,
+    
+    @SerializedName("description")
+    val description: String,
+    
+    @SerializedName("how_it_works")
+    val howItWorks: String
+)
+
+data class SecurityResult(
+    @SerializedName("before")
+    val before: String,
+    
+    @SerializedName("after")
+    val after: String,
+    
+    @SerializedName("outcome")
+    val outcome: String
+)
+
+data class SecurityAction(
+    @SerializedName("title")
+    val title: String,
+    
+    @SerializedName("description")
+    val description: String,
+    
+    @SerializedName("is_urgent")
+    val isUrgent: Boolean = false
+)
+
+enum class SecurityAnalysisType {
+    @SerializedName("account_security")
+    ACCOUNT_SECURITY,
+    
+    @SerializedName("data_protection")
+    DATA_PROTECTION,
+    
+    @SerializedName("network_security")
+    NETWORK_SECURITY,
+    
+    @SerializedName("system_vulnerability")
+    SYSTEM_VULNERABILITY
+}
+
+enum class SecuritySeverity {
+    @SerializedName("low")
+    LOW,
+    
+    @SerializedName("medium")
+    MEDIUM,
+    
+    @SerializedName("high")
+    HIGH,
+    
+    @SerializedName("critical")
+    CRITICAL
 }

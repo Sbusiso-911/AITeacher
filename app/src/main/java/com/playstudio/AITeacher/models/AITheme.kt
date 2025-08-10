@@ -1,4 +1,4 @@
-package com.playstudio.AITeacher.models
+package com.playstudio.aiteacher.models
 
 import android.graphics.drawable.Drawable
 import androidx.annotation.ColorRes

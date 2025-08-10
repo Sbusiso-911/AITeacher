@@ -7,6 +7,7 @@ import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageInfo
@@ -29,6 +30,7 @@ import android.util.Log
 import android.view.*
 import android.view.animation.*
 import android.widget.*
+import androidx.appcompat.widget.PopupMenu
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.viewModels
@@ -82,8 +84,12 @@ import android.content.res.ColorStateList
 import android.content.res.Resources
 import android.graphics.Typeface
 import android.text.InputType
+import android.provider.AlarmClock
+import android.provider.CalendarContract
+import java.util.*
 import android.text.TextUtils
 import android.util.TypedValue
+import android.view.ViewGroup
 //import android.text.TextUtils
 import com.google.android.material.button.MaterialButton
 import androidx.core.content.res.ResourcesCompat
@@ -116,8 +122,9 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
     private lateinit var googleSignInLauncher: ActivityResultLauncher<Intent>
 
     private val skuDetailsList = mutableListOf<SkuDetails>()
-    private lateinit var subscriptionStatusText: TextView
-    private lateinit var subscriptionTimer: TextView
+    // Badge elements removed for cleaner design
+    // private lateinit var subscriptionStatusText: TextView
+    // private lateinit var subscriptionTimer: TextView
     private var timerHandler = Handler(Looper.getMainLooper())
     private var timerRunnable: Runnable? = null
 
@@ -489,8 +496,24 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState) // Call super first!
 
+        // Enable edge-to-edge design for seamless blended appearance
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.setDecorFitsSystemWindows(false)
+        } else {
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            )
+        }
 
+        // Make status bar transparent for blended design
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            window.statusBarColor = Color.TRANSPARENT
+        }
 
+        // Hide action bar for seamless blended design
+        supportActionBar?.hide()
 
         // Initialize Data Binding
         binding = ActivityMainBinding.inflate(layoutInflater) // Replace YourLayoutBinding
@@ -499,17 +522,9 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
         // Initialize Theme Manager
         themeManager = ThemeManager(this)
         
-        // Configure action bar with AI robot icon
-        setupAiRobotActionBar()
+        // Action bar is hidden for blended design
 
-        // Remove this line:
-        // subscriptionTimer = findViewById(R.id.subscriptionTimer)
-
-        // And use the binding reference instead:
-        binding.subscriptionTimer.visibility = View.VISIBLE // or View.GONE
-
-        val badgeImageView = binding.badgeImageView
-        val badgeTextView = binding.badgeTextView
+        // Badge elements removed for cleaner design
         val splashScreen = installSplashScreen()
         //checkForAppUpdate()
 
@@ -597,7 +612,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                 kotlinx.coroutines.delay(2000)
                 
                 // Update UI with fresh data
-                updateBadgeAndText()
+                //updateBadgeAndText() // Badge functionality disabled - using stub
             } catch (e: Exception) {
                 Log.e("MainActivity", "Error during force sync", e)
             }
@@ -609,21 +624,13 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
         // Setup Google Sign-In launcher
         setupGoogleSignInLauncher()
 
-        // Set the custom action bar background
-        supportActionBar?.setBackgroundDrawable(
-            ContextCompat.getDrawable(
-                this,
-                R.drawable.action_bar_background
-            )
-        )
-        // Set up custom action bar with clickable title
-        supportActionBar?.setDisplayShowCustomEnabled(true)
-        supportActionBar?.setDisplayShowTitleEnabled(false)
-
-        // Action bar setup is now handled by setupAiRobotActionBar() method called earlier
-        // setupPromoCodeDetection is no longer needed as we removed the title text field
+        // Action bar is hidden for seamless blended design
+        // All navigation is now handled through the blended header
         binding.buttonNew2.setOnClickListener {
-            startSpeechToText()
+            // Voice Chat - Launch Chat with live voice mode enabled
+            if (checkAndRequestPermissions()) {
+                startVoiceChatSessionGeneral()
+            }
         }
 
 
@@ -661,22 +668,16 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                 showSubscriptionOptions()
             }
 
-            binding.buttonNew1.setOnClickListener {
-                Log.d("ButtonTest", "Button clicked - attempting to open file picker")
+            binding.cardHomeworkHelper.setOnClickListener {
+                // Homework Helper - Extract text from docs, images, and PDFs
+                Log.d("ButtonTest", "Homework Helper clicked")
                 if (checkAndRequestPermissions()) {
-                    openFilePicker()
+                    startHomeworkHelperSession()
                 }
             }
             binding.buttonNew3.setOnClickListener {
-                // Check subscription first
-                if (sharedPreferences.getBoolean(keyAdFree, false) &&
-                    System.currentTimeMillis() < sharedPreferences.getLong(expirationTimeKey, 0)) {
-                    // User is subscribed - switch to DALL-E 3
-                    openChatActivityWithModel("dall-e-3")
-                } else {
-                    // Show subscription required dialog
-                    showDalle3SubscriptionRequiredDialog()
-                }
+                // AI Image Generator - Direct access to GPT Image 1
+                startAdvancedImageGeneration()
             }
 
             // Add secret tap detection for top-left corner
@@ -690,27 +691,60 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             // Update your email button click listener
             // Update your email button click listener
             binding.btnExtractEmail.setOnClickListener {
-                if (emailProviderHelper.hasEmailPermissions()) {
-                    val accounts = emailProviderHelper.getAvailableEmailAccounts()
-                    if (accounts.isNotEmpty()) {
-                        showEmailAccountPicker(accounts)
-                    } else {
-                        openGenericEmailPicker() // This will call startActivityForResult
-                    }
-                } else {
-                    requestEmailPermissions() // This is MainActivity's existing method, will be adapted
-                }
+                // Email Assistant - Smart email composition and analysis
+                startEmailAssistantSession()
             }
 
+            // AI Tool Cards Click Handlers
+            binding.cardAnalyzeImage.setOnClickListener {
+                // Analyze Image tool - Launch image analysis directly
+                startImageAnalysisSession()
+            }
+
+            binding.cardScienceTool.setOnClickListener {
+                // Science tool - Show academic hierarchy starting with Science subjects
+                showAcademicHierarchy("Physics") // or could start with all science subjects
+            }
+
+            // Category Tab Click Handlers
+            binding.tabAllTools.setOnClickListener {
+                selectCategoryTab("all_tools")
+            }
+
+            binding.tabCreative.setOnClickListener {
+                selectCategoryTab("creative")
+            }
+
+            binding.tabAcademic.setOnClickListener {
+                selectCategoryTab("academic")
+            }
+
+            binding.tabProductivity.setOnClickListener {
+                selectCategoryTab("productivity")
+            }
+
+            // Navigation Menu Click Handlers
+            binding.hamburgerMenu.setOnClickListener {
+                showHamburgerMenu()
+            }
+
+            binding.profileIcon.setOnClickListener {
+                openProfileActivity()
+            }
+
+            // Floating Action Button - Quick Actions
+            binding.floatingActionButton.setOnClickListener {
+                showQuickActionsMenu()
+            }
 
             // Set up other UI elements and listeners...
             setupUI()
 
             // Check subscription status and update ViewModel
-            checkSubscriptionStatus()
+            //checkSubscriptionStatus()
 
             // Update badge and text based on the current subscription
-            updateBadgeAndText()
+            //updateBadgeAndText() // Badge functionality disabled - using stub
 
             // Check if the welcome message has been shown
             if (!isWelcomeMessageShown()) {
@@ -722,8 +756,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                 showThankYouDialog()
                 setThankYouDialogShown(true)
             }
-            // Add this to your onCreate() after setContentView()
-            subscriptionStatusText = findViewById(R.id.subscriptionStatusText)
+            // Badge elements removed for cleaner design
 
 
             // Show the subscription dialog if it hasn't been shown before
@@ -739,6 +772,9 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
 
             //emailProviderHelper = EmailProviderHelper(this)
         }
+        
+        // Set initial UI state
+        handleFragmentChanges()
 
         // Handle intent action for subscription purchase
         handleIntentAction(intent)
@@ -746,14 +782,15 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
         // Check for existing subscription on startup
         checkExistingSubscription()
 
-
+        // Set default selected tab to "All Tools" when app starts
+        selectCategoryTab("all_tools")
     }
 
     private fun showDalle3SubscriptionRequiredDialog() {
         AlertDialog.Builder(this)
             .setTitle("Premium Feature Required")
             .setMessage("DALL-E 3 image generation requires a premium subscription. Subscribe now to unlock this feature!")
-            .setPositiveButton("Subscribe") { _, _ ->
+            .setPositiveButton("Subscribe") { dialog: DialogInterface, which: Int ->
                 // Check authentication before showing subscription options
                 if (!firebaseAuthService.isSignedIn()) {
                     Log.w("MainActivity", "User not authenticated, showing authentication required dialog")
@@ -824,6 +861,9 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                 .replace(R.id.fragment_container, newChatFragment)
                 .addToBackStack(null)
                 .commit()
+            
+            // Update UI visibility
+            handleFragmentChanges()
         }
     }
 
@@ -889,13 +929,15 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
         findViewById<LinearLayout>(R.id.topicsLayout).visibility = View.GONE
         findViewById<LinearLayout>(R.id.subtopicsLayout).visibility = View.GONE
 
-        // Show subjects container
-        findViewById<HorizontalScrollView>(R.id.subjectsScrollView).visibility = View.VISIBLE
+        // Show subjects container - removed, functionality moved to Academic button
+        // findViewById<HorizontalScrollView>(R.id.subjectsScrollView).visibility = View.VISIBLE
 
-        val subjectsLayout = findViewById<LinearLayout>(R.id.subjectsLayout)
-        subjectsLayout.removeAllViews()
+        // Subjects layout removed - functionality moved to Academic button
+        // val subjectsLayout = findViewById<LinearLayout>(R.id.subjectsLayout)
+        // subjectsLayout.removeAllViews()
 
-        // Create subject cards
+        // Create subject cards - COMMENTED OUT: subjectsLayout removed from layout
+        /*
         subjects.forEach { (subject, chapters) ->
             val subjectCard = MaterialCardView(this).apply {
                 layoutParams = LinearLayout.LayoutParams(
@@ -985,14 +1027,15 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                 addView(cardContent)
             }
 
-            subjectsLayout.addView(subjectCard)
+            // subjectsLayout.addView(subjectCard) // Commented out - subjectsLayout removed from layout
         }
+        */
     }
 
 
     private fun setupChapters(subject: String, chapters: Map<String, Map<String, List<String>>>) {
         // Hide subjects and other containers
-        findViewById<HorizontalScrollView>(R.id.subjectsScrollView).visibility = View.GONE
+        // findViewById<HorizontalScrollView>(R.id.subjectsScrollView).visibility = View.GONE // Commented out - subjectsScrollView removed from layout
         findViewById<LinearLayout>(R.id.topicsLayout).visibility = View.GONE
         findViewById<LinearLayout>(R.id.subtopicsLayout).visibility = View.GONE
 
@@ -1009,12 +1052,12 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             icon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_arrow_back)
             iconGravity = MaterialButton.ICON_GRAVITY_START
             cornerRadius = 8.dpToPx()
-            layoutParams = LinearLayout.LayoutParams(
+            val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                bottomMargin = 16.dpToPx()
-            }
+            )
+            params.bottomMargin = 16.dpToPx()
+            layoutParams = params
             setOnClickListener {
                 setupSubjects()
             }
@@ -1086,12 +1129,12 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             setBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.secondaryColor))
             iconGravity = MaterialButton.ICON_GRAVITY_START
             cornerRadius = 8.dpToPx()
-            layoutParams = LinearLayout.LayoutParams(
+            val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                bottomMargin = 16.dpToPx()
-            }
+            )
+            params.bottomMargin = 16.dpToPx()
+            layoutParams = params
             setOnClickListener {
                 val chapters = subjects[subject] ?: emptyMap()
                 setupChapters(subject, chapters)
@@ -1166,12 +1209,12 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             setBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.secondaryColor))
             iconGravity = MaterialButton.ICON_GRAVITY_START
             cornerRadius = 8.dpToPx()
-            layoutParams = LinearLayout.LayoutParams(
+            val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                bottomMargin = 16.dpToPx()
-            }
+            )
+            params.bottomMargin = 16.dpToPx()
+            layoutParams = params
             setOnClickListener {
                 val chapters = subjects[subject] ?: emptyMap()
                 val topics = chapters[chapter] ?: emptyMap()
@@ -1415,13 +1458,13 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
         val authDialog = AlertDialog.Builder(this, R.style.BlueDialogTheme)
             .setTitle("Account Required")
             .setMessage("You need to create an account before purchasing a subscription. This helps us secure your subscription and sync it across devices.")
-            .setPositiveButton("Create Account") { _, _ ->
+            .setPositiveButton("Create Account") { dialog: DialogInterface, which: Int ->
                 // Navigate to profile/login screen
                 val intent = Intent(this, ProfileActivity::class.java)
                 intent.putExtra("show_registration", true)
                 startActivity(intent)
             }
-            .setNegativeButton("Cancel") { _, _ ->
+            .setNegativeButton("Cancel") { dialog: DialogInterface, which: Int ->
                 // Stay in current activity
             }
             .create()
@@ -1531,12 +1574,12 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
         applyCurrentTheme()
         
         // Set up the click listener for the notification icon
-        binding.recyclerView.post {
-            val copyIcon: ImageView? = binding.recyclerView.findViewById(R.id.copy_icon)
+        binding.emailRecyclerView.post {
+            val copyIcon: ImageView? = binding.emailRecyclerView.findViewById(R.id.copy_icon)
             copyIcon?.setOnClickListener {
                 it.startAnimation(AnimationUtils.loadAnimation(this, R.anim.button_click))
                 val messageTextView: TextView? =
-                    binding.recyclerView.findViewById(R.id.messageTextView)
+                    binding.emailRecyclerView.findViewById(R.id.messageTextView)
                 val message = messageTextView?.text.toString()
 
                 // Copy the message to the custom clipboard
@@ -1545,7 +1588,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                 // Show a toast message
                 showCustomToast("Message copied to custom clipboard")
             }
-            binding.messageEditText.setOnTouchListener { _, event ->
+            binding.searchBar.setOnTouchListener { _, event ->
                 if (event.action == MotionEvent.ACTION_DOWN) {
                     openChatActivityWithModel(currentModel)
                     updateLastInteractionTime()
@@ -1563,7 +1606,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
         setupSubjects()
 
         // Open ChatActivity on message input box touch
-        binding.messageEditText.setOnTouchListener { _, event ->
+        binding.searchBar.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
                 openChatActivityWithModel(currentModel)
                 true
@@ -1585,13 +1628,6 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             // Initialize the first conversation on first launch
             currentConversationId = generateConversationId()
         }
-        binding.buttonNew3.setOnClickListener {
-            if (isUserSubscribed()) {
-                openChatActivityWithModel("dall-e-3")
-            } else {
-                showDalle3SubscriptionDialog()
-            }
-        }
     }
 
 
@@ -1603,53 +1639,19 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                 currentTime < sharedPreferences.getLong(expirationTimeKey, 0)
     }
 
-    // In your Activity (not Fragment):
-    private fun showDalle3SubscriptionDialog() {
-        val dialog = Dialog(this).apply {  // 'this' refers to Activity context
-            setContentView(R.layout.dialog_dalle_subscription)
-            window?.setBackgroundDrawableResource(android.R.color.transparent)
-
-            setCancelable(true)
-            setCanceledOnTouchOutside(true)
-
-            // Configure benefits
-            val benefitsLayout = findViewById<LinearLayout>(R.id.benefitsLayout)
-            listOf(
-                "Generate high-resolution AI images (1024x1024)",
-                "Create unlimited DALL-E 3 artwork",
-                "Priority generation queue access",
-            ).forEach { benefit ->
-                TextView(this@MainActivity).apply {  // Use activity context
-                    text = "• $benefit"
-                    setTextColor(ContextCompat.getColor(context, R.color.white))
-                    textSize = 16f
-                    typeface = ResourcesCompat.getFont(context, R.font.montserrat_medium)
-                    layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    ).apply {
-                        bottomMargin = resources.getDimensionPixelSize(R.dimen.benefit_item_margin) // Define in dimens.xml
-                    }
-                    benefitsLayout.addView(this)
-                }
-            }
-
-            findViewById<Button>(R.id.btnBuy).setOnClickListener {
-                showSubscriptionOptions()
-                dismiss()
-            }
-
-            findViewById<TextView>(R.id.btnClose).setOnClickListener {
-                dismiss()
-            }
-        }
-        dialog.show()
-    }
-
 
     private fun openChatActivityWithModel(model: String) {
         Intent(this, ChatActivity::class.java).apply {
             putExtra("selected_model", model)
+            putExtra("is_ad_free", sharedPreferences.getBoolean(keyAdFree, false))
+            putExtra("expiration_time", sharedPreferences.getLong(expirationTimeKey, 0))
+        }.also { startActivity(it) }
+    }
+
+    private fun openChatActivityWithModel(model: String, initialMessage: String) {
+        Intent(this, ChatActivity::class.java).apply {
+            putExtra("selected_model", model)
+            putExtra("initial_message", initialMessage)
             putExtra("is_ad_free", sharedPreferences.getBoolean(keyAdFree, false))
             putExtra("expiration_time", sharedPreferences.getLong(expirationTimeKey, 0))
         }.also { startActivity(it) }
@@ -1670,8 +1672,8 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
         val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
 
         if (fragment is ChatFragment) {
-            binding.fragmentContainer.visibility = View.VISIBLE
-            binding.nonChatElements.visibility = View.GONE
+            findViewById<FrameLayout>(R.id.fragment_container).visibility = View.VISIBLE
+            findViewById<ScrollView>(R.id.mainScrollView).visibility = View.GONE
             // Update subscription status based on user subscription
             val isAdFree = sharedPreferences.getBoolean(keyAdFree, false)
             val expirationTime = sharedPreferences.getLong(expirationTimeKey, 0)
@@ -1681,8 +1683,8 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             actionBarIcon?.alpha = 1.0f
 
         } else {
-            binding.fragmentContainer.visibility = View.GONE
-            binding.nonChatElements.visibility = View.VISIBLE
+            findViewById<FrameLayout>(R.id.fragment_container).visibility = View.GONE
+            findViewById<ScrollView>(R.id.mainScrollView).visibility = View.VISIBLE
             // Optional: Make robot icon slightly dimmed in home mode
             actionBarIcon?.alpha = 0.8f
         }
@@ -1788,13 +1790,13 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                     val dialog = AlertDialog.Builder(this@MainActivity)
                         .setTitle("User Profile")
                         .setMessage("Email: ${user.email}\nName: ${user.fullName}\nUID: ${user.uid}")
-                        .setPositiveButton("View Profile") { _, _ ->
+                        .setPositiveButton("View Profile") { dialog: DialogInterface, which: Int ->
                             startActivity(Intent(this@MainActivity, ProfileActivity::class.java))
                         }
-                        .setNeutralButton("Settings") { _, _ ->
+                        .setNeutralButton("Settings") { dialog: DialogInterface, which: Int ->
                             startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
                         }
-                        .setNegativeButton("Logout") { _, _ ->
+                        .setNegativeButton("Logout") { dialog: DialogInterface, which: Int ->
                             handleLogout()
                         }
                         .create()
@@ -1813,13 +1815,13 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
         val dialog = AlertDialog.Builder(this)
             .setTitle("Login Required")
             .setMessage("Please log in to access your profile, chat history, and subscription features across devices.")
-            .setPositiveButton("Email Login") { _, _ ->
+            .setPositiveButton("Email Login") { dialog: DialogInterface, which: Int ->
                 showLoginForm()
             }
-            .setNeutralButton("Google Sign-In") { _, _ ->
+            .setNeutralButton("Google Sign-In") { dialog: DialogInterface, which: Int ->
                 startGoogleSignIn()
             }
-            .setNegativeButton("Register") { _, _ ->
+            .setNegativeButton("Register") { dialog: DialogInterface, which: Int ->
                 showRegistrationForm()
             }
             .create()
@@ -1847,7 +1849,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
         val dialog = AlertDialog.Builder(this)
             .setTitle("Login")
             .setView(layout)
-            .setPositiveButton("Login") { _, _ ->
+            .setPositiveButton("Login") { dialog: DialogInterface, which: Int ->
                 val email = emailEditText.text.toString().trim()
                 val password = passwordEditText.text.toString().trim()
                 if (email.isNotEmpty() && password.isNotEmpty()) {
@@ -1886,7 +1888,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
         val dialog = AlertDialog.Builder(this)
             .setTitle("Create Account")
             .setView(layout)
-            .setPositiveButton("Register") { _, _ ->
+            .setPositiveButton("Register") { dialog: DialogInterface, which: Int ->
                 val email = emailEditText.text.toString().trim()
                 val password = passwordEditText.text.toString().trim()
                 val confirmPassword = confirmPasswordEditText.text.toString().trim()
@@ -1921,7 +1923,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                     // Refresh menu to show profile options
                     invalidateOptionsMenu()
                     // Update badge and UI to reflect authentication status
-                    updateBadgeAndText()
+                    //updateBadgeAndText() // Badge functionality disabled - using stub
                 } else {
                     Toast.makeText(this@MainActivity, "Login failed: ${result.message}", Toast.LENGTH_SHORT).show()
                 }
@@ -1943,7 +1945,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                     // Refresh menu to show profile options
                     invalidateOptionsMenu()
                     // Update badge and UI to reflect authentication status
-                    updateBadgeAndText()
+                    updateBadgeAndText() // Badge functionality disabled - using stub
                 } else {
                     Toast.makeText(this@MainActivity, "Registration failed: ${result.message}", Toast.LENGTH_SHORT).show()
                 }
@@ -1965,7 +1967,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                     forceClearAllLegacySubscriptionData()
                     invalidateOptionsMenu()
                     // Update badge to show free tier
-                    updateBadgeAndText()
+                    updateBadgeAndText() // Badge functionality disabled - using stub
                 } else {
                     Toast.makeText(this@MainActivity, "Logout failed", Toast.LENGTH_SHORT).show()
                 }
@@ -2064,7 +2066,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                        "✅ Preferences synced\n\n" +
                        "Access expires in ${expiresIn / 60} minutes.\n\n" +
                        "Open in browser?")
-            .setPositiveButton("Open Webapp") { _, _ ->
+            .setPositiveButton("Open Webapp") { dialog: DialogInterface, which: Int ->
                 try {
                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(webappUrl))
                     startActivity(intent)
@@ -2073,7 +2075,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                     showWebappErrorDialog("Failed to open webapp: ${e.message}")
                 }
             }
-            .setNegativeButton("Copy Link") { _, _ ->
+            .setNegativeButton("Copy Link") { dialog: DialogInterface, which: Int ->
                 val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText("AI Teacher Webapp", webappUrl)
                 clipboard.setPrimaryClip(clip)
@@ -2090,7 +2092,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             .setTitle("Webapp Switch Failed")
             .setMessage(message)
             .setPositiveButton("OK", null)
-            .setNeutralButton("Try Again") { _, _ ->
+            .setNeutralButton("Try Again") { dialog: DialogInterface, which: Int ->
                 handleWebappSwitchAction()
             }
             .show()
@@ -2238,15 +2240,26 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
 
     private fun handlePurchase(purchase: Purchase) {
         if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-            // Check if user is authenticated before processing purchase
+            // SECURITY FIX: Enhanced error handling for unauthenticated purchases
             if (!firebaseAuthService.isSignedIn()) {
-                Log.e("MainActivity", "User must be authenticated to complete subscription purchase")
-                showCustomToast("Please sign in to complete your subscription purchase")
+                Log.e("MainActivity", "Critical: User paid for subscription but is not authenticated")
                 
-                // Redirect to authentication
-                val intent = Intent(this, ProfileActivity::class.java)
-                intent.putExtra("show_login", true)
-                startActivity(intent)
+                // Show critical error dialog with recovery options
+                AlertDialog.Builder(this)
+                    .setTitle("Account Required")
+                    .setMessage("Your purchase was successful, but you need to sign in to activate your subscription. Your purchase will be restored once you sign in.")
+                    .setPositiveButton("Sign In Now") { dialog: DialogInterface, which: Int ->
+                        val intent = Intent(this, ProfileActivity::class.java)
+                        intent.putExtra("show_login", true)
+                        intent.putExtra("purchase_recovery_mode", true)
+                        intent.putExtra("pending_purchase_token", purchase.purchaseToken)
+                        startActivity(intent)
+                    }
+                    .setNegativeButton("Later") { dialog: DialogInterface, which: Int ->
+                        showCustomToast("Please sign in to activate your subscription")
+                    }
+                    .setCancelable(false)
+                    .show()
                 return
             }
             
@@ -2312,7 +2325,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                             // Update UI after successful Firestore save
                             setAdFree(true)
                             updateChatFragmentSubscriptionStatus()
-                            updateSubscriptionTimer()
+                            //updateSubscriptionTimer() // Badge functionality disabled - using stub
                             
                             // Also save to SharedPreferences for backward compatibility
                             val expirationTime = System.currentTimeMillis() + 30 * 24 * 60 * 60 * 1000L
@@ -2321,7 +2334,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                                 "basic_monthly_subscription" -> "BASIC"
                                 "pro_monthly_plan" -> "PRO"
                                 "premium_monthly_subscription" -> "PREMIUM"
-                                "ultra_monthly_subscription" -> "ULTRA_PREMIUM"
+                                "ultra_monthly_subscription" -> "ENTERPRISE"
                                 else -> "FREE"
                             }
                             saveSubscriptionToPreferences(tierName, expirationTime)
@@ -2361,7 +2374,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
         return Security.verifyPurchase(base64EncodedPublicKey, signedData, signature)
     }
 
-    private fun setSubscriptionTypeAndBadge(badge: String, text: String) {
+    /*private fun setSubscriptionTypeAndBadge(badge: String, text: String) {
         sharedPreferences.edit().apply {
             putString(subscriptionTypeKey, badge)
             apply()
@@ -2405,9 +2418,9 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                 updateBadgeAndTextLegacy()
             }
         }
-    }
+    }*/
     
-    private fun updateBadgeForActivePlan(planType: String, daysRemaining: Int) {
+    /*private fun updateBadgeForActivePlan(planType: String, daysRemaining: Int) {
         when (planType) {
             "basic" -> {
                 binding.badgeImageView.setImageResource(R.drawable.bronze_badge)
@@ -2441,17 +2454,17 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             }
         }
         binding.subscriptionTimer.visibility = View.VISIBLE
-        updateSubscriptionTimer()
-    }
+        updateSubscriptionTimer() // Badge functionality disabled - using stub
+    }*/
     
-    private fun updateBadgeForFreeTier() {
+    /*private fun updateBadgeForFreeTier() {
         // Free tier state
         binding.badgeImageView.setImageResource(R.drawable.bronze_badge)
         binding.badgeTextView.text = "Light"
         binding.subscriptionStatusText.text = "Upgrade for:\n• No ads\n• Better AI models\n• Image generation"
         binding.subscriptionStatusText.setTextColor(ContextCompat.getColor(this, R.color.red))
         binding.subscriptionTimer.visibility = View.GONE
-    }
+    }*/
     
     private fun clearLegacySubscriptionData() {
         try {
@@ -2494,7 +2507,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
         }
     }
     
-    private fun updateBadgeAndTextLegacy() {
+    /*private fun updateBadgeAndTextLegacy() {
         // Legacy method as fallback
         val subscriptionType = sharedPreferences.getString(subscriptionTypeKey, null)
         val expirationTime = sharedPreferences.getLong(expirationTimeKey, 0)
@@ -2535,7 +2548,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                 }
             }
             binding.subscriptionTimer.visibility = View.VISIBLE
-            updateSubscriptionTimer()
+            updateSubscriptionTimer() // Badge functionality disabled - using stub
         } else {
             // Free tier state
             binding.badgeImageView.setImageResource(R.drawable.bronze_badge)
@@ -2544,7 +2557,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             binding.subscriptionStatusText.setTextColor(ContextCompat.getColor(this, R.color.red))
             binding.subscriptionTimer.visibility = View.GONE
         }
-    }
+    }*/
     private fun saveSubscriptionExpiration(expirationTime: Long) {
         // DEPRECATED: No longer save to SharedPreferences - use Firestore instead
         // This prevents conflicts with Firestore-based subscription system
@@ -2624,6 +2637,20 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
     }
 
     private fun startPurchaseFlow(productId: String) {
+        // SECURITY FIX: Require authentication before any subscription purchase
+        if (!firebaseAuthService.isSignedIn()) {
+            Log.w("MainActivity", "Authentication required before subscription purchase")
+            showCustomToast("Please sign in to purchase a subscription")
+            
+            // Redirect to authentication
+            val intent = Intent(this, ProfileActivity::class.java)
+            intent.putExtra("show_login", true)
+            intent.putExtra("redirect_after_login", "subscription_purchase")
+            intent.putExtra("requested_product_id", productId)
+            startActivity(intent)
+            return
+        }
+        
         val productDetails = productDetailsMap[productId]
         if (productDetails != null) {
             if (productDetails.subscriptionOfferDetails.isNullOrEmpty()) {
@@ -2641,6 +2668,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                 .setProductDetailsParamsList(listOf(productDetailsParams))
                 .build()
 
+            Log.d("MainActivity", "Launching billing flow for authenticated user")
             billingClient.launchBillingFlow(this, flowParams)
         } else {
             Log.e("MainActivity", "ProductDetails not found for productId: $productId")
@@ -2759,7 +2787,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
     }
 
 
-    private fun checkSubscriptionStatus() {
+    /*private fun checkSubscriptionStatus() {
         billingClient.queryPurchasesAsync(
             QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.SUBS).build()
         ) { billingResult, purchases ->
@@ -2770,7 +2798,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                         if (isSubscriptionActive(purchase)) {
                             hasActiveSubscription = true
                             setAdFree(true)
-                            updateSubscriptionTimer() // Add this line
+                            updateSubscriptionTimer() // Badge functionality disabled - using stub // Add this line
                         }
                     }
                 }
@@ -2785,9 +2813,9 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             val isAdFree = sharedPreferences.getBoolean(keyAdFree, false)
             val expirationTime = sharedPreferences.getLong(expirationTimeKey, 0)
             subscriptionViewModel.updateSubscriptionStatus(isAdFree, expirationTime)
-            updateBadgeAndText() // Ensure the badge and text are updated
+            updateBadgeAndText() // Badge functionality disabled - using stub // Ensure the badge and text are updated
         }
-    }
+    }*/
 
 
 
@@ -2825,7 +2853,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             .setTitle("Reviewer Access")
             .setMessage("Enter promo code to unlock all features")
             .setView(input)
-            .setPositiveButton("Apply") { _, _ ->
+            .setPositiveButton("Apply") { dialog: DialogInterface, which: Int ->
                 verifyPromoCode(input.text.toString().trim())
             }
             .setNegativeButton("Cancel", null)
@@ -2902,7 +2930,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             //binding.clearRecentConversationsButton.setTextColor(Color.BLACK)
             binding.buyButton.setTextColor(Color.BLACK)
 
-            binding.messageEditText.setTextColor(textColor)
+            binding.searchBar.setTextColor(textColor)
 
         } catch (e: Resources.NotFoundException) {
             Log.e("MainActivity", "Resource not found: $drawableResId", e)
@@ -3176,16 +3204,16 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                 subscriptionUIManager.updateUIForSubscriptionStatus(this@MainActivity)
                 
                 // Check and update legacy subscription status for backward compatibility
-                checkSubscriptionStatus()
-                updateBadgeAndText()
-                updateSubscriptionTimer()
+                //checkSubscriptionStatus()
+                updateBadgeAndText() // Badge functionality disabled - using stub
+                //updateSubscriptionTimer() // Badge functionality disabled - using stub
                 
             } catch (e: Exception) {
                 Log.e("MainActivity", "Error updating subscription status on resume", e)
                 // Fallback to legacy methods
-                checkSubscriptionStatus()
-                updateBadgeAndText()
-                updateSubscriptionTimer()
+                //checkSubscriptionStatus()
+                updateBadgeAndText() // Badge functionality disabled - using stub
+                //updateSubscriptionTimer() // Badge functionality disabled - using stub
             }
         }
         
@@ -3364,11 +3392,30 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                 selectSubscription("ultra_monthly_subscription", ultraSubscription, "ENTERPRISE MAX")
             }
 
-            // Purchase button click
+            // SECURITY FIX: Purchase button click with authentication check
             btnBuy?.setOnClickListener {
+                // Check authentication before allowing purchase
+                if (!firebaseAuthService.isSignedIn()) {
+                    Log.w("MainActivity", "Authentication required for subscription purchase from dialog")
+                    dialog.dismiss()
+                    
+                    AlertDialog.Builder(this@MainActivity)
+                        .setTitle("Sign In Required")
+                        .setMessage("Please sign in to purchase a subscription. This ensures your subscription can be restored on all your devices.")
+                        .setPositiveButton("Sign In") { dialog: DialogInterface, which: Int ->
+                            val intent = Intent(this@MainActivity, ProfileActivity::class.java)
+                            intent.putExtra("show_login", true)
+                            intent.putExtra("redirect_after_login", "subscription_dialog")
+                            startActivity(intent)
+                        }
+                        .setNegativeButton("Cancel", null)
+                        .show()
+                    return@setOnClickListener
+                }
+                
                 selectedProductId?.let { productId ->
                     try {
-                        Log.d("MainActivity", "Starting purchase flow for: $productId")
+                        Log.d("MainActivity", "Starting authenticated purchase flow for: $productId")
                         startPurchaseFlow(productId)
                         dialog.dismiss()
                     } catch (e: Exception) {
@@ -3621,7 +3668,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
 
 
 
-    private fun updateSubscriptionTimer() {
+    /*private fun updateSubscriptionTimer() {
         val expirationTime = sharedPreferences.getLong(expirationTimeKey, 0)
         val currentTime = System.currentTimeMillis()
 
@@ -3645,11 +3692,11 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             binding.subscriptionTimer.visibility = View.GONE
             binding.subscriptionStatusText.text = "You're missing out on:\n- No ads\n- Premium features"
         }
-    }
+    }*/
 
 
 
-    private fun updateTimerText(expirationTime: Long) {
+   /* private fun updateTimerText(expirationTime: Long) {
         val remainingTime = expirationTime - System.currentTimeMillis()
 
         if (remainingTime > 0) {
@@ -3675,12 +3722,12 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             binding.subscriptionTimer.visibility = View.GONE
             timerRunnable?.let { timerHandler.removeCallbacks(it) }
             setAdFree(false)
-            updateBadgeAndText()
+            updateBadgeAndText() // Badge functionality disabled - using stub
 
             // Show what user is missing
             binding.subscriptionStatusText.text = "You're missing:\n- Ad-free experience\n- Premium models"
         }
-    }
+    }*/
 
     private fun enhanceBuyButton() {
         // Apply pulse animation (View animation)
@@ -3758,7 +3805,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
         AlertDialog.Builder(this)
             .setTitle("Email App Not Found")
             .setMessage("Would you like to install an email app or copy your email manually?")
-            .setPositiveButton("Install Gmail") { _, _ ->
+            .setPositiveButton("Install Gmail") { dialog: DialogInterface, which: Int ->
                 try {
                     startActivity(Intent(Intent.ACTION_VIEW).apply {
                         data = Uri.parse("market://details?id=com.google.android.gm")
@@ -3769,7 +3816,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                     })
                 }
             }
-            .setNegativeButton("Copy Manually") { _, _ ->
+            .setNegativeButton("Copy Manually") { dialog: DialogInterface, which: Int ->
                 // Open chat with instructions
                 openChatActivityWithMessage("Please paste your email content here for analysis.")
             }
@@ -3786,7 +3833,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                     AlertDialog.Builder(this)
                         .setTitle("Permission Needed")
                         .setMessage("This app needs access to your accounts to list available email accounts. This helps you select an email for AI-assisted responses. Your email content is processed locally for this purpose only and is not stored or shared.")
-                        .setPositiveButton("Grant Permission") { _, _ ->
+                        .setPositiveButton("Grant Permission") { dialog: DialogInterface, which: Int ->
                             ActivityCompat.requestPermissions(
                                 this,
                                 arrayOf(permissionNeeded),
@@ -3920,6 +3967,9 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                 .replace(R.id.fragment_container, newChatFragment)
                 .addToBackStack(null)
                 .commit()
+            
+            // Update UI visibility
+            handleFragmentChanges()
         }
     }
     private fun showQuickWorkQuestions() {
@@ -4034,5 +4084,1841 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             // Set action bar background to AI robot theme
             setBackgroundDrawable(ContextCompat.getDrawable(this@MainActivity, R.color.ai_robot_background))
         }
+    }
+
+    // AI Feature Implementation Methods
+
+    /**
+     * Start Voice Chat Session - Advanced conversational AI with voice input/output
+     */
+    private fun startVoiceChatSessionGeneral() {
+        val intent = Intent(this, ChatActivity::class.java).apply {
+            putExtra("chat_mode", "live_voice")
+            putExtra("suggested_message", "Starting live voice conversation...")
+            putExtra("feature_name", "Live Voice Chat")
+            putExtra("auto_start_live_voice", true)
+            putExtra("voice_agent_type", "general_assistant")
+        }
+        startActivity(intent)
+    }
+
+    /**
+     * Start Document Intelligence Session - AI-powered document analysis and extraction
+     */
+    private fun startDocumentIntelligenceSession() {
+        val intent = Intent(this, ChatActivity::class.java).apply {
+            putExtra("chat_mode", "document")
+            putExtra("suggested_message", "Upload a document for AI analysis")
+            putExtra("feature_name", "Document Intelligence")
+            putExtra("enable_file_upload", true)
+            putExtra("ai_specialty", "document_analysis")
+        }
+        startActivity(intent)
+    }
+
+    /**
+     * Start Image Analysis Session - Capture and analyze images with AI
+     */
+    private fun startImageAnalysisSession() {
+        val intent = Intent(this, ChatActivity::class.java).apply {
+            putExtra("chat_mode", "image_analysis")
+            putExtra("suggested_message", "Capture or select an image for AI analysis")
+            putExtra("feature_name", "Image Analysis")
+            putExtra("enable_image_capture", true)
+            putExtra("auto_show_image_picker", true)
+            putExtra("ai_specialty", "image_analysis")
+        }
+        startActivity(intent)
+    }
+
+    /**
+     * Start Homework Helper Session - Extract text from docs, images, and PDFs for homework assistance
+     */
+    private fun startHomeworkHelperSession() {
+        val intent = Intent(this, ChatActivity::class.java).apply {
+            putExtra("chat_mode", "homework_helper")
+            putExtra("suggested_message", "Upload homework documents or capture images to extract text and get AI assistance")
+            putExtra("feature_name", "Homework Helper")
+            putExtra("enable_file_upload", true)
+            putExtra("auto_show_document_picker", true)
+            putExtra("ai_specialty", "homework_assistance")
+        }
+        startActivity(intent)
+    }
+
+    /**
+     * Start Advanced Image Generation Session - Create and transform images with GPT Image 1
+     */
+    private fun startAdvancedImageGeneration() {
+        val intent = Intent(this, ChatActivity::class.java).apply {
+            putExtra("chat_mode", "image_generation")
+            putExtra("suggested_message", "Describe the image you want me to create and I'll generate it for you")
+            putExtra("feature_name", "AI Image Generator")
+            putExtra("selected_model", "gpt-image-1")
+            putExtra("enable_image_generation", true)
+            putExtra("auto_select_model", true)
+        }
+        startActivity(intent)
+    }
+
+    /**
+     * Start Email Assistant Session - Smart email composition and analysis
+     */
+    private fun startEmailAssistantSession() {
+        val intent = Intent(this, ChatActivity::class.java).apply {
+            putExtra("chat_mode", "email")
+            putExtra("suggested_message", "Help me write a professional email")
+            putExtra("feature_name", "Email Assistant")
+            putExtra("ai_specialty", "email_writing")
+            putExtra("enable_templates", true)
+        }
+        startActivity(intent)
+    }
+
+    /**
+     * Start Math Solver Session - Advanced mathematical problem solving
+     */
+    private fun startMathSolverSession() {
+        val intent = Intent(this, ChatActivity::class.java).apply {
+            putExtra("chat_mode", "math")
+            putExtra("suggested_message", "Solve this math problem step by step:")
+            putExtra("feature_name", "Math Solver")
+            putExtra("ai_specialty", "mathematics")
+            putExtra("enable_latex", true)
+            putExtra("enable_step_by_step", true)
+        }
+        startActivity(intent)
+    }
+
+    /**
+     * Start Science Assistant Session - Scientific analysis and explanations
+     */
+    private fun startScienceAssistantSession() {
+        val intent = Intent(this, ChatActivity::class.java).apply {
+            putExtra("chat_mode", "science")
+            putExtra("suggested_message", "Explain this scientific concept:")
+            putExtra("feature_name", "Science Assistant")
+            putExtra("ai_specialty", "science")
+            putExtra("enable_diagrams", true)
+            putExtra("enable_experiments", true)
+        }
+        startActivity(intent)
+    }
+
+    /**
+     * Show Image Generation Subscription Dialog - Premium features for image creation
+     */
+    private fun showImageGenerationSubscriptionDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Premium Image Generation")
+            .setMessage("Unlock advanced AI image generation with DALL-E 3:\n\n• High-quality image creation\n• Style transfer and editing\n• Unlimited generations\n• Commercial usage rights")
+            .setPositiveButton("Upgrade Now") { dialog: DialogInterface, which: Int ->
+                showSubscriptionOptions()
+            }
+            .setNegativeButton("Try Basic") { dialog: DialogInterface, which: Int ->
+                // Offer basic image generation
+                startBasicImageGeneration()
+            }
+            .setNeutralButton("Cancel", null)
+            .show()
+    }
+
+    /**
+     * Start Basic Image Generation - Free tier with limited features
+     */
+    private fun startBasicImageGeneration() {
+        val intent = Intent(this, ChatActivity::class.java).apply {
+            putExtra("chat_mode", "image_generation_basic")
+            putExtra("suggested_message", "Describe a simple image (Basic tier)")
+            putExtra("feature_name", "Basic Image Generator")
+            putExtra("selected_model", "dall-e-2")
+            putExtra("generation_limit", 3)
+        }
+        startActivity(intent)
+    }
+
+    /**
+     * Handle category tab selection and UI updates
+     */
+    private fun selectCategoryTab(category: String) {
+        // Reset all tabs to unselected state
+        binding.tabAllTools.isSelected = false
+        binding.tabCreative.isSelected = false
+        binding.tabAcademic.isSelected = false
+        binding.tabProductivity.isSelected = false
+
+        // Update background and colors for unselected state
+        binding.tabAllTools.setBackgroundResource(R.drawable.category_tab_inactive_background)
+        binding.tabAllTools.setTextColor(ContextCompat.getColor(this, R.color.ocean_text_secondary))
+        binding.tabCreative.setBackgroundResource(R.drawable.category_tab_inactive_background)
+        binding.tabCreative.setTextColor(ContextCompat.getColor(this, R.color.ocean_text_secondary))
+        binding.tabAcademic.setBackgroundResource(R.drawable.category_tab_inactive_background)
+        binding.tabAcademic.setTextColor(ContextCompat.getColor(this, R.color.ocean_text_secondary))
+        binding.tabProductivity.setBackgroundResource(R.drawable.category_tab_inactive_background)
+        binding.tabProductivity.setTextColor(ContextCompat.getColor(this, R.color.ocean_text_secondary))
+
+        // Select the clicked tab and update its appearance
+        when (category) {
+            "all_tools" -> {
+                binding.tabAllTools.isSelected = true
+                binding.tabAllTools.setBackgroundResource(R.drawable.category_tab_background)
+                binding.tabAllTools.setTextColor(ContextCompat.getColor(this, R.color.ocean_text_dark))
+                showAllTools()
+            }
+            "creative" -> {
+                binding.tabCreative.isSelected = true
+                binding.tabCreative.setBackgroundResource(R.drawable.category_tab_background)
+                binding.tabCreative.setTextColor(ContextCompat.getColor(this, R.color.ocean_text_dark))
+                showCreativeTools()
+            }
+            "academic" -> {
+                binding.tabAcademic.isSelected = true
+                binding.tabAcademic.setBackgroundResource(R.drawable.category_tab_background)
+                binding.tabAcademic.setTextColor(ContextCompat.getColor(this, R.color.ocean_text_dark))
+                showAcademicTools()
+            }
+            "productivity" -> {
+                binding.tabProductivity.isSelected = true
+                binding.tabProductivity.setBackgroundResource(R.drawable.category_tab_background)
+                binding.tabProductivity.setTextColor(ContextCompat.getColor(this, R.color.ocean_text_dark))
+                showProductivityTools()
+            }
+        }
+    }
+
+    /**
+     * Show all available AI tools (default view)
+     */
+    private fun showAllTools() {
+        // Ensure main content is visible (restore default view)
+        showMainContent()
+        // Hide any academic interface that might be showing
+        hideAcademicInterface()
+        
+        // Hide all dynamic content to keep it clean like the demo
+        hideVoiceCommandShortcuts()
+        hideAIEducationalTools()
+        
+        // Show only the main 6 tools like in the demo
+        binding.quickActionsContainer.visibility = View.VISIBLE
+        binding.additionalButtonsLayout.visibility = View.VISIBLE
+        
+        showCustomToast("Showing Main Tools")
+    }
+
+    /**
+     * Show voice command shortcuts in the All Tools section
+     */
+    private fun showVoiceCommandShortcuts() {
+        // Create voice command shortcuts container
+        hideVoiceCommandShortcuts() // Remove any existing shortcuts first
+        
+        val voiceShortcutsContainer = LinearLayout(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            orientation = LinearLayout.VERTICAL
+            setPadding(16.dpToPx(), 16.dpToPx(), 16.dpToPx(), 16.dpToPx())
+        }
+        
+        // Add header with back button and title
+        val headerContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            val headerParams = layoutParams as LinearLayout.LayoutParams
+            headerParams.setMargins(0, 0, 0, 16.dpToPx())
+            gravity = android.view.Gravity.CENTER_VERTICAL
+        }
+
+        // Back button
+        val backButton = TextView(this).apply {
+            text = "← Back"
+            textSize = 16f
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_primary))
+            typeface = ResourcesCompat.getFont(this@MainActivity, R.font.montserrat_semi_bold)
+            background = ContextCompat.getDrawable(this@MainActivity, R.drawable.category_tab_background)
+            setPadding(12.dpToPx(), 8.dpToPx(), 12.dpToPx(), 8.dpToPx())
+            
+            // Add click listener to go back to All Tools
+            setOnClickListener {
+                selectCategoryTab("all_tools")
+            }
+            
+            // Add some styling
+            val buttonParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            buttonParams.marginEnd = 16.dpToPx()
+            layoutParams = buttonParams
+        }
+
+        // Voice Commands title
+        val voiceTitle = TextView(this).apply {
+            text = "⚡ Productivity Tools"
+            textSize = 22f
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_text_primary))
+            typeface = ResourcesCompat.getFont(this@MainActivity, R.font.montserrat_semi_bold)
+            val titleParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            layoutParams = titleParams
+        }
+
+        headerContainer.addView(backButton)
+        headerContainer.addView(voiceTitle)
+        voiceShortcutsContainer.addView(headerContainer)
+        
+        // Create voice command cards container (2x2 grid)
+        val voiceCardsContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+        
+        // First row: Set Alarm + Send Email
+        val firstRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+        
+        firstRow.addView(createVoiceCommandCard("⏰", "Set Alarm", "Voice alarm setup", "alarm"))
+        firstRow.addView(createVoiceCommandCard("📧", "Send Email", "Voice email compose", "email"))
+        
+        // Second row: Set Reminder + Voice Chat
+        val secondRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            val rowParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            rowParams.setMargins(0, 16.dpToPx(), 0, 0)
+            layoutParams = rowParams
+        }
+        
+        secondRow.addView(createVoiceCommandCard("📅", "Set Reminder", "Voice calendar reminder", "reminder"))
+        secondRow.addView(createVoiceCommandCard("🎙️", "Voice Assistant", "Full voice interaction", "voice_chat"))
+        
+        voiceCardsContainer.addView(firstRow)
+        voiceCardsContainer.addView(secondRow)
+        voiceShortcutsContainer.addView(voiceCardsContainer)
+        
+        // Add to root layout
+        binding.rootLayout.addView(voiceShortcutsContainer)
+        currentVoiceContainer = voiceShortcutsContainer
+    }
+    
+    // Variable to track current voice shortcuts container
+    private var currentVoiceContainer: LinearLayout? = null
+    
+    /**
+     * Hide voice command shortcuts
+     */
+    private fun hideVoiceCommandShortcuts() {
+        currentVoiceContainer?.let { container ->
+            binding.rootLayout.removeView(container)
+        }
+        currentVoiceContainer = null
+    }
+    
+    // Variable to track current AI educational tools container
+    private var currentAIToolsContainer: LinearLayout? = null
+    
+    /**
+     * Show AI-powered educational tools in the All Tools section
+     */
+    private fun showAIEducationalTools() {
+        // Create AI educational tools container
+        hideAIEducationalTools() // Remove any existing tools first
+        
+        val aiToolsContainer = LinearLayout(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            orientation = LinearLayout.VERTICAL
+            setPadding(16.dpToPx(), 16.dpToPx(), 16.dpToPx(), 16.dpToPx())
+        }
+        
+        // Add header with back button and title
+        val headerContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            val headerParams = layoutParams as LinearLayout.LayoutParams
+            headerParams.setMargins(0, 16.dpToPx(), 0, 16.dpToPx())
+            gravity = android.view.Gravity.CENTER_VERTICAL
+        }
+
+        // Back button
+        val backButton = TextView(this).apply {
+            text = "← Back"
+            textSize = 16f
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_primary))
+            typeface = ResourcesCompat.getFont(this@MainActivity, R.font.montserrat_semi_bold)
+            background = ContextCompat.getDrawable(this@MainActivity, R.drawable.category_tab_background)
+            setPadding(12.dpToPx(), 8.dpToPx(), 12.dpToPx(), 8.dpToPx())
+            
+            // Add click listener to go back to All Tools
+            setOnClickListener {
+                selectCategoryTab("all_tools")
+            }
+            
+            // Add some styling
+            val buttonParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            buttonParams.marginEnd = 16.dpToPx()
+            layoutParams = buttonParams
+        }
+
+        // AI Educational Tools title
+        val aiToolsTitle = TextView(this).apply {
+            text = "🎨 Creative AI Tools"
+            textSize = 22f
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_text_primary))
+            typeface = ResourcesCompat.getFont(this@MainActivity, R.font.montserrat_semi_bold)
+            val titleParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            layoutParams = titleParams
+        }
+
+        headerContainer.addView(backButton)
+        headerContainer.addView(aiToolsTitle)
+        aiToolsContainer.addView(headerContainer)
+        
+        // Create AI educational tools cards container (2x2 grid)
+        val aiToolsCardsContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+        
+        // First row: Explain Concept + Create Quiz
+        val firstRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+        
+        firstRow.addView(createAIEducationalCard("💡", "Explain Concept", "AI-powered explanations", "explain"))
+        firstRow.addView(createAIEducationalCard("🧠", "Create Quiz", "Generate practice tests", "quiz"))
+        
+        // Second row: Homework Help + Study Plan
+        val secondRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            val rowParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            rowParams.setMargins(0, 16.dpToPx(), 0, 0)
+            layoutParams = rowParams
+        }
+        
+        secondRow.addView(createAIEducationalCard("📚", "Homework Help", "Step-by-step guidance", "homework"))
+        secondRow.addView(createAIEducationalCard("📅", "Study Plan", "Personalized learning", "study_plan"))
+        
+        // Third row: Research Assistant + Examples Generator
+        val thirdRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            val rowParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            rowParams.setMargins(0, 16.dpToPx(), 0, 0)
+            layoutParams = rowParams
+        }
+        
+        thirdRow.addView(createAIEducationalCard("🔍", "Research Assistant", "Find learning resources", "research"))
+        thirdRow.addView(createAIEducationalCard("🌟", "Generate Examples", "Real-world applications", "examples"))
+        
+        aiToolsCardsContainer.addView(firstRow)
+        aiToolsCardsContainer.addView(secondRow)
+        aiToolsCardsContainer.addView(thirdRow)
+        aiToolsContainer.addView(aiToolsCardsContainer)
+        
+        // Add to root layout
+        binding.rootLayout.addView(aiToolsContainer)
+        currentAIToolsContainer = aiToolsContainer
+    }
+    
+    /**
+     * Hide AI educational tools
+     */
+    private fun hideAIEducationalTools() {
+        currentAIToolsContainer?.let { container ->
+            binding.rootLayout.removeView(container)
+        }
+        currentAIToolsContainer = null
+    }
+    
+    /**
+     * Create an AI educational tool card
+     */
+    private fun createAIEducationalCard(icon: String, title: String, description: String, tool: String): MaterialCardView {
+        return MaterialCardView(this).apply {
+            val cardParams = LinearLayout.LayoutParams(
+                0,
+                140.dpToPx(),
+                1f
+            )
+            cardParams.setMargins(if (tool == "explain" || tool == "homework" || tool == "research") 0 else 8.dpToPx(), 0, if (tool == "quiz" || tool == "study_plan" || tool == "examples") 0 else 8.dpToPx(), 0)
+            layoutParams = cardParams
+            cardElevation = 8.dpToPx().toFloat()
+            radius = 16.dpToPx().toFloat()
+            setCardBackgroundColor(ContextCompat.getColor(this@MainActivity, android.R.color.transparent))
+            isClickable = true
+            isFocusable = true
+            // Use proper attribute resolution for selectableItemBackground
+            val typedArray = this@MainActivity.obtainStyledAttributes(intArrayOf(android.R.attr.selectableItemBackground))
+            foreground = typedArray.getDrawable(0)
+            typedArray.recycle()
+            
+            val cardContent = LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                setPadding(16.dpToPx(), 16.dpToPx(), 16.dpToPx(), 16.dpToPx())
+                background = ContextCompat.getDrawable(this@MainActivity, R.drawable.floating_card_background)
+                
+                val iconText = TextView(this@MainActivity).apply {
+                    text = icon
+                    textSize = 28f
+                    gravity = Gravity.CENTER
+                    val iconParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                    iconParams.setMargins(0, 0, 0, 8.dpToPx())
+                    layoutParams = iconParams
+                }
+                
+                val titleText = TextView(this@MainActivity).apply {
+                    text = title
+                    textSize = 14f
+                    setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_text_primary))
+                    typeface = ResourcesCompat.getFont(this@MainActivity, R.font.montserrat_semi_bold)
+                    gravity = Gravity.CENTER
+                    val titleParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                    titleParams.setMargins(0, 0, 0, 4.dpToPx())
+                    layoutParams = titleParams
+                }
+                
+                val descText = TextView(this@MainActivity).apply {
+                    text = description
+                    textSize = 11f
+                    setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_text_secondary))
+                    typeface = ResourcesCompat.getFont(this@MainActivity, R.font.montserrat_medium)
+                    gravity = Gravity.CENTER
+                    maxLines = 2
+                }
+                
+                addView(iconText)
+                addView(titleText)
+                addView(descText)
+            }
+            
+            addView(cardContent)
+            
+            // Set click listener based on tool type
+            setOnClickListener {
+                when (tool) {
+                    "explain" -> startAIEducationalTool("explain_concept")
+                    "quiz" -> startAIEducationalTool("create_quiz")
+                    "homework" -> startAIEducationalTool("homework_help")
+                    "study_plan" -> startAIEducationalTool("study_plan")
+                    "research" -> startAIEducationalTool("research_assistant")
+                    "examples" -> startAIEducationalTool("generate_examples")
+                }
+            }
+        }
+    }
+    
+    /**
+     * Start AI Educational Tool
+     */
+    private fun startAIEducationalTool(toolType: String) {
+        val intent = Intent(this, ChatActivity::class.java).apply {
+            putExtra("chat_mode", "ai_educational_tool")
+            putExtra("tool_type", toolType)
+            putExtra("enable_function_calling", true)
+            putExtra("enable_web_search", true) // Enable web search for educational content
+            
+            when (toolType) {
+                "explain_concept" -> {
+                    putExtra("suggested_message", "💡 AI Concept Explainer - What concept would you like me to explain?")
+                    putExtra("feature_name", "AI Concept Explainer")
+                    putExtra("system_prompt", "You are an AI educational assistant specialized in explaining concepts clearly and engagingly. Use analogies, examples, and step-by-step breakdowns. Adapt your explanation style to the user's level.")
+                }
+                "create_quiz" -> {
+                    putExtra("suggested_message", "🧠 AI Quiz Generator - What topic would you like me to create a quiz for?")
+                    putExtra("feature_name", "AI Quiz Generator")
+                    putExtra("system_prompt", "You are an AI quiz generator. Create engaging, educational quizzes with multiple choice, true/false, and short answer questions. Include explanations for correct answers.")
+                }
+                "homework_help" -> {
+                    putExtra("suggested_message", "📚 AI Homework Helper - Share your homework question and I'll guide you through it!")
+                    putExtra("feature_name", "AI Homework Helper")
+                    putExtra("system_prompt", "You are an AI homework assistant. Provide step-by-step guidance without giving direct answers. Focus on teaching the process and helping students understand concepts.")
+                }
+                "study_plan" -> {
+                    putExtra("suggested_message", "📅 AI Study Planner - Tell me what you want to learn and I'll create a personalized study plan!")
+                    putExtra("feature_name", "AI Study Planner")
+                    putExtra("system_prompt", "You are an AI study planning assistant. Create structured, achievable study plans with clear milestones, time management, and learning resources recommendations.")
+                }
+                "research_assistant" -> {
+                    putExtra("suggested_message", "🔍 AI Research Assistant - What topic would you like me to help you research?")
+                    putExtra("feature_name", "AI Research Assistant")
+                    putExtra("system_prompt", "You are an AI research assistant. Help users find credible educational resources, summarize key information, and suggest further reading materials. Use web search to find current information.")
+                }
+                "generate_examples" -> {
+                    putExtra("suggested_message", "🌟 AI Examples Generator - What concept would you like me to provide examples for?")
+                    putExtra("feature_name", "AI Examples Generator")
+                    putExtra("system_prompt", "You are an AI examples generator. Provide diverse, relevant, and practical examples that help illustrate concepts. Use real-world applications and varied contexts.")
+                }
+            }
+        }
+        startActivity(intent)
+        
+        val toolName = when (toolType) {
+            "explain_concept" -> "Concept Explainer"
+            "create_quiz" -> "Quiz Generator"
+            "homework_help" -> "Homework Helper"
+            "study_plan" -> "Study Planner"
+            "research_assistant" -> "Research Assistant"
+            "generate_examples" -> "Examples Generator"
+            else -> "Educational Tool"
+        }
+        showCustomToast("🤖 Starting AI $toolName...")
+    }
+    
+    /**
+     * Create a voice command shortcut card
+     */
+    private fun createVoiceCommandCard(icon: String, title: String, description: String, command: String): MaterialCardView {
+        return MaterialCardView(this).apply {
+            val cardParams = LinearLayout.LayoutParams(
+                0,
+                120.dpToPx(),
+                1f
+            )
+            cardParams.setMargins(if (command == "alarm" || command == "reminder") 0 else 8.dpToPx(), 0, if (command == "email" || command == "voice_chat") 0 else 8.dpToPx(), 0)
+            layoutParams = cardParams
+            cardElevation = 8.dpToPx().toFloat()
+            radius = 16.dpToPx().toFloat()
+            setCardBackgroundColor(ContextCompat.getColor(this@MainActivity, android.R.color.transparent))
+            isClickable = true
+            isFocusable = true
+            // Use proper attribute resolution for selectableItemBackground
+            val typedArray = this@MainActivity.obtainStyledAttributes(intArrayOf(android.R.attr.selectableItemBackground))
+            foreground = typedArray.getDrawable(0)
+            typedArray.recycle()
+            
+            val cardContent = LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                setPadding(16.dpToPx(), 16.dpToPx(), 16.dpToPx(), 16.dpToPx())
+                background = ContextCompat.getDrawable(this@MainActivity, R.drawable.floating_card_background)
+                
+                val iconText = TextView(this@MainActivity).apply {
+                    text = icon
+                    textSize = 24f
+                    gravity = Gravity.CENTER
+                    val iconParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                    iconParams.setMargins(0, 0, 0, 8.dpToPx())
+                    layoutParams = iconParams
+                }
+                
+                val titleText = TextView(this@MainActivity).apply {
+                    text = title
+                    textSize = 14f
+                    setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_text_primary))
+                    typeface = ResourcesCompat.getFont(this@MainActivity, R.font.montserrat_semi_bold)
+                    gravity = Gravity.CENTER
+                    val titleParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                    titleParams.setMargins(0, 0, 0, 4.dpToPx())
+                    layoutParams = titleParams
+                }
+                
+                val descText = TextView(this@MainActivity).apply {
+                    text = description
+                    textSize = 11f
+                    setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_text_secondary))
+                    typeface = ResourcesCompat.getFont(this@MainActivity, R.font.montserrat_medium)
+                    gravity = Gravity.CENTER
+                    maxLines = 2
+                }
+                
+                addView(iconText)
+                addView(titleText)
+                addView(descText)
+            }
+            
+            addView(cardContent)
+            
+            // Set click listener based on command type
+            setOnClickListener {
+                when (command) {
+                    "alarm" -> showVoiceAlarmShortcut()
+                    "email" -> showVoiceEmailShortcut()
+                    "reminder" -> showVoiceReminderShortcut()
+                    "voice_chat" -> startVoiceChatSession()
+                }
+            }
+        }
+    }
+    
+    /**
+     * Voice Alarm Shortcut - Quick alarm setup with AI enhancement
+     */
+    private fun showVoiceAlarmShortcut() {
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("🎤 AI-Enhanced Voice Alarm Setup")
+            .setMessage("Choose your preferred method to set an alarm:")
+            .setPositiveButton("Quick Setup (7 AM)") { dialog: DialogInterface, which: Int ->
+                setQuickAlarm(7, 0, "Morning Alarm")
+            }
+            .setNeutralButton("Custom Setup") { dialog: DialogInterface, which: Int ->
+                showCustomAlarmDialog()
+            }
+            .setNegativeButton("AI Voice Command") { dialog: DialogInterface, which: Int ->
+                startAIEnhancedVoiceCommand("alarm")
+            }
+            .create()
+        
+        dialog.show()
+    }
+    
+    /**
+     * Voice Email Shortcut - Quick email compose with AI enhancement
+     */
+    private fun showVoiceEmailShortcut() {
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("📧 AI-Enhanced Email Assistant")
+            .setMessage("Choose your preferred method to compose an email:")
+            .setPositiveButton("Quick Email") { dialog: DialogInterface, which: Int ->
+                showQuickEmailDialog()
+            }
+            .setNeutralButton("AI Email Helper") { dialog: DialogInterface, which: Int ->
+                startAIEnhancedVoiceCommand("email")
+            }
+            .setNegativeButton("Voice Compose") { dialog: DialogInterface, which: Int ->
+                startVoiceEmailCommand()
+            }
+            .create()
+        
+        dialog.show()
+    }
+    
+    /**
+     * Voice Reminder Shortcut - Quick reminder setup with AI enhancement
+     */
+    private fun showVoiceReminderShortcut() {
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("📅 AI-Enhanced Reminder Assistant")
+            .setMessage("Choose your preferred method to set a reminder:")
+            .setPositiveButton("Quick Reminder") { dialog: DialogInterface, which: Int ->
+                showQuickReminderDialog()
+            }
+            .setNeutralButton("AI Reminder Helper") { dialog: DialogInterface, which: Int ->
+                startAIEnhancedVoiceCommand("reminder")
+            }
+            .setNegativeButton("Voice Setup") { dialog: DialogInterface, which: Int ->
+                startVoiceReminderCommand()
+            }
+            .create()
+        
+        dialog.show()
+    }
+    
+    /**
+     * Start Voice Chat Session - Direct voice interaction with AI enhancement
+     */
+    private fun startVoiceChatSession() {
+        val intent = Intent(this, ChatActivity::class.java).apply {
+            putExtra("chat_mode", "ai_voice_assistant")
+            putExtra("suggested_message", "🎤 AI-Enhanced Voice Assistant Ready - Ask me anything!")
+            putExtra("feature_name", "AI Voice Assistant")
+            putExtra("auto_start_voice", true) // Flag to auto-start voice recording
+            putExtra("enable_function_calling", true) // Enable AI function calling
+            putExtra("enable_web_search", true) // Enable web search
+        }
+        startActivity(intent)
+        showCustomToast("🎤 Starting AI-Enhanced Voice Assistant...")
+    }
+    
+    /**
+     * Start AI-Enhanced Voice Command for specific functions
+     */
+    private fun startAIEnhancedVoiceCommand(commandType: String) {
+        val intent = Intent(this, ChatActivity::class.java).apply {
+            putExtra("chat_mode", "ai_voice_command")
+            putExtra("command_type", commandType)
+            putExtra("enable_function_calling", true)
+            putExtra("enable_web_search", false) // No web search for voice commands
+            putExtra("auto_start_voice", true)
+            
+            when (commandType) {
+                "alarm" -> {
+                    putExtra("suggested_message", "🎤 AI Alarm Assistant - Tell me when you want to wake up and I'll help set the perfect alarm")
+                    putExtra("feature_name", "AI Alarm Assistant")
+                    putExtra("system_prompt", "You are an AI alarm assistant. Help users set alarms intelligently by understanding natural language requests like 'wake me up early tomorrow' or 'set an alarm for my meeting'. Consider time zones, work schedules, and sleep patterns.")
+                }
+                "email" -> {
+                    putExtra("suggested_message", "📧 AI Email Assistant - Tell me who you want to email and what about, I'll help compose the perfect message")
+                    putExtra("feature_name", "AI Email Assistant")  
+                    putExtra("system_prompt", "You are an AI email assistant. Help users compose professional, clear, and effective emails. Ask for recipient, subject, and key points, then suggest well-structured email content with appropriate tone and formatting.")
+                }
+                "reminder" -> {
+                    putExtra("suggested_message", "📅 AI Reminder Assistant - Tell me what you need to remember and when, I'll help organize it perfectly")
+                    putExtra("feature_name", "AI Reminder Assistant")
+                    putExtra("system_prompt", "You are an AI reminder assistant. Help users create smart reminders by understanding natural language like 'remind me to call mom tomorrow' or 'don't let me forget the presentation next week'. Suggest optimal timing and follow-up reminders.")
+                }
+            }
+        }
+        startActivity(intent)
+        
+        val commandName = when (commandType) {
+            "alarm" -> "Alarm Assistant"
+            "email" -> "Email Assistant" 
+            "reminder" -> "Reminder Assistant"
+            else -> "Voice Command"
+        }
+        showCustomToast("🤖 Starting AI-Enhanced $commandName...")
+    }
+    
+    // ==================== VOICE COMMAND HELPER FUNCTIONS ====================
+    
+    /**
+     * Set a quick alarm with predefined time
+     */
+    private fun setQuickAlarm(hour: Int, minute: Int, message: String) {
+        try {
+            val intent = Intent(AlarmClock.ACTION_SET_ALARM).apply {
+                putExtra(AlarmClock.EXTRA_HOUR, hour)
+                putExtra(AlarmClock.EXTRA_MINUTES, minute)
+                putExtra(AlarmClock.EXTRA_MESSAGE, message)
+                putExtra(AlarmClock.EXTRA_SKIP_UI, false) // Show clock app for confirmation
+            }
+            
+            if (intent.resolveActivity(packageManager) != null) {
+                startActivity(intent)
+                showCustomToast("⏰ Setting alarm for $hour:${minute.toString().padStart(2, '0')}")
+            } else {
+                showCustomToast("❌ No clock app found")
+            }
+        } catch (e: Exception) {
+            showCustomToast("❌ Error setting alarm: ${e.message}")
+        }
+    }
+    
+    /**
+     * Show custom alarm setup dialog
+     */
+    private fun showCustomAlarmDialog() {
+        val timePickerView = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(32.dpToPx(), 16.dpToPx(), 32.dpToPx(), 16.dpToPx())
+        }
+        
+        val hourPicker = android.widget.NumberPicker(this).apply {
+            minValue = 0
+            maxValue = 23
+            value = 7 // Default to 7 AM
+        }
+        
+        val minutePicker = android.widget.NumberPicker(this).apply {
+            minValue = 0
+            maxValue = 59
+            value = 0 // Default to :00
+        }
+        
+        val hourLabel = TextView(this).apply {
+            text = "Hour (24-hour format)"
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_text_primary))
+        }
+        
+        val minuteLabel = TextView(this).apply {
+            text = "Minutes"
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_text_primary))
+        }
+        
+        timePickerView.addView(hourLabel)
+        timePickerView.addView(hourPicker)
+        timePickerView.addView(minuteLabel)
+        timePickerView.addView(minutePicker)
+        
+        AlertDialog.Builder(this)
+            .setTitle("🎤 Custom Alarm Setup")
+            .setView(timePickerView)
+            .setPositiveButton("Set Alarm") { dialog: DialogInterface, which: Int ->
+                setQuickAlarm(hourPicker.value, minutePicker.value, "Custom Alarm")
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+    
+    /**
+     * Start voice command for alarm setting
+     */
+    private fun startVoiceAlarmCommand() {
+        val intent = Intent(this, ChatActivity::class.java).apply {
+            putExtra("chat_mode", "voice_alarm")
+            putExtra("suggested_message", "🎤 Say: 'Set alarm for 7 AM tomorrow' or similar")
+            putExtra("feature_name", "Voice Alarm")
+            putExtra("auto_start_voice", true)
+            putExtra("voice_prompt", "Please tell me when you want to set the alarm. For example: 'Set alarm for 7 AM' or 'Wake me up at 6:30 PM'")
+        }
+        startActivity(intent)
+    }
+    
+    /**
+     * Show quick email dialog
+     */
+    private fun showQuickEmailDialog() {
+        val emailView = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(32.dpToPx(), 16.dpToPx(), 32.dpToPx(), 16.dpToPx())
+        }
+        
+        val recipientInput = EditText(this).apply {
+            hint = "Recipient email address"
+            inputType = InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_text_primary))
+            setHintTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_text_secondary))
+        }
+        
+        val subjectInput = EditText(this).apply {
+            hint = "Subject"
+            inputType = InputType.TYPE_CLASS_TEXT
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_text_primary))
+            setHintTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_text_secondary))
+        }
+        
+        val bodyInput = EditText(this).apply {
+            hint = "Message body"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            minLines = 3
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_text_primary))
+            setHintTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_text_secondary))
+        }
+        
+        emailView.addView(recipientInput)
+        emailView.addView(subjectInput)
+        emailView.addView(bodyInput)
+        
+        AlertDialog.Builder(this)
+            .setTitle("🎤 Quick Email Compose")
+            .setView(emailView)
+            .setPositiveButton("Send Email") { dialog: DialogInterface, which: Int ->
+                val recipient = recipientInput.text.toString()
+                val subject = subjectInput.text.toString()
+                val body = bodyInput.text.toString()
+                
+                if (recipient.isNotEmpty()) {
+                    sendQuickEmail(recipient, subject, body)
+                } else {
+                    showCustomToast("❌ Please enter recipient email")
+                }
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+    
+    /**
+     * Send quick email using system email app
+     */
+    private fun sendQuickEmail(recipient: String, subject: String, body: String) {
+        try {
+            val intent = Intent(Intent.ACTION_SENDTO).apply {
+                data = Uri.parse("mailto:$recipient")
+                putExtra(Intent.EXTRA_SUBJECT, subject)
+                putExtra(Intent.EXTRA_TEXT, body)
+            }
+            
+            if (intent.resolveActivity(packageManager) != null) {
+                startActivity(Intent.createChooser(intent, "Send email using:"))
+                showCustomToast("📧 Opening email app...")
+            } else {
+                showCustomToast("❌ No email app found")
+            }
+        } catch (e: Exception) {
+            showCustomToast("❌ Error sending email: ${e.message}")
+        }
+    }
+    
+    /**
+     * Start voice command for email composition
+     */
+    private fun startVoiceEmailCommand() {
+        val intent = Intent(this, ChatActivity::class.java).apply {
+            putExtra("chat_mode", "voice_email")
+            putExtra("suggested_message", "🎤 Say: 'Send email to john@example.com with subject Meeting Tomorrow'")
+            putExtra("feature_name", "Voice Email")
+            putExtra("auto_start_voice", true)
+            putExtra("voice_prompt", "Please tell me the email details. For example: 'Send email to john@example.com with subject Meeting and message Let's meet at 3 PM'")
+        }
+        startActivity(intent)
+    }
+    
+    /**
+     * Show quick reminder dialog
+     */
+    private fun showQuickReminderDialog() {
+        val reminderView = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(32.dpToPx(), 16.dpToPx(), 32.dpToPx(), 16.dpToPx())
+        }
+        
+        val titleInput = EditText(this).apply {
+            hint = "Reminder title"
+            inputType = InputType.TYPE_CLASS_TEXT
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_text_primary))
+            setHintTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_text_secondary))
+        }
+        
+        val timeInfo = TextView(this).apply {
+            text = "Reminder will be set for 1 hour from now"
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_text_secondary))
+            textSize = 12f
+        }
+        
+        reminderView.addView(titleInput)
+        reminderView.addView(timeInfo)
+        
+        AlertDialog.Builder(this)
+            .setTitle("🎤 Quick Reminder Setup")
+            .setView(reminderView)
+            .setPositiveButton("Set Reminder") { dialog: DialogInterface, which: Int ->
+                val title = titleInput.text.toString()
+                if (title.isNotEmpty()) {
+                    setQuickReminder(title)
+                } else {
+                    showCustomToast("❌ Please enter reminder title")
+                }
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+    
+    /**
+     * Set a quick reminder for 1 hour from now
+     */
+    private fun setQuickReminder(title: String) {
+        try {
+            val calendar = Calendar.getInstance()
+            calendar.add(Calendar.HOUR_OF_DAY, 1) // 1 hour from now
+            
+            val intent = Intent(Intent.ACTION_INSERT).apply {
+                data = CalendarContract.Events.CONTENT_URI
+                putExtra(CalendarContract.Events.TITLE, title)
+                putExtra(CalendarContract.Events.DESCRIPTION, "Quick reminder set via AI Teacher")
+                putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, calendar.timeInMillis)
+                putExtra(CalendarContract.EXTRA_EVENT_END_TIME, calendar.timeInMillis + (30 * 60 * 1000)) // 30 minutes duration
+            }
+            
+            if (intent.resolveActivity(packageManager) != null) {
+                startActivity(intent)
+                showCustomToast("📅 Setting reminder: $title")
+            } else {
+                showCustomToast("❌ No calendar app found")
+            }
+        } catch (e: Exception) {
+            showCustomToast("❌ Error setting reminder: ${e.message}")
+        }
+    }
+    
+    /**
+     * Start voice command for reminder setting
+     */
+    private fun startVoiceReminderCommand() {
+        val intent = Intent(this, ChatActivity::class.java).apply {
+            putExtra("chat_mode", "voice_reminder")
+            putExtra("suggested_message", "🎤 Say: 'Remind me to call mom at 3 PM tomorrow'")
+            putExtra("feature_name", "Voice Reminder")
+            putExtra("auto_start_voice", true)
+            putExtra("voice_prompt", "Please tell me what to remind you about and when. For example: 'Remind me to call mom at 3 PM tomorrow' or 'Set reminder for meeting at 2 PM'")
+        }
+        startActivity(intent)
+    }
+
+    /**
+     * Show creative AI tools like image generation, creative writing, etc.
+     */
+    private fun showCreativeTools() {
+        // Ensure main content is visible
+        showMainContent()
+        hideAcademicInterface()
+        hideVoiceCommandShortcuts() // Hide voice shortcuts
+        
+        // Show creative tools: AI Image Generator, Voice Chat + AI Educational Tools
+        binding.quickActionsContainer.visibility = View.VISIBLE
+        binding.additionalButtonsLayout.visibility = View.GONE // Hide Elite Tools for Creative filter
+        
+        // Show AI-powered educational/creative tools
+        showAIEducationalTools()
+        
+        showCustomToast("Showing Creative Tools")
+    }
+
+    /**
+     * Show academic tools with full subjects/chapters/topics hierarchy
+     */
+    private fun showAcademicTools() {
+        // Hide main content to show academic interface
+        hideVoiceCommandShortcuts()
+        hideAIEducationalTools() // Hide AI educational tools
+        
+        // Hide the main tool containers
+        binding.quickActionsContainer.visibility = View.GONE
+        binding.additionalButtonsLayout.visibility = View.GONE
+        
+        // Show academic hierarchy interface when Academic tab is selected
+        showAcademicHierarchy()
+        
+        showCustomToast("Showing Academic Tools")
+    }
+
+    /**
+     * Display the academic subjects hierarchy interface
+     * @param specificSubject Optional subject to show directly (e.g., "Maths", "Physics")
+     */
+    private fun showAcademicHierarchy(specificSubject: String? = null) {
+        // Hide main content and show academic interface
+        hideMainContent()
+        if (specificSubject != null && subjects.containsKey(specificSubject)) {
+            // Show chapters for the specific subject directly
+            val chapters = subjects[specificSubject] ?: emptyMap()
+            showChapters(specificSubject, chapters)
+        } else {
+            // Show all subjects
+            showAcademicInterface()
+        }
+    }
+
+    /**
+     * Hide main content sections to show academic interface
+     */
+    private fun hideMainContent() {
+        // Hide the main scroll view content
+        binding.mainScrollView.visibility = View.GONE
+    }
+
+    /**
+     * Show main content sections (restore normal view)
+     */
+    private fun showMainContent() {
+        binding.mainScrollView.visibility = View.VISIBLE
+    }
+
+    /**
+     * Create and show academic interface with subjects hierarchy
+     */
+    private fun showAcademicInterface() {
+        // Create a new layout for academic hierarchy
+        val academicContainer = LinearLayout(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            orientation = LinearLayout.VERTICAL
+            setPadding(20, 20, 20, 20)
+        }
+
+        // Add back button
+        val backButton = Button(this).apply {
+            text = "← Back to Main"
+            setOnClickListener {
+                hideAcademicInterface()
+            }
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            params.bottomMargin = 16.dpToPx()
+            layoutParams = params
+        }
+        academicContainer.addView(backButton)
+
+        // Add title
+        val title = TextView(this).apply {
+            text = "Academic Subjects"
+            textSize = 24f
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_primary))
+            typeface = ResourcesCompat.getFont(this@MainActivity, R.font.montserrat_semi_bold)
+            val titleParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            titleParams.bottomMargin = 24.dpToPx()
+            layoutParams = titleParams
+        }
+        academicContainer.addView(title)
+
+        // Add subjects
+        subjects.keys.forEach { subject ->
+            val subjectCard = createSubjectCard(subject)
+            academicContainer.addView(subjectCard)
+        }
+
+        // Add the academic container to root layout
+        binding.rootLayout.addView(academicContainer)
+        academicContainer.id = View.generateViewId()
+        
+        // Store reference for later removal
+        this.currentAcademicContainer = academicContainer
+    }
+
+    // Store reference to current academic container
+    private var currentAcademicContainer: LinearLayout? = null
+
+    /**
+     * Hide academic interface and return to main content
+     */
+    private fun hideAcademicInterface() {
+        currentAcademicContainer?.let { container ->
+            binding.rootLayout.removeView(container)
+        }
+        currentAcademicContainer = null
+        showMainContent()
+    }
+
+    /**
+     * Create a card for each subject
+     */
+    private fun createSubjectCard(subject: String): MaterialCardView {
+        return MaterialCardView(this).apply {
+            val cardParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            cardParams.setMargins(0, 8.dpToPx(), 0, 8.dpToPx())
+            layoutParams = cardParams
+            cardElevation = 8.dpToPx().toFloat()
+            radius = 16.dpToPx().toFloat()
+            
+            val cardContent = LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(20.dpToPx(), 20.dpToPx(), 20.dpToPx(), 20.dpToPx())
+                
+                val subjectName = TextView(this@MainActivity).apply {
+                    text = subject
+                    textSize = 18f
+                    setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_primary))
+                    typeface = ResourcesCompat.getFont(this@MainActivity, R.font.montserrat_semi_bold)
+                }
+                addView(subjectName)
+            }
+            addView(cardContent)
+            
+            setOnClickListener {
+                val chapters = subjects[subject] ?: emptyMap()
+                showChapters(subject, chapters)
+            }
+        }
+    }
+
+    /**
+     * Show chapters for a selected subject
+     */
+    private fun showChapters(subject: String, chapters: Map<String, Map<String, List<String>>>) {
+        // Remove current academic container
+        currentAcademicContainer?.let { container ->
+            binding.rootLayout.removeView(container)
+        }
+
+        // Create chapters interface
+        val chaptersContainer = LinearLayout(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            orientation = LinearLayout.VERTICAL
+            setPadding(20, 20, 20, 20)
+        }
+
+        // Add back button
+        val backButton = Button(this).apply {
+            text = "← Back to Subjects"
+            setOnClickListener {
+                hideAcademicInterface()
+                showAcademicInterface()
+            }
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            params.bottomMargin = 16.dpToPx()
+            layoutParams = params
+        }
+        chaptersContainer.addView(backButton)
+
+        // Add title
+        val title = TextView(this).apply {
+            text = "$subject - Chapters"
+            textSize = 24f
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_primary))
+            typeface = ResourcesCompat.getFont(this@MainActivity, R.font.montserrat_semi_bold)
+            val titleParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            titleParams.bottomMargin = 24.dpToPx()
+            layoutParams = titleParams
+        }
+        chaptersContainer.addView(title)
+
+        // Add chapters
+        chapters.keys.forEach { chapter ->
+            val chapterCard = createChapterCard(subject, chapter, chapters[chapter] ?: emptyMap())
+            chaptersContainer.addView(chapterCard)
+        }
+
+        // Add the container to root layout
+        binding.rootLayout.addView(chaptersContainer)
+        chaptersContainer.id = View.generateViewId()
+        currentAcademicContainer = chaptersContainer
+    }
+
+    /**
+     * Create a card for each chapter
+     */
+    private fun createChapterCard(subject: String, chapter: String, topics: Map<String, List<String>>): MaterialCardView {
+        return MaterialCardView(this).apply {
+            val cardParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            cardParams.setMargins(0, 8.dpToPx(), 0, 8.dpToPx())
+            layoutParams = cardParams
+            cardElevation = 8.dpToPx().toFloat()
+            radius = 16.dpToPx().toFloat()
+            
+            val cardContent = LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(20.dpToPx(), 20.dpToPx(), 20.dpToPx(), 20.dpToPx())
+                
+                val chapterName = TextView(this@MainActivity).apply {
+                    text = chapter
+                    textSize = 18f
+                    setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_primary))
+                    typeface = ResourcesCompat.getFont(this@MainActivity, R.font.montserrat_semi_bold)
+                }
+                addView(chapterName)
+            }
+            addView(cardContent)
+            
+            setOnClickListener {
+                showTopics(subject, chapter, topics)
+            }
+        }
+    }
+
+    /**
+     * Show topics for a selected chapter
+     */
+    private fun showTopics(subject: String, chapter: String, topics: Map<String, List<String>>) {
+        // Remove current academic container
+        currentAcademicContainer?.let { container ->
+            binding.rootLayout.removeView(container)
+        }
+
+        // Create topics interface
+        val topicsContainer = LinearLayout(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            orientation = LinearLayout.VERTICAL
+            setPadding(20, 20, 20, 20)
+        }
+
+        // Add back button
+        val backButton = Button(this).apply {
+            text = "← Back to Chapters"
+            setOnClickListener {
+                val chapters = subjects[subject] ?: emptyMap()
+                showChapters(subject, chapters)
+            }
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            params.bottomMargin = 16.dpToPx()
+            layoutParams = params
+        }
+        topicsContainer.addView(backButton)
+
+        // Add title
+        val title = TextView(this).apply {
+            text = "$subject - $chapter - Topics"
+            textSize = 24f
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_primary))
+            typeface = ResourcesCompat.getFont(this@MainActivity, R.font.montserrat_semi_bold)
+            val titleParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            titleParams.bottomMargin = 24.dpToPx()
+            layoutParams = titleParams
+        }
+        topicsContainer.addView(title)
+
+        // Add topics
+        topics.keys.forEach { topic ->
+            val topicCard = createTopicCard(subject, chapter, topic, topics[topic] ?: emptyList())
+            topicsContainer.addView(topicCard)
+        }
+
+        // Add the container to root layout
+        binding.rootLayout.addView(topicsContainer)
+        topicsContainer.id = View.generateViewId()
+        currentAcademicContainer = topicsContainer
+    }
+
+    /**
+     * Create a card for each topic
+     */
+    private fun createTopicCard(subject: String, chapter: String, topic: String, subtopics: List<String>): MaterialCardView {
+        return MaterialCardView(this).apply {
+            val cardParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            cardParams.setMargins(0, 8.dpToPx(), 0, 8.dpToPx())
+            layoutParams = cardParams
+            cardElevation = 8.dpToPx().toFloat()
+            radius = 16.dpToPx().toFloat()
+            
+            val cardContent = LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(20.dpToPx(), 20.dpToPx(), 20.dpToPx(), 20.dpToPx())
+                
+                val topicName = TextView(this@MainActivity).apply {
+                    text = topic
+                    textSize = 18f
+                    setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_primary))
+                    typeface = ResourcesCompat.getFont(this@MainActivity, R.font.montserrat_semi_bold)
+                }
+                addView(topicName)
+            }
+            addView(cardContent)
+            
+            setOnClickListener {
+                showSubtopics(subject, chapter, topic, subtopics)
+            }
+        }
+    }
+
+    /**
+     * Show subtopics and launch AI chat for learning
+     */
+    private fun showSubtopics(subject: String, chapter: String, topic: String, subtopics: List<String>) {
+        // Remove current academic container
+        currentAcademicContainer?.let { container ->
+            binding.rootLayout.removeView(container)
+        }
+
+        // Create subtopics interface
+        val subtopicsContainer = LinearLayout(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            orientation = LinearLayout.VERTICAL
+            setPadding(20, 20, 20, 20)
+        }
+
+        // Add back button
+        val backButton = Button(this).apply {
+            text = "← Back to Topics"
+            setOnClickListener {
+                val chapters = subjects[subject] ?: emptyMap()
+                val topics = chapters[chapter] ?: emptyMap()
+                showTopics(subject, chapter, topics)
+            }
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            params.bottomMargin = 16.dpToPx()
+            layoutParams = params
+        }
+        subtopicsContainer.addView(backButton)
+
+        // Add title
+        val title = TextView(this).apply {
+            text = "$subject - $chapter - $topic"
+            textSize = 24f
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_primary))
+            typeface = ResourcesCompat.getFont(this@MainActivity, R.font.montserrat_semi_bold)
+            val titleParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            titleParams.bottomMargin = 24.dpToPx()
+            layoutParams = titleParams
+        }
+        subtopicsContainer.addView(title)
+
+        // Add subtopics
+        subtopics.forEach { subtopic ->
+            val subtopicCard = createSubtopicCard(subject, chapter, topic, subtopic)
+            subtopicsContainer.addView(subtopicCard)
+        }
+
+        // Add the container to root layout
+        binding.rootLayout.addView(subtopicsContainer)
+        subtopicsContainer.id = View.generateViewId()
+        currentAcademicContainer = subtopicsContainer
+    }
+
+    /**
+     * Create a card for each subtopic - launches AI chat when clicked
+     */
+    private fun createSubtopicCard(subject: String, chapter: String, topic: String, subtopic: String): MaterialCardView {
+        return MaterialCardView(this).apply {
+            val cardParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            cardParams.setMargins(0, 8.dpToPx(), 0, 8.dpToPx())
+            layoutParams = cardParams
+            cardElevation = 8.dpToPx().toFloat()
+            radius = 16.dpToPx().toFloat()
+            
+            val cardContent = LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(20.dpToPx(), 20.dpToPx(), 20.dpToPx(), 20.dpToPx())
+                
+                val subtopicName = TextView(this@MainActivity).apply {
+                    text = subtopic
+                    textSize = 18f
+                    setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_primary))
+                    typeface = ResourcesCompat.getFont(this@MainActivity, R.font.montserrat_semi_bold)
+                }
+                addView(subtopicName)
+                
+                // Add AI chat indicator
+                val aiIndicator = TextView(this@MainActivity).apply {
+                    text = "🤖 Learn with AI"
+                    textSize = 14f
+                    setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ocean_accent_coral))
+                    val indicatorParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                    indicatorParams.topMargin = 8.dpToPx()
+                    layoutParams = indicatorParams
+                }
+                addView(aiIndicator)
+            }
+            addView(cardContent)
+            
+            setOnClickListener {
+                // Launch AI chat for this specific subtopic
+                launchAIChat(subject, chapter, topic, subtopic)
+            }
+        }
+    }
+
+    /**
+     * Launch AI chat for specific academic content
+     */
+    private fun launchAIChat(subject: String, chapter: String, topic: String, subtopic: String) {
+        val intent = Intent(this, ChatActivity::class.java).apply {
+            putExtra("chat_mode", "academic_learning")
+            putExtra("suggested_message", "Teach me about $subtopic in $topic ($subject - $chapter)")
+            putExtra("feature_name", "Academic Learning: $subtopic")
+            putExtra("ai_specialty", "education")
+            putExtra("subject", subject)
+            putExtra("chapter", chapter)
+            putExtra("topic", topic)
+            putExtra("subtopic", subtopic)
+        }
+        startActivity(intent)
+    }
+
+    /**
+     * Show productivity AI tools like email, documents, scheduling, etc.
+     */
+    private fun showProductivityTools() {
+        // Ensure main content is visible
+        showMainContent()
+        hideAcademicInterface()
+        hideAIEducationalTools() // Hide AI educational tools
+        
+        // Show productivity tools: Text Extractor, Email Assistant + Voice Commands
+        binding.quickActionsContainer.visibility = View.GONE // Hide Quick Actions for Productivity filter
+        binding.additionalButtonsLayout.visibility = View.VISIBLE
+        
+        // Show voice command shortcuts for productivity
+        showVoiceCommandShortcuts()
+        
+        showCustomToast("Showing Productivity Tools")
+    }
+
+    /**
+     * Show hamburger menu with important navigation options
+     */
+    private fun showHamburgerMenu() {
+        val popupMenu = PopupMenu(this, binding.hamburgerMenu)
+        popupMenu.menuInflater.inflate(R.menu.main_menu, popupMenu.menu)
+        
+        // Update profile menu item based on authentication status
+        val profileMenuItem = popupMenu.menu.findItem(R.id.action_profile)
+        lifecycleScope.launch {
+            try {
+                val isLoggedIn = firebaseAuthService.isSignedIn()
+                profileMenuItem?.title = if (isLoggedIn) "👤 Profile" else "🔐 Sign In"
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error checking auth status for menu", e)
+                profileMenuItem?.title = "👤 Profile"
+            }
+        }
+
+        popupMenu.setOnMenuItemClickListener { menuItem ->
+            handleMenuItemClick(menuItem)
+        }
+
+        popupMenu.show()
+    }
+
+    /**
+     * Show quick actions menu from floating action button
+     */
+    private fun showQuickActionsMenu() {
+        val options = arrayOf(
+            "🤖 New AI Chat",
+            "🎨 Generate Image", 
+            "🎤 Voice Chat",
+            "📄 Extract Text",
+            "✉️ Email Assistant",
+            "🧮 Math Helper",
+            "🔬 Science Helper"
+        )
+
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("⚡ Quick Actions")
+        builder.setItems(options) { dialog: DialogInterface, which: Int ->
+            when (which) {
+                0 -> {
+                    // New AI Chat
+                    openChatActivityWithModel(currentModel)
+                }
+                1 -> {
+                    // Generate Image
+                    if (isUserSubscribed()) {
+                        openChatActivityWithModel("dall-e-3")
+                    } else {
+                        //()
+                    }
+                }
+                2 -> {
+                    // Voice Chat
+                    openVoiceChat()
+                }
+                3 -> {
+                    // Extract Text
+                    openTextExtractor()
+                }
+                4 -> {
+                    // Email Assistant
+                    openEmailAssistant()
+                }
+                5 -> {
+                    // Math Helper
+                    openChatActivityWithModel("gpt-4", "I need help with mathematics. Please be ready to solve math problems and explain concepts clearly.")
+                }
+                6 -> {
+                    // Science Helper
+                    openChatActivityWithModel("gpt-4", "I need help with science. Please be ready to explain scientific concepts and help with science problems.")
+                }
+            }
+        }
+        builder.show()
+    }
+
+    /**
+     * Handle menu item clicks from hamburger menu
+     */
+    private fun handleMenuItemClick(menuItem: MenuItem): Boolean {
+        return when (menuItem.itemId) {
+            R.id.action_settings -> {
+                startActivity(Intent(this, SettingsActivity::class.java))
+                true
+            }
+            R.id.action_new_conversation -> {
+                startActivity(Intent(this, ChatActivity::class.java))
+                true
+            }
+            R.id.action_change_background_color -> {
+                showAIThemeSelectionDialog()
+                true
+            }
+            R.id.action_profile -> {
+                openProfileActivity()
+                true
+            }
+            R.id.action_switch_to_webapp -> {
+                openWebApp()
+                true
+            }
+            R.id.action_redeem_promo -> {
+                showPromoCodeDialog()
+                true
+            }
+            else -> false
+        }
+    }
+
+    /**
+     * Open profile activity with authentication handling
+     */
+    private fun openProfileActivity() {
+        val intent = Intent(this, ProfileActivity::class.java)
+        startActivity(intent)
+    }
+
+    /**
+     * Show promo code dialog for redeeming promotional codes
+     */
+    /*private fun showPromoCodeDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Redeem Promo Code")
+        
+        val input = EditText(this)
+        input.hint = "Enter promo code"
+        input.inputType = InputType.TYPE_CLASS_TEXT
+        builder.setView(input)
+
+        builder.setPositiveButton("Redeem") { dialog: DialogInterface, which: Int ->
+            val promoCode = input.text.toString().trim()
+            if (promoCode.isNotEmpty()) {
+                handlePromoCode(promoCode)
+            } else {
+                showCustomToast("Please enter a valid promo code")
+            }
+        }
+
+        builder.setNegativeButton("Cancel") { dialog, _ ->
+            dialog.cancel()
+        }
+
+        builder.show()
+    }*/
+
+    /**
+     * Handle promo code redemption
+     */
+    private fun handlePromoCode(promoCode: String) {
+        // Add promo code handling logic here
+        when (promoCode.uppercase()) {
+            "WELCOME2024" -> {
+                showCustomToast("Welcome promo activated! Enjoy your benefits.")
+                // Grant welcome benefits
+            }
+            "PREMIUM30" -> {
+                showCustomToast("30-day premium trial activated!")
+                // Grant premium trial
+            }
+            else -> {
+                showCustomToast("Invalid promo code. Please try again.")
+            }
+        }
+    }
+
+    // Badge functionality disabled - stub methods to prevent crashes
+    private fun updateBadgeAndText() {
+        // Badge functionality disabled for cleaner design
+    }
+
+    /*private fun updateSubscriptionTimer() {
+        // Badge functionality disabled for cleaner design
+    }
+
+    private fun updateBadgeForActivePlan(planType: String, daysRemaining: Int) {
+        // Badge functionality disabled for cleaner design
+    }*/
+
+    private fun updateBadgeForFreeTier() {
+        // Badge functionality disabled for cleaner design
+    }
+
+    /**
+     * Open voice chat functionality
+     */
+    private fun openVoiceChat() {
+        Intent(this, ChatActivity::class.java).apply {
+            putExtra("selected_model", currentModel)
+            putExtra("open_voice_chat", true)
+            putExtra("is_ad_free", sharedPreferences.getBoolean(keyAdFree, false))
+            putExtra("expiration_time", sharedPreferences.getLong(expirationTimeKey, 0))
+        }.also { startActivity(it) }
+    }
+
+    /**
+     * Open text extractor functionality
+     */
+    private fun openTextExtractor() {
+        Intent(this, ChatActivity::class.java).apply {
+            putExtra("selected_model", currentModel)
+            putExtra("initial_message", "I need help extracting text from images or documents. Please help me with OCR or text extraction tasks.")
+            putExtra("is_ad_free", sharedPreferences.getBoolean(keyAdFree, false))
+            putExtra("expiration_time", sharedPreferences.getLong(expirationTimeKey, 0))
+        }.also { startActivity(it) }
+    }
+
+    /**
+     * Open email assistant functionality
+     */
+    private fun openEmailAssistant() {
+        val intent = Intent(this, MainActivity::class.java)
+        intent.putExtra("show_email_fragment", true)
+        startActivity(intent)
     }
 }

@@ -1,4 +1,4 @@
-package com.playstudio.AITeacher.models
+package com.playstudio.aiteacher.models
 
 import com.playstudio.aiteacher.R
 /**

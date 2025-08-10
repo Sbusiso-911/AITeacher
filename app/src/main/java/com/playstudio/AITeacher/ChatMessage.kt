@@ -58,7 +58,9 @@ data class ChatMessage(
     val isWebSearchResult: Boolean = false,// This determines if WebView or TextView is used
     var structuredContentJson: String? = null, // JSON string for persistence
     @Transient
-    var structuredContent: com.playstudio.aiteacher.models.EducationalResponse? = null
+    var structuredContent: com.playstudio.aiteacher.models.EducationalResponse? = null, // Legacy
+    @Transient
+    var learningContent: com.playstudio.aiteacher.models.LearningContent? = null // NEW
     // spannableContent: SpannableString? = null // Usually, Spannables are generated on-the-fly in onBindViewHolder or pre-processed.
     // Storing them directly in the data model can be complex for DiffUtil and Parcelable.
     // If you must store it, ensure it's handled in equals/hashCode and Parcelable.
@@ -104,7 +106,7 @@ data class ChatMessage(
         return 0
     }
 
-    // Helper methods for structured content persistence
+    // Helper methods for structured content persistence (LEGACY)
     fun storeStructuredContent(educationalResponse: com.playstudio.aiteacher.models.EducationalResponse) {
         this.structuredContent = educationalResponse
         // Serialize to JSON for persistence
@@ -120,12 +122,12 @@ data class ChatMessage(
         if (structuredContent != null) {
             return structuredContent
         }
-        
+
         // Try to deserialize from JSON if cached object is null
-        structuredContentJson?.let { json ->
+        structuredContentJson?.takeIf { it != "null" }?.let { json ->
             try {
                 structuredContent = com.google.gson.Gson().fromJson(
-                    json, 
+                    json,
                     com.playstudio.aiteacher.models.EducationalResponse::class.java
                 )
                 return structuredContent
@@ -133,7 +135,40 @@ data class ChatMessage(
                 android.util.Log.e("ChatMessage", "Failed to deserialize structured content", e)
             }
         }
-        
+
+        return null
+    }
+
+    // NEW: Helper methods for learning content persistence
+    fun storeLearningContent(content: com.playstudio.aiteacher.models.LearningContent) {
+        this.learningContent = content
+        // Serialize to JSON for persistence
+        try {
+            this.structuredContentJson = com.google.gson.Gson().toJson(content)
+        } catch (e: Exception) {
+            android.util.Log.e("ChatMessage", "Failed to serialize learning content", e)
+        }
+    }
+
+    fun loadLearningContent(): com.playstudio.aiteacher.models.LearningContent? {
+        // Return cached object if available
+        if (learningContent != null) {
+            return learningContent
+        }
+
+        // Try to deserialize from JSON if cached object is null
+        structuredContentJson?.takeIf { it != "null" }?.let { json ->
+            try {
+                learningContent = com.google.gson.Gson().fromJson(
+                    json,
+                    com.playstudio.aiteacher.models.LearningContent::class.java
+                )
+                return learningContent
+            } catch (e: Exception) {
+                android.util.Log.e("ChatMessage", "Failed to deserialize learning content", e)
+            }
+        }
+
         return null
     }
 

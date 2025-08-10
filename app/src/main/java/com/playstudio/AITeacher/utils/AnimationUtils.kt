@@ -1,4 +1,4 @@
-package com.playstudio.AITeacher.utils
+package com.playstudio.aiteacher.utils
 
 import android.animation.*
 import android.content.Context
@@ -7,7 +7,7 @@ import android.view.View
 import android.view.animation.*
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
-import com.playstudio.AITeacher.models.*
+import com.playstudio.aiteacher.models.*
 
 /**
  * Utility class for creating and managing AI theme animations

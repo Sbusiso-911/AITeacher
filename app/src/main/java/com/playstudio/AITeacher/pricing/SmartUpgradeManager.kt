@@ -25,8 +25,8 @@ class SmartUpgradeManager(private val context: Context) {
             SubscriptionTier.FREE -> SubscriptionTier.BASIC
             SubscriptionTier.BASIC -> SubscriptionTier.PRO
             SubscriptionTier.PRO -> SubscriptionTier.PREMIUM
-            SubscriptionTier.PREMIUM -> SubscriptionTier.ULTRA_PREMIUM
-            SubscriptionTier.ULTRA_PREMIUM -> null // Already at top tier
+            SubscriptionTier.PREMIUM -> SubscriptionTier.ENTERPRISE
+            SubscriptionTier.ENTERPRISE -> null // Already at top tier
         }
     }
     
@@ -34,7 +34,7 @@ class SmartUpgradeManager(private val context: Context) {
      * Check if user has reached the maximum tier
      */
     fun isAtMaxTier(currentTier: SubscriptionTier): Boolean {
-        return currentTier == SubscriptionTier.ULTRA_PREMIUM
+        return currentTier == SubscriptionTier.ENTERPRISE
     }
     
     /**
