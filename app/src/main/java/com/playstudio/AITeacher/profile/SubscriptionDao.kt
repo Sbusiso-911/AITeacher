@@ -8,13 +8,13 @@ import java.util.Date
 interface SubscriptionDao {
     
     @Query("SELECT * FROM subscriptions WHERE user_id = :userId ORDER BY created_at DESC")
-    fun getSubscriptionsByUser(userId: Long): Flow<List<SubscriptionEntity>>
+    fun getSubscriptionsByUser(userId: String): Flow<List<SubscriptionEntity>>
     
     @Query("SELECT * FROM subscriptions WHERE user_id = :userId AND status = 'active' ORDER BY created_at DESC LIMIT 1")
-    suspend fun getActiveSubscription(userId: Long): SubscriptionEntity?
+    suspend fun getActiveSubscription(userId: String): SubscriptionEntity?
     
     @Query("SELECT * FROM subscriptions WHERE user_id = :userId AND status = 'active' ORDER BY created_at DESC LIMIT 1")
-    fun getActiveSubscriptionFlow(userId: Long): Flow<SubscriptionEntity?>
+    fun getActiveSubscriptionFlow(userId: String): Flow<SubscriptionEntity?>
     
     @Query("SELECT * FROM subscriptions WHERE subscription_id = :subscriptionId")
     suspend fun getSubscriptionById(subscriptionId: Long): SubscriptionEntity?
@@ -38,7 +38,7 @@ interface SubscriptionDao {
     suspend fun updateEndDate(subscriptionId: Long, endDate: Date)
     
     @Query("SELECT COUNT(*) FROM subscriptions WHERE user_id = :userId AND status = 'active'")
-    suspend fun getActiveSubscriptionCount(userId: Long): Int
+    suspend fun getActiveSubscriptionCount(userId: String): Int
     
     @Query("SELECT * FROM subscriptions WHERE end_date < :currentDate AND status = 'active'")
     suspend fun getExpiredSubscriptions(currentDate: Date): List<SubscriptionEntity>
@@ -47,8 +47,8 @@ interface SubscriptionDao {
     suspend fun getSubscriptionsExpiringBetween(startDate: Date, endDate: Date): List<SubscriptionEntity>
     
     @Query("SELECT SUM(price_paid) FROM subscriptions WHERE user_id = :userId")
-    suspend fun getTotalRevenue(userId: Long): Double
+    suspend fun getTotalRevenue(userId: String): Double
     
     @Query("SELECT plan_type, COUNT(*) as count FROM subscriptions WHERE user_id = :userId GROUP BY plan_type")
-    suspend fun getSubscriptionHistory(userId: Long): List<PlanTypeCount>
+    suspend fun getSubscriptionHistory(userId: String): List<PlanTypeCount>
 }

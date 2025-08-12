@@ -17,7 +17,7 @@ interface ChatMessageDao {
     fun searchMessagesInSession(sessionId: Long, query: String): Flow<List<ChatMessageEntity>>
     
     @Query("SELECT * FROM chat_messages WHERE session_id IN (SELECT session_id FROM chat_sessions WHERE user_id = :userId) AND content LIKE '%' || :query || '%' ORDER BY timestamp DESC")
-    fun searchAllUserMessages(userId: Long, query: String): Flow<List<ChatMessageEntity>>
+    fun searchAllUserMessages(userId: String, query: String): Flow<List<ChatMessageEntity>>
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessage(message: ChatMessageEntity): Long
@@ -41,20 +41,27 @@ interface ChatMessageDao {
     suspend fun getMessageCountInSession(sessionId: Long): Int
     
     @Query("SELECT COUNT(*) FROM chat_messages WHERE session_id IN (SELECT session_id FROM chat_sessions WHERE user_id = :userId) AND sender_type = 'user'")
-    suspend fun getTotalUserMessages(userId: Long): Int
+    suspend fun getTotalUserMessages(userId: String): Int
     
     @Query("SELECT COUNT(*) FROM chat_messages WHERE session_id IN (SELECT session_id FROM chat_sessions WHERE user_id = :userId) AND sender_type = 'ai'")
-    suspend fun getTotalAiMessages(userId: Long): Int
+    suspend fun getTotalAiMessages(userId: String): Int
     
     @Query("SELECT SUM(token_count) FROM chat_messages WHERE session_id IN (SELECT session_id FROM chat_sessions WHERE user_id = :userId)")
-    suspend fun getTotalTokensUsed(userId: Long): Int
+    suspend fun getTotalTokensUsed(userId: String): Int
     
     @Query("SELECT * FROM chat_messages WHERE session_id = :sessionId ORDER BY timestamp DESC LIMIT 1")
     suspend fun getLastMessageInSession(sessionId: Long): ChatMessageEntity?
     
     @Query("SELECT AVG(processing_time_ms) FROM chat_messages WHERE session_id IN (SELECT session_id FROM chat_sessions WHERE user_id = :userId) AND sender_type = 'ai'")
-    suspend fun getAverageProcessingTime(userId: Long): Double
+    suspend fun getAverageProcessingTime(userId: String): Double
     
+    // Chat history deletion methods
+    @Query("DELETE FROM chat_messages WHERE session_id = :sessionId")
+    suspend fun deleteMessagesForSession(sessionId: Long)
+    
+    @Query("DELETE FROM chat_messages WHERE session_id IN (SELECT session_id FROM chat_sessions WHERE user_id = :userId)")
+    suspend fun deleteAllMessagesForUser(userId: String)
+
     // Webapp integration methods
     @Query("SELECT * FROM chat_messages WHERE session_id = :sessionId ORDER BY timestamp ASC")
     suspend fun getMessagesForSession(sessionId: Long): List<ChatMessageEntity>

@@ -17,7 +17,8 @@ import java.util.Date
             childColumns = ["user_id"],
             onDelete = ForeignKey.CASCADE
         )
-    ]
+    ],
+    indices = [androidx.room.Index(value = ["user_id"])] // Index for foreign key
 )
 @TypeConverters(DatabaseConverters::class)
 data class SubscriptionEntity(
@@ -26,7 +27,7 @@ data class SubscriptionEntity(
     val subscriptionId: Long = 0,
     
     @ColumnInfo(name = "user_id")
-    val userId: Long,
+    val userId: String, // Changed to String to match Firebase UID
     
     @ColumnInfo(name = "plan_type")
     val planType: String, // free, pro, premium

@@ -98,6 +98,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.suspendCancellableCoroutine
+import com.playstudio.aiteacher.firestore.FirestoreChatManager
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -130,6 +131,7 @@ import java.net.URLEncoder
 import android.provider.CalendarContract
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
+import kotlinx.coroutines.CoroutineScope
 //import com.playstudio.AITeacher.R
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -459,7 +461,6 @@ class ChatFragment : Fragment() {
         // Update subscription status display and credit balance
         updateSubscriptionStatusDisplay()
         updateCreditBalanceDisplay()
-
         // Check if user should get model recommendations
         lifecycleScope.launch {
             delay(2000) // Small delay to let UI settle
@@ -1595,19 +1596,22 @@ class ChatFragment : Fragment() {
             // Check credit balance before sending - must call suspend function in coroutine
             lifecycleScope.launch {
                 val tier = subscriptionUIManager.getUserSubscriptionTier()
-                val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(requireContext())
                 val model = com.playstudio.aiteacher.pricing.AIModel.fromModelId(currentModel)
                 if (model != null && currentModel != "gpt-image-1") {
-                    val estimatedCost = creditManager.calculateMessageCost(
-                        model.averageInputTokens,
-                        model.averageOutputTokens,
-                        model.modelId,
-                        tier
+                    val tokenPool = com.playstudio.aiteacher.credits.TokenPoolManager.getInstance(requireContext())
+                    val poolTier = tier.toTokenPoolTier()
+                    val estimatedCost = tokenPool.calculateTokenCost(
+                        modelName = model.modelId,
+                        responseType = com.playstudio.aiteacher.credits.TokenPoolManager.ResponseType.TEXT,
+                        inputTokens = model.averageInputTokens,
+                        outputTokens = model.averageOutputTokens,
+                        responseLength = model.averageOutputTokens * 4,
+                        userTier = poolTier
                     )
-                    val remaining = creditManager.getRemainingCredits("default_user", tier)
+                    val remaining = tokenPool.getRemainingDailyTokens("default_user", poolTier)
                     if (remaining < estimatedCost) {
                         withContext(Dispatchers.Main) {
-                            showCustomToast("Insufficient credits to send message")
+                            showCustomToast("Insufficient tokens to send message")
                         }
                         return@launch
                     }
@@ -3632,8 +3636,21 @@ class ChatFragment : Fragment() {
                             // Track usage after successful image generation
                             val currentAIModel = com.playstudio.aiteacher.pricing.AIModel.fromModelId("dall-e-3")
                             if (currentAIModel != null) {
-                                // For image generation, we don't have token usage, so use 0,0 or nominal values
+                                // For image generation, we don't have token usage, so use nominal values
                                 trackMessageUsage(currentAIModel, 0, 0)
+                                // Deduct from the shared token pool as an image response (1 image)
+                                lifecycleScope.launch {
+                                    com.playstudio.aiteacher.credits.TokenPoolIntegration.getInstance(requireContext())
+                                        .processImageResponse(
+                                            modelName = currentAIModel.modelId,
+                                            inputTokens = 0,
+                                            outputTokens = 0,
+                                            imageCount = 1,
+                                            agentName = "image-generator",
+                                            userId = "default_user",
+                                            userTier = subscriptionUIManager.getUserSubscriptionTier().toTokenPoolTier()
+                                        )
+                                }
                             }
 
                             // Hide the "Generating..." text and stop the animation
@@ -3819,6 +3836,19 @@ class ChatFragment : Fragment() {
                                     val equivalentOutputTokens = (imageCost / currentAIModel.outputCostPer1M * 1000000).toInt()
                                     
                                     trackMessageUsage(currentAIModel, 100, equivalentOutputTokens) // 100 tokens for prompt
+                                    // Also deduct from unified token pool as an image response (1 image)
+                                    lifecycleScope.launch {
+                                        com.playstudio.aiteacher.credits.TokenPoolIntegration.getInstance(requireContext())
+                                            .processImageResponse(
+                                                modelName = currentAIModel.modelId,
+                                                inputTokens = 100,
+                                                outputTokens = equivalentOutputTokens,
+                                                imageCount = 1,
+                                                agentName = "gpt-image-1",
+                                                userId = "default_user",
+                                                userTier = subscriptionUIManager.getUserSubscriptionTier().toTokenPoolTier()
+                                            )
+                                    }
                                 }
 
                                 binding.generatingText.visibility = View.GONE
@@ -4628,12 +4658,10 @@ class ChatFragment : Fragment() {
 
     // Usage tracking and cost management functionality
     private lateinit var usageTracker: com.playstudio.aiteacher.pricing.UsageTracker
-    private lateinit var costManager: com.playstudio.aiteacher.pricing.CostManager
-    private lateinit var subscriptionUIManager: SubscriptionUIManager
+        private lateinit var subscriptionUIManager: SubscriptionUIManager
 
     private fun initializeUsageTracking() {
         usageTracker = com.playstudio.aiteacher.pricing.UsageTracker(requireContext())
-        costManager = com.playstudio.aiteacher.pricing.CostManager.getInstance(requireContext())
         subscriptionUIManager = SubscriptionUIManager(requireContext())
     }
 
@@ -4729,22 +4757,40 @@ class ChatFragment : Fragment() {
                 // Increment usage count
                 usageTracker.incrementUsage(model.modelId)
 
-                // Record actual cost with CostManager
-                costManager.recordActualCost(
-                    model = model,
-                    inputTokens = inputTokens,
-                    outputTokens = outputTokens
-                )
-
-                // Deduct credits using the new credit system
-                val tier = subscriptionUIManager.getUserSubscriptionTier()
-                val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(requireContext())
-                val creditCost = creditManager.calculateMessageCost(inputTokens, outputTokens, model.modelId, tier)
-                creditManager.updateUserCredits("default_user", tier, creditCost)
-
-                // Update UI with remaining usage and credit balance
+                // Update UI with remaining usage and token balance
                 updateUsageDisplay(model)
                 updateCreditBalanceDisplay()
+
+                // Also deduct from the unified token pool so all models share one pool
+                val tier = subscriptionUIManager.getUserSubscriptionTier()
+                val tokenPoolIntegration = com.playstudio.aiteacher.credits.TokenPoolIntegration.getInstance(requireContext())
+                val poolTier = tier.toTokenPoolTier()
+                val responseType = when {
+                    model.modelId.contains("dall-e", ignoreCase = true) ||
+                    model.modelId.contains("gpt-image-1", ignoreCase = true) ->
+                        com.playstudio.aiteacher.credits.TokenPoolManager.ResponseType.IMAGE
+                    model.modelId.contains("realtime", ignoreCase = true) ||
+                    model.modelId.contains("openai-realtime-voice", ignoreCase = true) ->
+                        com.playstudio.aiteacher.credits.TokenPoolManager.ResponseType.REALTIME
+                    model.modelId.contains("audio", ignoreCase = true) ->
+                        com.playstudio.aiteacher.credits.TokenPoolManager.ResponseType.AUDIO
+                    else -> com.playstudio.aiteacher.credits.TokenPoolManager.ResponseType.TEXT
+                }
+                val responseLengthEstimate = if (responseType == com.playstudio.aiteacher.credits.TokenPoolManager.ResponseType.TEXT) {
+                    (outputTokens * 4).coerceAtLeast(0)
+                } else 0
+                tokenPoolIntegration.processAIResponseWithLength(
+                    modelName = model.modelId,
+                    responseType = responseType,
+                    inputTokens = inputTokens,
+                    outputTokens = outputTokens,
+                    responseLength = responseLengthEstimate,
+                    agentName = "chat-fragment",
+                    userId = "default_user",
+                    userTier = poolTier
+                )
+
+
 
             } catch (e: Exception) {
                 Log.e("ChatFragment", "Error tracking usage", e)
@@ -4781,10 +4827,11 @@ class ChatFragment : Fragment() {
         lifecycleScope.launch {
             try {
                 val tier = subscriptionUIManager.getUserSubscriptionTier()
-                val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(requireContext())
-                val remaining = creditManager.getRemainingCredits("default_user", tier)
-                val config = com.playstudio.aiteacher.credits.SubscriptionTiers.getConfig(tier)
-                binding.tvCreditBalance.text = "Credits: ${String.format("%.2f", remaining)} / ${config.dailyCredits}"
+                val poolTier = tier.toTokenPoolTier()
+                val tokenPool = com.playstudio.aiteacher.credits.TokenPoolManager.getInstance(requireContext())
+                val remainingTokens = tokenPool.getRemainingDailyTokens("default_user", poolTier).toInt()
+                val dailyAllocation = poolTier.tokenAllocation.toInt()
+                binding.tvCreditBalance.text = "Tokens: $remainingTokens / $dailyAllocation"
             } catch (e: Exception) {
                 Log.e("ChatFragment", "Error updating credit balance", e)
             }
@@ -4805,16 +4852,13 @@ class ChatFragment : Fragment() {
                 return true
             }
 
-            // For free users, check daily limits using UsageTracker
+            // For free users, check token pool daily tokens instead of per-model usage limits
             val userTier = com.playstudio.aiteacher.pricing.SubscriptionTier.FREE
-            val canUse = usageTracker.canUseModel(model.modelId, userTier)
-            Log.d("ChatFragment", "Free user can use model ${model.modelId}: $canUse")
-
-            if (!canUse) {
-                Log.d("ChatFragment", "Usage limit reached for ${model.modelId}, showing dialog")
-                withContext(Dispatchers.Main) {
-                    showUsageLimitDialog(model)
-                }
+            val poolTier = userTier.toTokenPoolTier()
+            val tokenPool = com.playstudio.aiteacher.credits.TokenPoolManager.getInstance(requireContext())
+            val remainingTokens = tokenPool.getRemainingDailyTokens("default_user", poolTier)
+            if (remainingTokens <= 0.0) {
+                withContext(Dispatchers.Main) { showUsageLimitDialog(model) }
                 return false
             }
 
@@ -6997,11 +7041,76 @@ class ChatFragment : Fragment() {
     }
 
     private fun loadChatHistory() {
+        val currentConversationId = conversationId ?: return // Don't load if no ID
+        
+        // Try loading from Firestore first for cross-device sync
+        CoroutineScope(Dispatchers.IO).launch {
+            val firestoreMessages = loadMessagesFromFirestore(currentConversationId)
+            
+            withContext(Dispatchers.Main) {
+                if (firestoreMessages.isNotEmpty()) {
+                    // Use Firestore data if available
+                    Log.d("ChatFragment", "Loading ${firestoreMessages.size} messages from Firestore")
+                    chatMessages.clear()
+                    chatMessages.addAll(firestoreMessages)
+                    chatAdapter.submitList(chatMessages.toList()) {
+                        if (chatMessages.isNotEmpty()) {
+                            binding.recyclerView.smoothScrollToPosition(chatMessages.size - 1)
+                        }
+                    }
+                } else {
+                    // Fall back to SharedPreferences if Firestore is empty
+                    Log.d("ChatFragment", "No Firestore data found, loading from SharedPreferences")
+                    loadChatHistoryFromSharedPrefs(currentConversationId)
+                }
+            }
+        }
+    }
+    
+    /**
+     * Load chat messages from Firestore for cross-device sync
+     */
+    private suspend fun loadMessagesFromFirestore(conversationId: String): List<ChatMessage> = withContext(Dispatchers.IO) {
+        try {
+            val firebaseAuth = com.google.firebase.auth.FirebaseAuth.getInstance()
+            val currentUser = firebaseAuth.currentUser
+            
+            if (currentUser == null) {
+                Log.w("ChatFragment", "Cannot load from Firestore - user not authenticated")
+                return@withContext emptyList<ChatMessage>()
+            }
+            
+            val firestoreManager = FirestoreChatManager.getInstance()
+            val firestoreMessages = firestoreManager.getChatMessages(conversationId)
+            
+            // Convert Firestore messages to ChatMessage format
+            return@withContext firestoreMessages.map { firestoreMsg ->
+                ChatMessage(
+                    id = firestoreMsg.messageId,
+                    content = firestoreMsg.content,
+                    isUser = firestoreMsg.senderType == "user",
+                    timestamp = firestoreMsg.timestamp.time,
+                    isTyping = false,
+                    followUpQuestions = emptyList(),
+                    citations = emptyList(),
+                    containsRichContent = false,
+                    structuredContentJson = null
+                )
+            }.sortedBy { it.timestamp }
+            
+        } catch (e: Exception) {
+            Log.e("ChatFragment", "Error loading from Firestore", e)
+            return@withContext emptyList<ChatMessage>()
+        }
+    }
+    
+    /**
+     * Fallback method to load from SharedPreferences (original implementation)
+     */
+    private fun loadChatHistoryFromSharedPrefs(currentConversationId: String) {
         val sharedPreferences = requireContext().getSharedPreferences("prefs", Context.MODE_PRIVATE)
         val savedChatsJson = sharedPreferences.getString(chatHistoryKey, "[]")
         val loadedMessages = mutableListOf<ChatMessage>()
-
-        val currentConversationId = conversationId ?: return // Don't load if no ID
 
         try {
             val savedChatsArray = JSONArray(savedChatsJson)
@@ -7016,7 +7125,7 @@ class ChatFragment : Fragment() {
                 }
             }
         } catch (e: JSONException) {
-            Log.e("ChatFragment", "Error loading chat history", e)
+            Log.e("ChatFragment", "Error loading chat history from SharedPreferences", e)
         }
 
         chatMessages.clear()
@@ -7085,6 +7194,81 @@ class ChatFragment : Fragment() {
 
         editor.putString(chatHistoryKey, updatedChatsArray.toString())
         editor.apply()
+        
+        // Sync to Firestore for cross-device access
+        syncChatHistoryToFirestore(currentMessagesToSave, currentConvId)
+    }
+    
+    /**
+     * Sync chat messages to Firestore for cross-device access
+     */
+    private fun syncChatHistoryToFirestore(messages: List<ChatMessage>, conversationId: String) {
+        // Run sync in background to avoid blocking the UI
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val firebaseAuth = com.google.firebase.auth.FirebaseAuth.getInstance()
+                val currentUser = firebaseAuth.currentUser
+                
+                if (currentUser == null) {
+                    Log.w("ChatFragment", "Cannot sync to Firestore - user not authenticated")
+                    return@launch
+                }
+                
+                Log.d("ChatFragment", "Syncing ${messages.size} messages to Firestore for conversation: $conversationId")
+                
+                val firestoreManager = FirestoreChatManager.getInstance()
+                
+                // Convert ChatMessage objects to Firestore format and sync each message
+                messages.forEach { chatMessage ->
+                    val firestoreMessage = FirestoreChatManager.FirestoreChatMessage(
+                        messageId = chatMessage.id,
+                        sessionId = conversationId,
+                        content = chatMessage.content,
+                        senderType = if (chatMessage.isUser) "user" else "ai",
+                        timestamp = java.util.Date(chatMessage.timestamp),
+                        aiModel = "gpt-3.5-turbo", // Default model - could be enhanced to track actual model
+                        provider = "openai"
+                    )
+                    
+                    val success = firestoreManager.saveChatMessage(firestoreMessage)
+                    if (!success) {
+                        Log.w("ChatFragment", "Failed to sync message ${chatMessage.id} to Firestore")
+                    }
+                }
+                
+                // Also create/update the chat session in Firestore
+                val sessionTitle = if (messages.isNotEmpty()) {
+                    // Use first user message as title, truncated to 50 characters
+                    val firstUserMessage = messages.find { it.isUser }?.content?.take(50) ?: "Chat Session"
+                    firstUserMessage
+                } else {
+                    "Chat Session"
+                }
+                
+                val chatSession = FirestoreChatManager.FirestoreChatSession(
+                    sessionId = conversationId,
+                    title = sessionTitle,
+                    aiModelUsed = "gpt-3.5-turbo",
+                    category = "general",
+                    createdAt = java.util.Date(messages.minByOrNull { it.timestamp }?.timestamp ?: System.currentTimeMillis()),
+                    updatedAt = java.util.Date(messages.maxByOrNull { it.timestamp }?.timestamp ?: System.currentTimeMillis()),
+                    isFavorite = false,
+                    isArchived = false,
+                    messageCount = messages.size,
+                    lastMessagePreview = messages.lastOrNull()?.content?.take(100) ?: ""
+                )
+                
+                val sessionSuccess = firestoreManager.saveChatSession(chatSession)
+                if (sessionSuccess) {
+                    Log.d("ChatFragment", "Successfully synced chat session to Firestore")
+                } else {
+                    Log.w("ChatFragment", "Failed to sync chat session to Firestore")
+                }
+                
+            } catch (e: Exception) {
+                Log.e("ChatFragment", "Error syncing to Firestore", e)
+            }
+        }
     }
 
 

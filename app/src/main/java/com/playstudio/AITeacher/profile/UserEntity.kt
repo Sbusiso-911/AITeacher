@@ -10,9 +10,9 @@ import java.util.Date
 @Entity(tableName = "users")
 @TypeConverters(DatabaseConverters::class)
 data class UserEntity(
-    @PrimaryKey(autoGenerate = true)
+    @PrimaryKey
     @ColumnInfo(name = "user_id")
-    val userId: Long = 0,
+    val userId: String, // Changed to String to use Firebase UID directly
     
     @ColumnInfo(name = "email")
     val email: String,

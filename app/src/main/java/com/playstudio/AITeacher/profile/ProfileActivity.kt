@@ -1,6 +1,7 @@
 package com.playstudio.aiteacher.profile
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -25,6 +26,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.Date
 import android.util.Log
+import kotlinx.coroutines.tasks.await
 
 class ProfileActivity : AppCompatActivity() {
 
@@ -33,6 +35,9 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var firestoreSubscriptionManager: FirestoreSubscriptionManager
     private lateinit var subscriptionUIManager: SubscriptionUIManager
     private lateinit var billingSync: GooglePlayBillingSync
+    private lateinit var profileManager: ProfileManager
+    private lateinit var dailyTokenTracker: DailyTokenTracker
+    private lateinit var recentChatAdapter: RecentChatAdapter
 
     private lateinit var imagePickerLauncher: ActivityResultLauncher<Intent>
     private lateinit var cameraLauncher: ActivityResultLauncher<Intent>
@@ -49,6 +54,16 @@ class ProfileActivity : AppCompatActivity() {
         firestoreSubscriptionManager = FirestoreSubscriptionManager(this)
         subscriptionUIManager = SubscriptionUIManager(this)
         billingSync = GooglePlayBillingSync(this)
+        profileManager = ProfileManager(this)
+        dailyTokenTracker = DailyTokenTracker(this)
+        
+        // Initialize recent chat adapter
+        recentChatAdapter = RecentChatAdapter { chatSession ->
+            // Navigate to ChatHistoryActivity when chat is clicked
+            val intent = Intent(this, ChatHistoryActivity::class.java)
+            intent.putExtra("highlight_session_id", chatSession.sessionId)
+            startActivity(intent)
+        }
 
         // Setup activity result launchers
         setupActivityResultLaunchers()
@@ -169,9 +184,25 @@ class ProfileActivity : AppCompatActivity() {
                 startActivity(Intent(this@ProfileActivity, SettingsActivity::class.java))
             }
 
+            // Clear History button
+            clearHistoryButton.setOnClickListener {
+                showClearHistoryConfirmationDialog()
+            }
+
             // Logout button
             logoutButton.setOnClickListener {
                 logout()
+            }
+
+            // Setup recent chat history RecyclerView
+            recentChatHistoryRecyclerView.apply {
+                adapter = recentChatAdapter
+                layoutManager = androidx.recyclerview.widget.LinearLayoutManager(
+                    this@ProfileActivity, 
+                    androidx.recyclerview.widget.LinearLayoutManager.VERTICAL, 
+                    false
+                )
+                isNestedScrollingEnabled = false
             }
 
             // Statistics cards
@@ -210,7 +241,29 @@ class ProfileActivity : AppCompatActivity() {
                 // Check authentication first
                 val isAuthenticated = firebaseAuthService.isSignedIn()
                 val currentFirebaseUid = firebaseAuthService.getCurrentFirebaseUid()
-                Log.d("ProfileActivity", "Authentication check: isSignedIn=$isAuthenticated, uid=$currentFirebaseUid")
+                val directFirebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                
+                Log.e("ProfileActivity", "=== AUTHENTICATION DEBUG ===")
+                Log.e("ProfileActivity", "FirebaseAuthService: isSignedIn=$isAuthenticated, uid=$currentFirebaseUid")
+                Log.e("ProfileActivity", "Direct Firebase Auth: user=${directFirebaseUser?.uid}, email=${directFirebaseUser?.email}")
+                Log.e("ProfileActivity", "Direct Firebase Auth: isEmailVerified=${directFirebaseUser?.isEmailVerified}")
+                
+                // Test Firestore permissions directly
+                val testFirestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                try {
+                    val testDoc = testFirestore.collection("users").document(directFirebaseUser?.uid ?: "unknown").get().await()
+                    Log.e("ProfileActivity", "Firestore test: Direct document access SUCCESSFUL, exists=${testDoc.exists()}")
+                } catch (e: Exception) {
+                    Log.e("ProfileActivity", "Firestore test: Direct document access FAILED", e)
+                }
+                
+                // Also check what's in SharedPreferences for debugging
+                val sharedPrefs = getSharedPreferences("prefs", Context.MODE_PRIVATE)
+                val chatHistoryJson = sharedPrefs.getString("chat_history", "[]") ?: "[]"
+                Log.e("ProfileActivity", "SharedPrefs chat_history length: ${chatHistoryJson.length}")
+                if (chatHistoryJson.length > 10) {
+                    Log.e("ProfileActivity", "SharedPrefs sample: ${chatHistoryJson.take(300)}")
+                }
                 
                 if (!isAuthenticated || currentFirebaseUid == null) {
                     Log.e("ProfileActivity", "User is not properly authenticated")
@@ -218,32 +271,57 @@ class ProfileActivity : AppCompatActivity() {
                     return@launch
                 }
 
-                // Load user data from Firestore
-                Log.d("ProfileActivity", "Loading user data from Firestore for uid: $currentFirebaseUid")
-                currentUser = firebaseAuthService.getCurrentUser()
-                
-                if (currentUser == null) {
-                    Log.w("ProfileActivity", "No user data found in Firestore, creating user profile...")
-                    createUserProfileInFirestore()
-                    // Wait a moment for the write to complete
-                    kotlinx.coroutines.delay(1000)
+                // Try to load user data from Firestore, but continue if it fails
+                Log.e("ProfileActivity", "Attempting to load user data from Firestore for uid: $currentFirebaseUid")
+                try {
                     currentUser = firebaseAuthService.getCurrentUser()
+                    
+                    if (currentUser == null) {
+                        Log.w("ProfileActivity", "No user data found in Firestore, trying to create user profile...")
+                        try {
+                            createUserProfileInFirestore()
+                            kotlinx.coroutines.delay(1000)
+                            currentUser = firebaseAuthService.getCurrentUser()
+                        } catch (e: Exception) {
+                            Log.w("ProfileActivity", "Failed to create user profile in Firestore", e)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.w("ProfileActivity", "Error loading user data from Firestore", e)
+                    currentUser = null
+                }
+                
+                // If Firestore fails, create a basic user object from Firebase Auth
+                if (currentUser == null && directFirebaseUser != null) {
+                    Log.e("ProfileActivity", "Firestore failed, creating basic user from Firebase Auth")
+                    currentUser = createBasicUserFromFirebaseAuth(directFirebaseUser)
                 }
                 
                 if (currentUser != null) {
-                    Log.d("ProfileActivity", "User data loaded successfully: email=${currentUser!!.email}, name=${currentUser!!.fullName}")
+                    Log.e("ProfileActivity", "User data loaded successfully: email=${currentUser!!.email}, name=${currentUser!!.fullName}")
                 } else {
-                    Log.e("ProfileActivity", "Failed to load or create user data")
+                    Log.e("ProfileActivity", "Failed to load user data")
                     showErrorMessage("Failed to load profile data")
                     return@launch
                 }
 
-                // Migrate chat history stats from local database to Firestore profile
-                Log.d("ProfileActivity", "Migrating chat history stats to Firestore...")
+                // Initialize ProfileManager and sync chat history to Firestore
+                Log.e("ProfileActivity", "=== INITIALIZING PROFILE AND SYNCING CHAT HISTORY ===")
                 try {
+                    // Debug: First let's see what's actually in SharedPreferences
+                    profileManager.debugSharedPreferences()
+                    
+                    // For debugging: Let's do a fresh sync to clear old data
+                    val freshSyncSuccess = profileManager.clearFirestoreAndFreshSync()
+                    Log.e("ProfileActivity", "Fresh sync result: $freshSyncSuccess")
+                    
+                    val profileInitSuccess = profileManager.initializeUserProfile()
+                    Log.e("ProfileActivity", "Profile initialization result: $profileInitSuccess")
+                    
+                    // Also migrate stats for backwards compatibility
                     migrateChatHistoryStatsToFirestore()
                 } catch (e: Exception) {
-                    Log.w("ProfileActivity", "Chat history migration failed, continuing without migration", e)
+                    Log.w("ProfileActivity", "Profile initialization/migration failed, continuing", e)
                 }
                 
                 // Force a full billing sync to ensure we have latest subscription data
@@ -351,7 +429,51 @@ class ProfileActivity : AppCompatActivity() {
             totalChatsText.text = user.totalChats.toString()
             totalMessagesText.text = user.totalMessages.toString()
             totalTokensText.text = if (user.tokenCount > 1000) "${user.tokenCount / 1000}K" else user.tokenCount.toString()
-            favoriteChatsText.text = "0" // Not tracked in FirestoreUser
+            favoriteChatsText.text = "0" // Will be updated with Firestore data
+            
+            // Update statistics with real Firestore chat data and load recent chats
+            lifecycleScope.launch {
+                try {
+                    val firestoreStats = profileManager.getChatStatisticsFromFirestore()
+                    if (firestoreStats.isNotEmpty()) {
+                        // Update UI with accurate Firestore statistics
+                        totalChatsText.text = (firestoreStats["totalSessions"] ?: user.totalChats).toString()
+                        totalMessagesText.text = (firestoreStats["totalMessages"] ?: user.totalMessages).toString()
+                        favoriteChatsText.text = (firestoreStats["favoriteChats"] ?: 0).toString()
+                        Log.d("ProfileActivity", "Updated UI with Firestore chat statistics: $firestoreStats")
+                    }
+                    
+                    // Load recent chat history for the Total Chats card
+                    Log.e("ProfileActivity", "=== STARTING CHAT HISTORY LOAD ===")
+                    Log.e("ProfileActivity", "Calling profileManager.getRecentChatActivity(5)")
+                    val recentChats = profileManager.getRecentChatActivity(5)
+                    Log.e("ProfileActivity", "=== CHAT HISTORY RESULT: ${recentChats.size} chats ===")
+                    if (recentChats.isNotEmpty()) {
+                        Log.e("ProfileActivity", "About to submit list to adapter with ${recentChats.size} items")
+                        Log.e("ProfileActivity", "First chat: title='${recentChats[0].title}', messages=${recentChats[0].messageCount}")
+                        recentChatAdapter.submitList(recentChats)
+                        recentChatHistoryRecyclerView.visibility = android.view.View.VISIBLE
+                        emptyChatHistoryLayout.visibility = android.view.View.GONE
+                        Log.e("ProfileActivity", "Loaded ${recentChats.size} recent chats, RecyclerView visibility: ${recentChatHistoryRecyclerView.visibility}")
+                        
+                        // Check adapter count after a delay (ListAdapter uses async diff)
+                        recentChatHistoryRecyclerView.postDelayed({
+                            Log.d("ProfileActivity", "After delay - Adapter itemCount: ${recentChatAdapter.itemCount}")
+                            Log.d("ProfileActivity", "RecyclerView childCount: ${recentChatHistoryRecyclerView.childCount}")
+                        }, 100)
+                    } else {
+                        recentChatHistoryRecyclerView.visibility = android.view.View.GONE
+                        emptyChatHistoryLayout.visibility = android.view.View.VISIBLE
+                        Log.e("ProfileActivity", "=== NO RECENT CHATS FOUND, SHOWING EMPTY STATE ===")
+                    }
+                    
+                } catch (e: Exception) {
+                    Log.w("ProfileActivity", "Failed to load Firestore data", e)
+                    // Show empty state on error
+                    recentChatHistoryRecyclerView.visibility = android.view.View.GONE
+                    emptyChatHistoryLayout.visibility = android.view.View.VISIBLE
+                }
+            }
 
             // Storage usage (estimated from token count)
             val storageUsedKB = if (user.tokenCount > 0) {
@@ -428,32 +550,48 @@ class ProfileActivity : AppCompatActivity() {
                 planNameText.text = planDisplayName
                 planDescriptionText.text = planDescription
 
+                // Subscription Tier Display
+                subscriptionTierText.text = dailyTokenTracker.getTierDisplayName(firestoreStatus.planType)
+
                 // Status
                 subscriptionStatusText.text = "Active (${firestoreStatus.daysRemaining} days left)"
                 subscriptionStatusText.setTextColor(getColor(R.color.glass_accent))
 
-                // Usage progress - use actual user data from Firestore
+                // Daily token usage tracking
+                val dailyUsage = dailyTokenTracker.getDailyUsage(firestoreStatus.planType)
+                
+                // Update daily tokens progress
+                dailyTokensProgressText.text = dailyTokenTracker.formatDailyUsage(dailyUsage)
+                dailyTokensProgressBar.progress = dailyTokenTracker.formatUsagePercentage(dailyUsage)
+                tokenResetTimeText.text = dailyTokenTracker.getResetTimeText(dailyUsage)
+                
+                // Set progress bar color based on usage
+                val progressColor = when {
+                    dailyUsage.isOverLimit -> getColor(R.color.glass_text_secondary)
+                    dailyUsage.isNearLimit -> getColor(R.color.glass_secondary)
+                    else -> getColor(R.color.glass_accent)
+                }
+                dailyTokensProgressBar.progressTintList = android.content.res.ColorStateList.valueOf(progressColor)
+                
+                // Monthly progress (existing user data)
                 val user = currentUser
                 if (user != null) {
-                    // Show actual usage based on plan type
-                    when (firestoreStatus.planType) {
-                        "basic" -> {
-                            val maxMessages = 500
-                            val messageProgress = ((user.messageCount.toFloat() / maxMessages) * 100).toInt().coerceAtMost(100)
-                            messagesProgressBar.progress = messageProgress
-                            messagesProgressText.text = "${user.messageCount} / $maxMessages messages"
-                            
-                            val maxTokens = 100000L
-                            val tokenProgress = ((user.tokenCount.toFloat() / maxTokens) * 100).toInt().coerceAtMost(100)
-                            tokensProgressBar.progress = tokenProgress
-                            tokensProgressText.text = "${user.tokenCount / 1000}K / ${maxTokens / 1000}K tokens"
-                        }
-                        "pro", "premium", "ultra_premium" -> {
-                            messagesProgressBar.progress = 0
-                            messagesProgressText.text = "Unlimited messages"
-                            tokensProgressBar.progress = 0
-                            tokensProgressText.text = "Unlimited tokens"
-                        }
+                    // Estimate monthly usage based on subscription type
+                    val monthlyLimit = when (firestoreStatus.planType) {
+                        "basic" -> 150000L
+                        "pro" -> 300000L
+                        "premium" -> 1000000L
+                        "ultra_premium" -> -1L // Unlimited
+                        else -> 30000L // Free
+                    }
+                    
+                    if (monthlyLimit > 0) {
+                        val monthlyProgress = ((user.tokenCount.toFloat() / monthlyLimit) * 100).toInt().coerceAtMost(100)
+                        monthlyProgressBar.progress = monthlyProgress
+                        monthlyProgressText.text = "${user.tokenCount / 1000}K / ${monthlyLimit / 1000}K"
+                    } else {
+                        monthlyProgressBar.progress = 0
+                        monthlyProgressText.text = "Unlimited monthly usage"
                     }
                 }
 
@@ -467,6 +605,7 @@ class ProfileActivity : AppCompatActivity() {
                 // Free plan or expired subscription
                 planNameText.text = "Free Plan"
                 planDescriptionText.text = "Basic AI chat with limited features"
+                subscriptionTierText.text = "FREE"
                 
                 if (firestoreStatus.isExpired) {
                     subscriptionStatusText.text = "Expired - Tap to renew"
@@ -476,23 +615,32 @@ class ProfileActivity : AppCompatActivity() {
                     subscriptionStatusText.setTextColor(getColor(R.color.glass_text_secondary))
                 }
 
-                // Show actual usage even for free plan
+                // Daily token usage tracking for free plan
+                val dailyUsage = dailyTokenTracker.getDailyUsage("free")
+                
+                // Update daily tokens progress
+                dailyTokensProgressText.text = dailyTokenTracker.formatDailyUsage(dailyUsage)
+                dailyTokensProgressBar.progress = dailyTokenTracker.formatUsagePercentage(dailyUsage)
+                tokenResetTimeText.text = dailyTokenTracker.getResetTimeText(dailyUsage)
+                
+                // Set progress bar color for free plan
+                val progressColor = when {
+                    dailyUsage.isOverLimit -> getColor(R.color.glass_text_secondary)
+                    dailyUsage.isNearLimit -> getColor(R.color.glass_secondary)
+                    else -> getColor(R.color.glass_accent)
+                }
+                dailyTokensProgressBar.progressTintList = android.content.res.ColorStateList.valueOf(progressColor)
+                
+                // Monthly progress for free plan
                 val user = currentUser
                 if (user != null) {
-                    val maxMessages = 50 // Free plan limit
-                    val messageProgress = ((user.messageCount.toFloat() / maxMessages) * 100).toInt().coerceAtMost(100)
-                    messagesProgressBar.progress = messageProgress
-                    messagesProgressText.text = "${user.messageCount} / $maxMessages messages"
-                    
-                    val maxTokens = 10000L // Free plan limit
-                    val tokenProgress = ((user.tokenCount.toFloat() / maxTokens) * 100).toInt().coerceAtMost(100)
-                    tokensProgressBar.progress = tokenProgress
-                    tokensProgressText.text = "${user.tokenCount / 1000}K / ${maxTokens / 1000}K tokens"
+                    val monthlyLimit = 30000L // Free plan monthly limit
+                    val monthlyProgress = ((user.tokenCount.toFloat() / monthlyLimit) * 100).toInt().coerceAtMost(100)
+                    monthlyProgressBar.progress = monthlyProgress
+                    monthlyProgressText.text = "${user.tokenCount / 1000}K / ${monthlyLimit / 1000}K"
                 } else {
-                    messagesProgressBar.progress = 0
-                    messagesProgressText.text = "0 / 50 messages"
-                    tokensProgressBar.progress = 0
-                    tokensProgressText.text = "0 / 10K tokens"
+                    monthlyProgressBar.progress = 0
+                    monthlyProgressText.text = "No usage data"
                 }
                 nextBillingText.text = "No billing"
             }
@@ -667,6 +815,61 @@ class ProfileActivity : AppCompatActivity() {
         }
     }
 
+    private fun showClearHistoryConfirmationDialog() {
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this, R.style.BlueDialogTheme)
+            .setTitle("Clear Chat History")
+            .setMessage("This will permanently delete ALL your chat history from both local storage and cloud backup. This action cannot be undone.\n\nAre you sure you want to proceed?")
+            .setIcon(R.drawable.ic_delete)
+            .setPositiveButton("Clear All") { _, _ ->
+                performClearHistory()
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        // Make the positive button red to indicate destructive action
+        dialog.setOnShowListener {
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+                ?.setTextColor(getColor(R.color.glass_accent))
+        }
+
+        dialog.show()
+    }
+
+    private fun performClearHistory() {
+        lifecycleScope.launch {
+            try {
+                binding.progressBar.visibility = android.view.View.VISIBLE
+                
+                Log.e("ProfileActivity", "=== USER INITIATED CHAT HISTORY DELETION ===")
+                
+                val success = profileManager.clearAllChatHistory()
+                
+                if (success) {
+                    Log.e("ProfileActivity", "Chat history cleared successfully")
+                    Toast.makeText(this@ProfileActivity, "Chat history cleared successfully", Toast.LENGTH_LONG).show()
+                    
+                    // Refresh the profile to reflect the cleared state
+                    loadProfileData()
+                    
+                    // Also clear the recent chat adapter immediately
+                    recentChatAdapter.submitList(emptyList())
+                    binding.recentChatHistoryRecyclerView.visibility = android.view.View.GONE
+                    binding.emptyChatHistoryLayout.visibility = android.view.View.VISIBLE
+                    
+                } else {
+                    Log.e("ProfileActivity", "Chat history clearing failed or was partial")
+                    Toast.makeText(this@ProfileActivity, "Failed to clear all chat history. Some data may remain.", Toast.LENGTH_LONG).show()
+                }
+                
+            } catch (e: Exception) {
+                Log.e("ProfileActivity", "Error during chat history clearing", e)
+                Toast.makeText(this@ProfileActivity, "Error clearing chat history: ${e.message}", Toast.LENGTH_LONG).show()
+            } finally {
+                binding.progressBar.visibility = android.view.View.GONE
+            }
+        }
+    }
+
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
@@ -732,11 +935,15 @@ class ProfileActivity : AppCompatActivity() {
                 // Load user data from Firestore (already authenticated)
                 currentUser = firebaseAuthService.getCurrentUser()
                 
-                // Migrate chat history stats if needed
+                // Sync chat history to Firestore and migrate stats if needed
                 try {
+                    // Ensure chat history is synced to Firestore for cross-device access
+                    val syncSuccess = profileManager.syncChatHistoryToFirestore()
+                    Log.d("ProfileActivity", "Profile refresh chat history sync result: $syncSuccess")
+                    
                     migrateChatHistoryStatsToFirestore()
                 } catch (e: Exception) {
-                    Log.w("ProfileActivity", "Chat history migration failed during refresh", e)
+                    Log.w("ProfileActivity", "Chat history sync/migration failed during refresh", e)
                 }
                 
                 // Force billing sync and load subscription status from Firestore
@@ -851,6 +1058,54 @@ class ProfileActivity : AppCompatActivity() {
         }
     }
     
+    /**
+     * Create a basic user object from Firebase Auth when Firestore fails
+     * This allows the profile to display basic information and current chat history from SharedPreferences
+     */
+    private fun createBasicUserFromFirebaseAuth(firebaseUser: com.google.firebase.auth.FirebaseUser): FirebaseAuthenticationService.FirestoreUser {
+        Log.e("ProfileActivity", "Creating basic user from Firebase Auth: uid=${firebaseUser.uid}, email=${firebaseUser.email}")
+        
+        // Get current chat history from SharedPreferences to populate statistics
+        val sharedPrefs = getSharedPreferences("prefs", android.content.Context.MODE_PRIVATE)
+        val chatHistoryJson = sharedPrefs.getString("chat_history", "[]") ?: "[]"
+        
+        var messageCount = 0
+        var totalChats = 0
+        
+        try {
+            val chatArray = org.json.JSONArray(chatHistoryJson)
+            totalChats = chatArray.length()
+            
+            // Count messages across all chats
+            for (i in 0 until chatArray.length()) {
+                val chatObject = chatArray.getJSONObject(i)
+                val messages = chatObject.optJSONArray("messages")
+                if (messages != null) {
+                    messageCount += messages.length()
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("ProfileActivity", "Error parsing SharedPreferences chat data", e)
+        }
+        
+        return FirebaseAuthenticationService.FirestoreUser(
+            uid = firebaseUser.uid,
+            email = firebaseUser.email ?: "unknown@example.com",
+            fullName = firebaseUser.displayName ?: "User",
+            profilePictureUrl = firebaseUser.photoUrl?.toString(),
+            createdAt = firebaseUser.metadata?.creationTimestamp ?: System.currentTimeMillis(),
+            lastLoginAt = System.currentTimeMillis(),
+            lastSyncAt = System.currentTimeMillis(),
+            subscriptionTier = "FREE",
+            subscriptionStatus = "INACTIVE",
+            subscriptionExpiresAt = 0L,
+            messageCount = messageCount,
+            tokenCount = (messageCount * 50L), // Estimate ~50 tokens per message
+            totalChats = totalChats,
+            totalMessages = messageCount
+        )
+    }
+
     /**
      * Debug method to populate test data for testing UI display
      * Can be called manually during development to test profile display

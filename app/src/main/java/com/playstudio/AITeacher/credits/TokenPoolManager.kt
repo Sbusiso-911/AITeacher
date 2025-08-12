@@ -353,7 +353,16 @@ class TokenPoolManager private constructor(private val context: Context) {
      * Get model pricing - Updated with actual OpenAI pricing reflecting model power and accuracy
      */
     private fun getModelPricing(modelName: String): ModelPricing.Pricing {
-        // Get base pricing from OpenAI rate card
+        // Prefer shared pricing table from ModelPricing/AIModel if available
+        ModelPricing.getPricing(modelName)?.let { pricing ->
+            val tier = getModelTier(modelName)
+            return ModelPricing.Pricing(
+                input = pricing.input * tier.strengthMultiplier,
+                output = pricing.output * tier.strengthMultiplier
+            )
+        }
+
+        // Fallback: map from known model prefixes (kept for robustness if model isn't in AIModel)
         val basePricing = when {
             // GPT-4.1 series
             modelName.contains("gpt-4.1-2025-04-14") -> ModelPricing.Pricing(2.00, 8.00)

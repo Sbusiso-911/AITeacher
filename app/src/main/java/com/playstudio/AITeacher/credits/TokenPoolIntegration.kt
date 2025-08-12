@@ -50,6 +50,31 @@ class TokenPoolIntegration private constructor(private val context: Context) {
             userTier = userTier
         )
     }
+    /**
+     * Process token deduction when only the response length is known/estimated
+     * Useful when we have token counts but not the actual text string.
+     */
+    suspend fun processAIResponseWithLength(
+        modelName: String,
+        responseType: TokenPoolManager.ResponseType,
+        inputTokens: Int,
+        outputTokens: Int,
+        responseLength: Int,
+        agentName: String? = null,
+        userId: String = "default_user",
+        userTier: TokenPoolManager.SubscriptionTier = TokenPoolManager.SubscriptionTier.FREE
+    ): Boolean {
+        return tokenPoolManager.deductTokens(
+            modelName = modelName,
+            responseType = responseType,
+            inputTokens = inputTokens,
+            outputTokens = outputTokens,
+            responseLength = responseLength,
+            agentName = agentName,
+            userId = userId,
+            userTier = userTier
+        )
+    }
 
     /**
      * Process text response from OpenAI models

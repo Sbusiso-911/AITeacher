@@ -751,11 +751,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
                 setWelcomeMessageShown(true)
             }
 
-            // Show the "Thank You for Downloading" dialog if it hasn't been shown before
-            if (!isThankYouDialogShown()) {
-                showThankYouDialog()
-                setThankYouDialogShown(true)
-            }
+
             // Badge elements removed for cleaner design
 
 
@@ -1472,68 +1468,8 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
         authDialog.show()
     }
 
-    // Function to show the "Thank You for Downloading" dialog
-    private fun showThankYouDialog() {
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_thank_you, null)
-        val dialog = AlertDialog.Builder(this)
-            .setView(dialogView)
-            .setCancelable(false)
-            .create()
-
-        val lottieAnimationView =
-            dialogView.findViewById<LottieAnimationView>(R.id.lottieAnimationView)
-        lottieAnimationView.setAnimation(R.raw.thank_you_animation) // Ensure you have this JSON animation in res/raw
-        lottieAnimationView.playAnimation()
-
-        val btnRateNow = dialogView.findViewById<Button>(R.id.btnRateNow)
-        val btnRateLater = dialogView.findViewById<Button>(R.id.btnRateLater)
-        val btnClose = dialogView.findViewById<Button>(R.id.btnClose)
-
-        btnRateNow.setOnClickListener {
-            // Open the app's rating page
-            val appPackageName = packageName
-            try {
-                startActivity(
-                    Intent(
-                        Intent.ACTION_VIEW,
-                        Uri.parse("market://details?id=$appPackageName")
-                    )
-                )
-            } catch (e: ActivityNotFoundException) {
-                startActivity(
-                    Intent(
-                        Intent.ACTION_VIEW,
-                        Uri.parse("https://play.google.com/store/apps/details?id=$appPackageName")
-                    )
-                )
-            }
-            dialog.dismiss()
-        }
-
-        btnRateLater.setOnClickListener {
-
-            // Just close the dialog
-            dialog.dismiss()
-        }
-
-        btnClose.setOnClickListener {
-            // Just close the dialog
-            dialog.dismiss()
-        }
-
-        dialog.show()
-    }
 
 
-    // Function to check if the "Thank You" dialog has been shown
-    private fun isThankYouDialogShown(): Boolean {
-        return sharedPreferences.getBoolean(thankYouDialogShownKey, false)
-    }
-
-    // Function to mark the "Thank You" dialog as shown
-    private fun setThankYouDialogShown(shown: Boolean) {
-        sharedPreferences.edit().putBoolean(thankYouDialogShownKey, shown).apply()
-    }
 
     // Function to check if the subscription dialog has been shown
     private fun isSubscriptionDialogShown(): Boolean {
@@ -3345,8 +3281,35 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener, ChatFragment
             val basicPrice = dialogView.findViewById<TextView>(R.id.basicPrice)
             val proPrice = dialogView.findViewById<TextView>(R.id.proPrice)
             val premiumPrice = dialogView.findViewById<TextView>(R.id.premiumPrice)
-            val ultraPrice = dialogView.findViewById<TextView>(R.id.ultraPrice)
             
+val ultraPrice = dialogView.findViewById<TextView>(R.id.ultraPrice)
+
+            // Dynamic descriptions aligned with TokenPool system
+            val freeDescription = dialogView.findViewById<TextView>(R.id.freeDescription)
+            val basicDescriptionText = dialogView.findViewById<TextView>(R.id.basicDescription)
+            val proDescriptionText = dialogView.findViewById<TextView>(R.id.proDescription)
+            val premiumDescriptionText = dialogView.findViewById<TextView>(R.id.premiumDescription)
+            val ultraDescriptionText = dialogView.findViewById<TextView>(R.id.ultraDescription)
+
+            fun desc(tokens: Int, markup: Double, extras: String = ""): String {
+                val base = "• %s tokens daily\n• ALL AI models available\n• Pricing x%s markup".format(tokens, markup)
+                return if (extras.isNotBlank()) base + "\n" + extras else base
+            }
+
+            // Use TokenPoolManager tiers so the dialog always reflects the actual system
+            val freeTier = com.playstudio.aiteacher.credits.TokenPoolManager.SubscriptionTier.FREE
+            val basicTier = com.playstudio.aiteacher.credits.TokenPoolManager.SubscriptionTier.BASIC
+            val premiumTier = com.playstudio.aiteacher.credits.TokenPoolManager.SubscriptionTier.PREMIUM
+            val proTier = com.playstudio.aiteacher.credits.TokenPoolManager.SubscriptionTier.PRO
+            val enterpriseTier = com.playstudio.aiteacher.credits.TokenPoolManager.SubscriptionTier.ENTERPRISE
+
+            freeDescription?.text = desc(freeTier.tokenAllocation.toInt(), freeTier.businessMarkup, "• Best for trying the app\n• Community support")
+            basicDescriptionText?.text = desc(basicTier.tokenAllocation.toInt(), basicTier.businessMarkup, "• Better pricing on expensive models\n• Email support")
+            proDescriptionText?.text = desc(premiumTier.tokenAllocation.toInt(), premiumTier.businessMarkup, "• More affordable for heavy usage\n• Priority support")
+            premiumDescriptionText?.text = desc(proTier.tokenAllocation.toInt(), proTier.businessMarkup, "• Good value for regular users\n• Advanced AI features\n• Priority support")
+            ultraDescriptionText?.text = desc(enterpriseTier.tokenAllocation.toInt(), enterpriseTier.businessMarkup, "• Most economical for power users\n• o1-pro, GPT-4.5, Claude Opus 4.1\n• Enterprise support")
+
+
             val btnBuy = dialogView.findViewById<Button>(R.id.btnBuy)
             val btnClose = dialogView.findViewById<TextView>(R.id.btnClose)
 

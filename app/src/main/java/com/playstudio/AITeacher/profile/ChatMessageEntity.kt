@@ -17,7 +17,8 @@ import java.util.Date
             childColumns = ["session_id"],
             onDelete = ForeignKey.CASCADE
         )
-    ]
+    ],
+    indices = [androidx.room.Index(value = ["session_id"])] // Index for foreign key
 )
 @TypeConverters(DatabaseConverters::class)
 data class ChatMessageEntity(

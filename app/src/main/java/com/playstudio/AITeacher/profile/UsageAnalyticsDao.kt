@@ -8,13 +8,13 @@ import java.util.Date
 interface UsageAnalyticsDao {
     
     @Query("SELECT * FROM usage_analytics WHERE user_id = :userId ORDER BY date DESC")
-    fun getUsageAnalyticsByUser(userId: Long): Flow<List<UsageAnalyticsEntity>>
+    fun getUsageAnalyticsByUser(userId: String): Flow<List<UsageAnalyticsEntity>>
     
     @Query("SELECT * FROM usage_analytics WHERE user_id = :userId AND date = :date")
-    suspend fun getUsageForDate(userId: Long, date: Date): UsageAnalyticsEntity?
+    suspend fun getUsageForDate(userId: String, date: Date): UsageAnalyticsEntity?
     
     @Query("SELECT * FROM usage_analytics WHERE user_id = :userId AND date BETWEEN :startDate AND :endDate ORDER BY date DESC")
-    fun getUsageForDateRange(userId: Long, startDate: Date, endDate: Date): Flow<List<UsageAnalyticsEntity>>
+    fun getUsageForDateRange(userId: String, startDate: Date, endDate: Date): Flow<List<UsageAnalyticsEntity>>
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUsageAnalytics(usage: UsageAnalyticsEntity): Long
@@ -26,35 +26,35 @@ interface UsageAnalyticsDao {
     suspend fun deleteUsageAnalytics(usage: UsageAnalyticsEntity)
     
     @Query("SELECT SUM(messages_sent) FROM usage_analytics WHERE user_id = :userId")
-    suspend fun getTotalMessagesSent(userId: Long): Int
+    suspend fun getTotalMessagesSent(userId: String): Int
     
     @Query("SELECT SUM(messages_received) FROM usage_analytics WHERE user_id = :userId")
-    suspend fun getTotalMessagesReceived(userId: Long): Int
+    suspend fun getTotalMessagesReceived(userId: String): Int
     
     @Query("SELECT SUM(tokens_consumed) FROM usage_analytics WHERE user_id = :userId")
-    suspend fun getTotalTokensConsumed(userId: Long): Int
+    suspend fun getTotalTokensConsumed(userId: String): Int
     
     @Query("SELECT SUM(chat_sessions_started) FROM usage_analytics WHERE user_id = :userId")
-    suspend fun getTotalChatSessionsStarted(userId: Long): Int
+    suspend fun getTotalChatSessionsStarted(userId: String): Int
     
     @Query("SELECT SUM(total_time_spent_minutes) FROM usage_analytics WHERE user_id = :userId")
-    suspend fun getTotalTimeSpent(userId: Long): Int
+    suspend fun getTotalTimeSpent(userId: String): Int
     
     @Query("SELECT SUM(storage_used_mb) FROM usage_analytics WHERE user_id = :userId")
-    suspend fun getTotalStorageUsed(userId: Long): Double
+    suspend fun getTotalStorageUsed(userId: String): Double
     
     @Query("SELECT SUM(messages_sent) FROM usage_analytics WHERE user_id = :userId AND date BETWEEN :startDate AND :endDate")
-    suspend fun getMessagesSentInPeriod(userId: Long, startDate: Date, endDate: Date): Int
+    suspend fun getMessagesSentInPeriod(userId: String, startDate: Date, endDate: Date): Int
     
     @Query("SELECT SUM(tokens_consumed) FROM usage_analytics WHERE user_id = :userId AND date BETWEEN :startDate AND :endDate")
-    suspend fun getTokensConsumedInPeriod(userId: Long, startDate: Date, endDate: Date): Int
+    suspend fun getTokensConsumedInPeriod(userId: String, startDate: Date, endDate: Date): Int
     
     @Query("SELECT * FROM usage_analytics WHERE user_id = :userId ORDER BY date DESC LIMIT 30")
-    fun getLastThirtyDaysUsage(userId: Long): Flow<List<UsageAnalyticsEntity>>
+    fun getLastThirtyDaysUsage(userId: String): Flow<List<UsageAnalyticsEntity>>
     
     @Query("SELECT * FROM usage_analytics WHERE user_id = :userId ORDER BY date DESC LIMIT 7")
-    fun getLastSevenDaysUsage(userId: Long): Flow<List<UsageAnalyticsEntity>>
+    fun getLastSevenDaysUsage(userId: String): Flow<List<UsageAnalyticsEntity>>
     
     @Query("DELETE FROM usage_analytics WHERE user_id = :userId AND date < :cutoffDate")
-    suspend fun deleteOldUsageData(userId: Long, cutoffDate: Date)
+    suspend fun deleteOldUsageData(userId: String, cutoffDate: Date)
 }

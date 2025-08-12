@@ -3,6 +3,7 @@ package com.playstudio.aiteacher.backend
 import android.content.Context
 import android.util.Log
 import com.playstudio.aiteacher.profile.*
+import com.playstudio.aiteacher.firestore.FirestoreChatManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -186,14 +187,23 @@ class UnifiedBackendClient(private val context: Context) {
     }
     
     /**
-     * Sync chat history to cloud
+     * Sync chat history to cloud - Enhanced with Firestore integration
      */
     suspend fun syncChatHistoryToCloud(): SyncResult {
         return try {
             val currentUser = authService.getCurrentUser() ?: return SyncResult(false, "No user logged in")
+            val firestoreManager = FirestoreChatManager.getInstance()
             
-            // Get recent chat history
+            // First, sync local database to Firestore for real-time access
+            val firestoreSuccess = firestoreManager.syncChatData()
+            if (!firestoreSuccess) {
+                Log.w(TAG, "Firestore sync failed, continuing with REST API sync")
+            }
+            
+            // Get recent chat history - use local database for compatibility
+            // Firestore data will be synced by firestoreManager.syncChatData() above
             val chatSessions = profileManager.getChatHistory().first()
+            
             if (chatSessions.isEmpty()) {
                 return SyncResult(true, "No chat history to sync", 0)
             }
@@ -212,7 +222,7 @@ class UnifiedBackendClient(private val context: Context) {
                     put("isFavorite", session.isFavorite)
                     put("isArchived", session.isArchived)
                     
-                    // Get messages for this session (simplified - in production, batch this)
+                    // Get messages for this session using local export
                     try {
                         val exportData = profileManager.exportChat(session.sessionId)
                         if (exportData != null) {
@@ -243,12 +253,19 @@ class UnifiedBackendClient(private val context: Context) {
                 put("chatSessions", JSONArray(chatData))
                 put("totalSessions", chatSessions.size)
                 put("totalMessages", syncedMessages)
+                put("firestoreSync", firestoreSuccess)
+                put("syncTimestamp", System.currentTimeMillis())
             }
             
             val result = makeApiCall(SYNC_CHAT_HISTORY_ENDPOINT, payload)
             
             if (result.success) {
-                SyncResult(true, "Chat history synced successfully", syncedMessages, Date())
+                val message = if (firestoreSuccess) {
+                    "Chat history synced to both Firestore and REST API successfully"
+                } else {
+                    "Chat history synced to REST API successfully (Firestore sync failed)"
+                }
+                SyncResult(true, message, syncedMessages, Date())
             } else {
                 SyncResult(false, result.message)
             }
@@ -450,4 +467,5 @@ class UnifiedBackendClient(private val context: Context) {
         val message: String,
         val data: JSONObject? = null
     )
+    
 }
