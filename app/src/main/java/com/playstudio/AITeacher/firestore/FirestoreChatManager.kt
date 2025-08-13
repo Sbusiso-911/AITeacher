@@ -1,47 +1,44 @@
 package com.playstudio.aiteacher.firestore
 
-import android.content.Context
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.tasks.await
-import java.util.*
+import java.util.Date
 
 /**
  * FirestoreChatManager - Direct Firestore integration for chat history
- * Handles real-time sync of chat messages and conversations with Firestore
+ * Stores chat sessions and messages in a structure that supports multiple
+ * conversations per user:
+ * users/{userId}/chat_sessions/{sessionId}/messages/{messageId}
  */
 class FirestoreChatManager private constructor() {
-    
+
     companion object {
         private const val TAG = "FirestoreChatManager"
         private const val COLLECTION_USERS = "users"
         private const val COLLECTION_CHAT_SESSIONS = "chat_sessions"
         private const val COLLECTION_MESSAGES = "messages"
-        private const val COLLECTION_CHAT_METADATA = "chat_metadata"
-        
+
         @Volatile
         private var INSTANCE: FirestoreChatManager? = null
-        
-        fun getInstance(): FirestoreChatManager {
-            return INSTANCE ?: synchronized(this) {
+
+        fun getInstance(): FirestoreChatManager =
+            INSTANCE ?: synchronized(this) {
                 INSTANCE ?: FirestoreChatManager().also { INSTANCE = it }
             }
-        }
     }
-    
+
     private val firestore = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
-    
-    /**
-     * Firestore Data Models
-     */
+
     data class FirestoreChatSession(
         val sessionId: String = "",
         val userId: String = "",
@@ -56,25 +53,22 @@ class FirestoreChatManager private constructor() {
         val lastMessagePreview: String = "",
         val tags: List<String> = emptyList()
     ) {
-        // Firestore requires no-arg constructor and public fields
-        constructor() : this("", "", "", "", "general", Date(), Date(), false, false, 0, "", emptyList())
-        
-        fun toMap(): Map<String, Any> = mutableMapOf<String, Any>().apply {
-            put("sessionId", sessionId)
-            put("userId", userId)
-            put("title", title)
-            put("aiModelUsed", aiModelUsed)
-            put("category", category)
-            put("createdAt", createdAt)
-            put("updatedAt", updatedAt)
-            put("isFavorite", isFavorite)
-            put("isArchived", isArchived)
-            put("messageCount", messageCount)
-            put("lastMessagePreview", lastMessagePreview)
-            put("tags", tags)
-        }
+        fun toMap() = mapOf(
+            "sessionId" to sessionId,
+            "userId" to userId,
+            "title" to title,
+            "aiModelUsed" to aiModelUsed,
+            "category" to category,
+            "createdAt" to createdAt,
+            "updatedAt" to updatedAt,
+            "isFavorite" to isFavorite,
+            "isArchived" to isArchived,
+            "messageCount" to messageCount,
+            "lastMessagePreview" to lastMessagePreview,
+            "tags" to tags
+        )
     }
-    
+
     data class FirestoreChatMessage(
         val messageId: String = "",
         val sessionId: String = "",
@@ -89,365 +83,180 @@ class FirestoreChatManager private constructor() {
         val citations: List<Map<String, String>> = emptyList(),
         val followUpQuestions: List<String> = emptyList()
     ) {
-        // Firestore requires no-arg constructor
-        constructor() : this("", "", "", "", "user", Date(), 0, 0L, null, null, emptyList(), emptyList())
-        
-        fun toMap(): Map<String, Any> = mutableMapOf<String, Any>().apply {
-            put("messageId", messageId)
-            put("sessionId", sessionId)
-            put("userId", userId)
-            put("content", content)
-            put("senderType", senderType)
-            put("timestamp", timestamp)
-            put("tokenCount", tokenCount)
-            put("processingTimeMs", processingTimeMs)
-            put("aiModel", aiModel ?: "")
-            put("provider", provider ?: "")
-            put("citations", citations)
-            put("followUpQuestions", followUpQuestions)
-        }
+        fun toMap() = mapOf(
+            "messageId" to messageId,
+            "sessionId" to sessionId,
+            "userId" to userId,
+            "content" to content,
+            "senderType" to senderType,
+            "timestamp" to timestamp,
+            "tokenCount" to tokenCount,
+            "processingTimeMs" to processingTimeMs,
+            "aiModel" to aiModel,
+            "provider" to provider,
+            "citations" to citations,
+            "followUpQuestions" to followUpQuestions
+        )
     }
-    
-    /**
-     * Save a chat session to Firestore (simplified for current structure)
-     */
-    suspend fun saveChatSession(session: FirestoreChatSession): Boolean {
-        return try {
-            val userId = getCurrentUserId() ?: return false
-            
-            // In the current structure, we don't save individual sessions
-            // The session data is derived from the messages array
-            Log.d(TAG, "Chat session handling integrated with message structure")
-            true
-        } catch (e: Exception) {
-            Log.e(TAG, "Error with chat session", e)
-            false
-        }
+
+    private fun sessionsCollection(userId: String) =
+        firestore.collection(COLLECTION_USERS).document(userId).collection(COLLECTION_CHAT_SESSIONS)
+
+    private fun messagesCollection(userId: String, sessionId: String) =
+        sessionsCollection(userId).document(sessionId).collection(COLLECTION_MESSAGES)
+
+    /** Save or update a chat session document. */
+    suspend fun saveChatSession(session: FirestoreChatSession): Boolean = try {
+        val userId = getCurrentUserId() ?: return false
+        sessionsCollection(userId).document(session.sessionId)
+            .set(session.copy(userId = userId).toMap(), SetOptions.merge()).await()
+        true
+    } catch (e: Exception) {
+        Log.e(TAG, "Error saving chat session", e)
+        false
     }
-    
-    /**
-     * Save a chat message to Firestore (simplified for current structure)
-     */
-    suspend fun saveChatMessage(message: FirestoreChatMessage): Boolean {
-        return try {
-            val userId = getCurrentUserId() ?: return false
-            
-            // In the current structure, messages are stored as arrays in chats/{userId}
-            // This would require reading the current array, adding the message, and updating
-            // For now, we'll return true as the existing app handles message saving differently
-            Log.d(TAG, "Chat message handling integrated with existing message structure")
-            true
-        } catch (e: Exception) {
-            Log.e(TAG, "Error with chat message", e)
-            false
-        }
+
+    /** Save a single chat message under its session and update session metadata. */
+    suspend fun saveChatMessage(message: FirestoreChatMessage): Boolean = try {
+        val userId = getCurrentUserId() ?: return false
+        val messageData = message.copy(userId = userId)
+
+        messagesCollection(userId, messageData.sessionId)
+            .document(messageData.messageId)
+            .set(messageData.toMap(), SetOptions.merge()).await()
+
+        sessionsCollection(userId).document(messageData.sessionId)
+            .set(
+                mapOf(
+                    "updatedAt" to messageData.timestamp,
+                    "messageCount" to FieldValue.increment(1),
+                    "lastMessagePreview" to messageData.content.take(100),
+                    "aiModelUsed" to (messageData.aiModel ?: "")
+                ),
+                SetOptions.merge()
+            ).await()
+        true
+    } catch (e: Exception) {
+        Log.e(TAG, "Error saving chat message", e)
+        false
     }
-    
-    /**
-     * Get all chat sessions for current user
-     */
-    suspend fun getChatSessions(): List<FirestoreChatSession> {
-        return try {
-            val userId = getCurrentUserId() ?: return emptyList()
-            
-            Log.d(TAG, "getChatSessions: Looking for chat data for user: $userId")
-            
-            // Query the existing chats/{userId} structure
-            val chatDoc = firestore.collection("chats")
-                .document(userId)
-                .get()
-                .await()
-            
-            Log.d(TAG, "getChatSessions: Document exists: ${chatDoc.exists()}")
-            if (!chatDoc.exists()) {
-                Log.d(TAG, "getChatSessions: No document found for user $userId")
-                return emptyList()
-            }
-            
-            @Suppress("UNCHECKED_CAST")
-            val messages = chatDoc.get("messages") as? List<Map<String, Any>> ?: emptyList()
-            val lastModel = chatDoc.getString("lastModel") ?: "unknown"
-            val lastUsed = chatDoc.getTimestamp("lastUsed")
-            
-            Log.d(TAG, "getChatSessions: Found ${messages.size} messages for user $userId")
-            
-            // Create a single session from the existing data structure
-            if (messages.isNotEmpty()) {
-                // Get the last message content for preview
-                val lastMessage = messages.lastOrNull()
-                val lastMessagePreview = lastMessage?.get("content") as? String ?: ""
-                
-                // Create a better title from the first user message
-                val firstUserMessage = messages.find { (it["role"] as? String) == "user" }
-                val title = (firstUserMessage?.get("content") as? String)?.take(50) ?: "Chat History"
-                
-                val session = FirestoreChatSession(
-                    sessionId = userId, // Use userId as session ID since there's only one session per user
-                    userId = userId,
-                    title = title,
-                    createdAt = lastUsed?.toDate() ?: Date(),
-                    updatedAt = lastUsed?.toDate() ?: Date(),
-                    messageCount = messages.size,
-                    aiModelUsed = lastModel,
-                    category = "general",
-                    tags = emptyList(),
-                    isFavorite = false,
-                    isArchived = false,
-                    lastMessagePreview = lastMessagePreview
-                )
-                Log.d(TAG, "getChatSessions: Created session with title: '$title' and ${messages.size} messages")
-                listOf(session)
-            } else {
-                Log.d(TAG, "getChatSessions: No messages found, returning empty list")
-                emptyList()
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error getting chat sessions", e)
-            emptyList()
-        }
+
+    /** Retrieve all chat sessions for the current user. */
+    suspend fun getChatSessions(): List<FirestoreChatSession> = try {
+        val userId = getCurrentUserId() ?: return emptyList()
+        sessionsCollection(userId)
+            .orderBy("updatedAt", Query.Direction.DESCENDING)
+            .get().await().documents.mapNotNull { it.toObject(FirestoreChatSession::class.java) }
+    } catch (e: Exception) {
+        Log.e(TAG, "Error getting chat sessions", e)
+        emptyList()
     }
-    
-    /**
-     * Get messages for a specific chat session
-     */
-    suspend fun getChatMessages(sessionId: String): List<FirestoreChatMessage> {
-        return try {
-            val userId = getCurrentUserId() ?: return emptyList()
-            
-            // Query the existing chats/{userId} structure
-            val chatDoc = firestore.collection("chats")
-                .document(userId)
-                .get()
-                .await()
-            
-            if (!chatDoc.exists()) {
-                return emptyList()
-            }
-            
-            @Suppress("UNCHECKED_CAST")
-            val messages = chatDoc.get("messages") as? List<Map<String, Any>> ?: emptyList()
-            
-            // Convert the message array to FirestoreChatMessage objects
-            messages.mapIndexedNotNull { index, messageMap ->
-                try {
-                    val content = messageMap["content"] as? String ?: ""
-                    val role = messageMap["role"] as? String ?: "user"
-                    val model = messageMap["model"] as? String ?: "unknown"
-                    val timestamp = messageMap["timestamp"] as? Long ?: System.currentTimeMillis()
-                    
-                    FirestoreChatMessage(
-                        messageId = "msg_${index}",
-                        sessionId = sessionId,
-                        content = content,
-                        senderType = if (role == "user") "user" else "ai",
-                        timestamp = Date(timestamp),
-                        aiModel = model,
-                        provider = "openai"
-                    )
-                } catch (e: Exception) {
-                    Log.w(TAG, "Error parsing message at index $index", e)
-                    null
-                }
-            }.sortedBy { it.timestamp }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error getting chat messages for session $sessionId", e)
-            emptyList()
-        }
+
+    /** Retrieve all messages for a specific chat session. */
+    suspend fun getChatMessages(sessionId: String): List<FirestoreChatMessage> = try {
+        val userId = getCurrentUserId() ?: return emptyList()
+        messagesCollection(userId, sessionId)
+            .orderBy("timestamp", Query.Direction.ASCENDING)
+            .get().await().documents.mapNotNull { it.toObject(FirestoreChatMessage::class.java) }
+    } catch (e: Exception) {
+        Log.e(TAG, "Error getting chat messages", e)
+        emptyList()
     }
-    
-    /**
-     * Real-time listener for chat sessions
-     */
+
+    /** Real-time updates for chat sessions. */
     fun getChatSessionsFlow(): Flow<List<FirestoreChatSession>> = callbackFlow {
         val userId = getCurrentUserId()
         if (userId == null) {
             close()
             return@callbackFlow
         }
-        
-        val listener = firestore.collection("chats")
-            .document(userId)
+        val listener = sessionsCollection(userId)
+            .orderBy("updatedAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.e(TAG, "Error listening to chat sessions", error)
                     return@addSnapshotListener
                 }
-                
-                val sessions = if (snapshot != null && snapshot.exists()) {
-                    @Suppress("UNCHECKED_CAST")
-                    val messages = snapshot.get("messages") as? List<Map<String, Any>> ?: emptyList()
-                    val lastModel = snapshot.getString("lastModel") ?: "unknown"
-                    val lastUsed = snapshot.getTimestamp("lastUsed")
-                    
-                    if (messages.isNotEmpty()) {
-                        val lastMessage = messages.lastOrNull()
-                        val lastMessagePreview = lastMessage?.get("content") as? String ?: ""
-                        val firstUserMessage = messages.find { (it["role"] as? String) == "user" }
-                        val title = (firstUserMessage?.get("content") as? String)?.take(50) ?: "Chat History"
-                        
-                        val session = FirestoreChatSession(
-                            sessionId = userId,
-                            userId = userId,
-                            title = title,
-                            createdAt = lastUsed?.toDate() ?: Date(),
-                            updatedAt = lastUsed?.toDate() ?: Date(),
-                            messageCount = messages.size,
-                            aiModelUsed = lastModel,
-                            category = "general",
-                            tags = emptyList(),
-                            isFavorite = false,
-                            isArchived = false,
-                            lastMessagePreview = lastMessagePreview
-                        )
-                        listOf(session)
-                    } else {
-                        emptyList()
-                    }
-                } else {
-                    emptyList()
-                }
-                
+                val sessions = snapshot?.documents?.mapNotNull { it.toObject(FirestoreChatSession::class.java) } ?: emptyList()
                 trySend(sessions)
             }
-        
         awaitClose { listener.remove() }
     }
-    
-    /**
-     * Real-time listener for chat messages in a session
-     */
+
+    /** Real-time updates for chat messages within a session. */
     fun getChatMessagesFlow(sessionId: String): Flow<List<FirestoreChatMessage>> = callbackFlow {
         val userId = getCurrentUserId()
         if (userId == null) {
             close()
             return@callbackFlow
         }
-        
-        val listener = firestore.collection("chats")
-            .document(userId)
+        val listener = messagesCollection(userId, sessionId)
+            .orderBy("timestamp", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.e(TAG, "Error listening to chat messages", error)
                     return@addSnapshotListener
                 }
-                
-                val messages = if (snapshot != null && snapshot.exists()) {
-                    @Suppress("UNCHECKED_CAST")
-                    val messageArray = snapshot.get("messages") as? List<Map<String, Any>> ?: emptyList()
-                    
-                    messageArray.mapIndexedNotNull { index, messageMap ->
-                        try {
-                            val content = messageMap["content"] as? String ?: ""
-                            val role = messageMap["role"] as? String ?: "user"
-                            val model = messageMap["model"] as? String ?: "unknown"
-                            val timestamp = messageMap["timestamp"] as? Long ?: System.currentTimeMillis()
-                            
-                            FirestoreChatMessage(
-                                messageId = "msg_${index}",
-                                sessionId = sessionId,
-                                content = content,
-                                senderType = if (role == "user") "user" else "ai",
-                                timestamp = Date(timestamp),
-                                aiModel = model,
-                                provider = "openai"
-                            )
-                        } catch (e: Exception) {
-                            Log.w(TAG, "Error parsing message at index $index", e)
-                            null
-                        }
-                    }.sortedBy { it.timestamp }
-                } else {
-                    emptyList()
-                }
-                
+                val messages = snapshot?.documents?.mapNotNull { it.toObject(FirestoreChatMessage::class.java) } ?: emptyList()
                 trySend(messages)
             }
-        
         awaitClose { listener.remove() }
     }
-    
-    /**
-     * Delete chat history for current user (simplified for current structure)
-     */
-    suspend fun deleteChatHistory(): Boolean {
-        return try {
-            val userId = getCurrentUserId() ?: return false
-            
-            firestore.collection("chats")
-                .document(userId)
-                .delete()
-                .await()
-            
-            Log.d(TAG, "Chat history deleted successfully")
-            true
-        } catch (e: Exception) {
-            Log.e(TAG, "Error deleting chat history", e)
-            false
-        }
-    }
-    
-    /**
-     * Search chat messages by content (simplified for current structure)
-     */
-    suspend fun searchChatMessages(query: String, limit: Int = 50): List<FirestoreChatMessage> {
-        return try {
-            val userId = getCurrentUserId() ?: return emptyList()
-            
-            val messages = getChatMessages(userId) // Use userId as sessionId
-            val matchingMessages = messages.filter { 
-                it.content.contains(query, ignoreCase = true) 
+
+    /** Delete all chat history for the current user. */
+    suspend fun deleteChatHistory(): Boolean = try {
+        val userId = getCurrentUserId() ?: return false
+        val sessions = sessionsCollection(userId).get().await()
+        for (session in sessions.documents) {
+            val messages = session.reference.collection(COLLECTION_MESSAGES).get().await()
+            for (msg in messages.documents) {
+                msg.reference.delete().await()
             }
-            
-            matchingMessages.take(limit)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error searching chat messages", e)
-            emptyList()
+            session.reference.delete().await()
         }
+        true
+    } catch (e: Exception) {
+        Log.e(TAG, "Error deleting chat history", e)
+        false
     }
-    
-    /**
-     * Get chat statistics for current user
-     */
-    suspend fun getChatStatistics(): Map<String, Int> {
-        return try {
-            val userId = getCurrentUserId() ?: return mutableMapOf<String, Int>()
-            
-            Log.d(TAG, "getChatStatistics: Looking for chat data for user: $userId")
-            
-            // Query the existing chats/{userId} structure directly
-            val chatDoc = firestore.collection("chats")
-                .document(userId)
-                .get()
-                .await()
-            
-            if (!chatDoc.exists()) {
-                return mutableMapOf<String, Int>().apply {
-                    put("totalSessions", 0)
-                    put("totalMessages", 0)
-                    put("favoriteChats", 0)
-                    put("archivedChats", 0)
-                }
-            }
-            
-            @Suppress("UNCHECKED_CAST")
-            val messages = chatDoc.get("messages") as? List<Map<String, Any>> ?: emptyList()
-            val totalSessions = if (messages.isNotEmpty()) 1 else 0
-            
-            mutableMapOf<String, Int>().apply {
-                put("totalSessions", totalSessions)
-                put("totalMessages", messages.size)
-                put("favoriteChats", 0) // Not supported in current structure
-                put("archivedChats", 0)  // Not supported in current structure
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error getting chat statistics", e)
-            mutableMapOf<String, Int>()
+
+    /** Search messages containing [query] across all sessions. */
+    suspend fun searchChatMessages(query: String, limit: Int = 50): List<FirestoreChatMessage> = try {
+        val userId = getCurrentUserId() ?: return emptyList()
+        firestore.collectionGroup(COLLECTION_MESSAGES)
+            .whereEqualTo("userId", userId)
+            .get().await().documents.mapNotNull { it.toObject(FirestoreChatMessage::class.java) }
+            .filter { it.content.contains(query, ignoreCase = true) }
+            .sortedBy { it.timestamp }
+            .take(limit)
+    } catch (e: Exception) {
+        Log.e(TAG, "Error searching chat messages", e)
+        emptyList()
+    }
+
+    /** Aggregate simple chat statistics. */
+    suspend fun getChatStatistics(): Map<String, Int> = try {
+        val userId = getCurrentUserId() ?: return emptyMap()
+        val sessionsSnapshot = sessionsCollection(userId).get().await()
+        var totalMessages = 0
+        var favorites = 0
+        var archived = 0
+        for (doc in sessionsSnapshot.documents) {
+            totalMessages += (doc.getLong("messageCount") ?: 0L).toInt()
+            if (doc.getBoolean("isFavorite") == true) favorites++
+            if (doc.getBoolean("isArchived") == true) archived++
         }
+        mapOf(
+            "totalSessions" to sessionsSnapshot.size(),
+            "totalMessages" to totalMessages,
+            "favoriteChats" to favorites,
+            "archivedChats" to archived
+        )
+    } catch (e: Exception) {
+        Log.e(TAG, "Error getting chat statistics", e)
+        emptyMap()
     }
-    
-    /**
-     * Helper method to convert map to FirestoreChatMessage
-     */
+
     fun convertMapToFirestoreMessage(
         messageMap: Map<String, Any>,
         sessionId: String,
@@ -464,26 +273,48 @@ class FirestoreChatManager private constructor() {
             provider = "openai"
         )
     }
-    
-    /**
-     * Bulk sync from existing Firestore chats structure 
-     */
-    suspend fun syncChatData(): Boolean {
-        return try {
-            val userId = getCurrentUserId() ?: return false
-            Log.d(TAG, "Syncing chat data for user: $userId")
-            
-            // This method can be expanded later for additional sync operations
-            true
-        } catch (e: Exception) {
-            Log.e(TAG, "Error syncing chat data", e)
-            false
+
+    /** Bulk sync local Room history to Firestore. */
+    suspend fun syncChatData(): Boolean = try {
+        val userId = getCurrentUserId() ?: return false
+        val conversations = com.playstudio.aiteacher.history.DatabaseProvider.database
+            .conversationDao().getConversations().first()
+        for (conversation in conversations) {
+            val messages = com.playstudio.aiteacher.history.DatabaseProvider.database
+                .messageDao().getMessages(conversation.id).first()
+
+            val session = FirestoreChatSession(
+                sessionId = conversation.id,
+                userId = userId,
+                title = conversation.title,
+                aiModelUsed = "gpt-3.5-turbo",
+                createdAt = Date(messages.firstOrNull()?.timestamp ?: System.currentTimeMillis()),
+                updatedAt = Date(messages.lastOrNull()?.timestamp ?: System.currentTimeMillis()),
+                messageCount = messages.size,
+                lastMessagePreview = messages.lastOrNull()?.content?.take(100) ?: ""
+            )
+            saveChatSession(session)
+
+            for (msg in messages) {
+                val fsMessage = FirestoreChatMessage(
+                    messageId = msg.id,
+                    sessionId = conversation.id,
+                    userId = userId,
+                    content = msg.content,
+                    senderType = if (msg.isUser) "user" else "ai",
+                    timestamp = Date(msg.timestamp),
+                    aiModel = "gpt-3.5-turbo",
+                    provider = "openai"
+                )
+                saveChatMessage(fsMessage)
+            }
         }
+        true
+    } catch (e: Exception) {
+        Log.e(TAG, "Error syncing chat data", e)
+        false
     }
-    
-    // Private helper methods
-    
-    private fun getCurrentUserId(): String? {
-        return auth.currentUser?.uid
-    }
+
+    private fun getCurrentUserId(): String? = auth.currentUser?.uid
 }
+

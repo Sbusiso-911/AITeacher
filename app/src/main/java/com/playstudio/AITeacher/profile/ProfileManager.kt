@@ -2,7 +2,6 @@ package com.playstudio.aiteacher.profile
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.net.Uri
 import android.util.Log
 import com.playstudio.aiteacher.firestore.FirestoreChatManager
 import kotlinx.coroutines.flow.Flow
@@ -10,9 +9,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import org.json.JSONArray
-import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -742,33 +738,20 @@ class ProfileManager(private val context: Context) {
      */
     suspend fun clearFirestoreAndFreshSync(): Boolean {
         return try {
-            val user = getCurrentUserEntity() ?: return false
-            val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
-            
             Log.e(TAG, "=== CLEARING OLD FIRESTORE DATA AND DOING FRESH SYNC ===")
-            Log.e(TAG, "AuthService user ID: ${user.userId}")
-            Log.e(TAG, "Firebase user ID: ${firebaseUser?.uid}")
-            Log.e(TAG, "Firebase user email: ${firebaseUser?.email}")
-            
-            val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-            
-            // Delete the old document
-            firestore.collection("chats")
-                .document(user.userId)
-                .delete()
-                .await()
-            
-            Log.e(TAG, "Old Firestore data cleared for user ${user.userId}, now doing fresh sync...")
-            
-            // Force a fresh sync
-            val syncResult = syncChatHistoryToFirestore()
-            
+
+            firestoreChatManager.deleteChatHistory()
+
+            Log.e(TAG, "Old Firestore data cleared, now doing fresh sync...")
+
+            val syncResult = firestoreChatManager.syncChatData()
+
             if (syncResult) {
                 Log.e(TAG, "=== FRESH SYNC COMPLETED SUCCESSFULLY ===")
             } else {
                 Log.e(TAG, "=== FRESH SYNC FAILED ===")
             }
-            
+
             syncResult
         } catch (e: Exception) {
             Log.e(TAG, "Error in clear and fresh sync", e)
@@ -804,30 +787,9 @@ class ProfileManager(private val context: Context) {
             
             // 2. Clear Firestore chat history
             try {
-                val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
-                if (firebaseUser != null) {
-                    val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                    
-                    // Delete the user's chat document
-                    firestore.collection("chats")
-                        .document(firebaseUser.uid)
-                        .delete()
-                        .await()
-                    
-                    // Also try with the AuthService user ID format in case it's different
-                    val authUser = getCurrentUserEntity()
-                    if (authUser != null && authUser.userId != firebaseUser.uid) {
-                        firestore.collection("chats")
-                            .document(authUser.userId)
-                            .delete()
-                            .await()
-                    }
-                    
-                    firestoreSuccess = true
+                firestoreSuccess = firestoreChatManager.deleteChatHistory()
+                if (firestoreSuccess) {
                     Log.e(TAG, "Firestore chat history cleared successfully")
-                } else {
-                    Log.w(TAG, "No Firebase user logged in, skipping Firestore deletion")
-                    firestoreSuccess = true // Not an error if user not logged in
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to clear Firestore", e)
@@ -1059,86 +1021,11 @@ class ProfileManager(private val context: Context) {
     /**
      * Sync chat history from SharedPreferences to Firestore for cross-device access
      */
-    suspend fun syncChatHistoryToFirestore(): Boolean {
-        return try {
-            val user = getCurrentUserEntity() ?: return false
-            Log.d(TAG, "Starting sync from SharedPreferences to Firestore")
-            
-            val sharedPreferences = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-            val savedChatsJson = sharedPreferences.getString("chat_history", "[]") ?: "[]"
-            Log.e(TAG, "=== SYNC DEBUG ===")
-            Log.e(TAG, "User trying to sync: ${user.userId}")
-            Log.e(TAG, "SharedPrefs chat_history length: ${savedChatsJson.length}")
-            Log.e(TAG, "Raw SharedPreferences data: ${savedChatsJson.take(500)}...")
-            
-            val savedChatsArray = org.json.JSONArray(savedChatsJson)
-            
-            if (savedChatsArray.length() == 0) {
-                Log.e(TAG, "=== NO CHAT HISTORY IN SHAREDPREFS TO SYNC ===")
-                return true
-            }
-            
-            Log.e(TAG, "Found ${savedChatsArray.length()} chat sessions in SharedPreferences")
-            
-            // Convert all SharedPreferences messages to Firestore format
-            val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-            val allMessages = mutableListOf<Map<String, Any>>()
-            
-            // Process all conversations and collect all messages
-            for (i in 0 until savedChatsArray.length()) {
-                val chatObject = savedChatsArray.getJSONObject(i)
-                val conversationId = chatObject.optString("id", "")
-                val messagesArray = chatObject.optJSONArray("messages") ?: continue
-                
-                Log.d(TAG, "Processing conversation $conversationId with ${messagesArray.length()} messages")
-                
-                for (j in 0 until messagesArray.length()) {
-                    val message = messagesArray.getJSONObject(j)
-                    val isUser = message.optBoolean("isUser", true)
-                    val originalTimestamp = message.optLong("timestamp", System.currentTimeMillis())
-                    
-                    allMessages.add(mutableMapOf<String, Any>().apply {
-                        put("content", message.optString("content", ""))
-                        put("role", if (isUser) "user" else "assistant")
-                        put("model", message.optString("model", "gpt-3.5-turbo"))
-                        put("timestamp", originalTimestamp) // Use original timestamp
-                        put("fromWebapp", false)
-                        put("conversationId", conversationId) // Track which conversation this came from
-                    })
-                }
-            }
-            
-            if (allMessages.isNotEmpty()) {
-                // Sort messages by timestamp to maintain chronological order
-                val sortedMessages = allMessages.sortedBy { it["timestamp"] as Long }
-                
-                // Get the most recent message timestamp for lastUsed
-                val lastTimestamp = sortedMessages.lastOrNull()?.get("timestamp") as? Long ?: System.currentTimeMillis()
-                
-                // Save all messages to Firestore chats/{userId} - this will overwrite old data
-                val chatData = mutableMapOf<String, Any>().apply {
-                    put("messages", sortedMessages)
-                    put("lastModel", sortedMessages.lastOrNull()?.get("model") as? String ?: "gpt-3.5-turbo")
-                    put("lastUsed", com.google.firebase.Timestamp(java.util.Date(lastTimestamp)))
-                    put("syncedAt", com.google.firebase.Timestamp.now())
-                    put("syncedFrom", "mobile_sharedprefs")
-                }
-                
-                firestore.collection("chats")
-                    .document(user.userId)
-                    .set(chatData)
-                    .await()
-                
-                Log.d(TAG, "Successfully synced ${allMessages.size} messages from ${savedChatsArray.length()} conversations to Firestore")
-                Log.d(TAG, "Last message timestamp: ${java.util.Date(lastTimestamp)}")
-            }
-            
-            Log.i(TAG, "Chat history sync completed successfully")
-            true
-        } catch (e: Exception) {
-            Log.e(TAG, "Error syncing chat history to Firestore", e)
-            false
-        }
+    suspend fun syncChatHistoryToFirestore(): Boolean = try {
+        firestoreChatManager.syncChatData()
+    } catch (e: Exception) {
+        Log.e(TAG, "Error syncing chat history to Firestore", e)
+        false
     }
     
     /**
