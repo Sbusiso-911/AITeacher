@@ -52,6 +52,7 @@ class FirebaseAuthenticationService(private val context: Context) {
         val profilePictureUrl: String? = null,
         val createdAt: Long = System.currentTimeMillis(),
         val lastLoginAt: Long = System.currentTimeMillis(),
+        val lastSyncAt: Long = 0L,
         val subscriptionTier: String = "FREE",
         val subscriptionStatus: String = "INACTIVE",
         val subscriptionExpiresAt: Long = 0L,

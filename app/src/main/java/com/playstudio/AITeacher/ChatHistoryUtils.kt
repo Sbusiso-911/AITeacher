@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken
 import com.playstudio.aiteacher.history.DatabaseProvider
 import com.playstudio.aiteacher.history.MessageEntity
 import com.playstudio.aiteacher.history.ConversationEntity
+import com.playstudio.aiteacher.firestore.FirestoreChatManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -162,22 +163,43 @@ object ChatHistoryUtils {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val database = DatabaseProvider.database
+                val messageId = "msg_${System.currentTimeMillis()}_${(0..999).random()}"
                 val messageEntity = MessageEntity(
-                    id = "msg_${System.currentTimeMillis()}_${(0..999).random()}",
+                    id = messageId,
                     conversationId = conversationId,
                     content = message,
                     isUser = isUser,
                     timestamp = System.currentTimeMillis()
                 )
                 
+                // Save to local Room database first
                 database.messageDao().insertMessage(messageEntity)
                 
-                // Auto-sync to cloud periodically
+                // Also save directly to Firestore for real-time sync
+                val firestoreManager = FirestoreChatManager.getInstance()
+                val firestoreMessage = FirestoreChatManager.FirestoreChatMessage(
+                    messageId = messageId,
+                    sessionId = conversationId,
+                    content = message,
+                    senderType = if (isUser) "user" else "ai",
+                    timestamp = java.util.Date(System.currentTimeMillis()),
+                    aiModel = aiModel,
+                    provider = provider
+                )
+                
+                val success = firestoreManager.saveChatMessage(firestoreMessage)
+                if (success) {
+                    Log.d(TAG, "Message saved to both local DB and Firestore")
+                } else {
+                    Log.w(TAG, "Message saved to local DB but Firestore save failed")
+                }
+                
+                // Auto-sync remaining history periodically
                 val sharedPrefs = context.getSharedPreferences("sync_status", Context.MODE_PRIVATE)
                 val lastSync = sharedPrefs.getLong("last_chat_sync", 0)
                 val currentTime = System.currentTimeMillis()
                 
-                // Sync every 30 minutes
+                // Full sync every 30 minutes
                 if (currentTime - lastSync > 30 * 60 * 1000) {
                     syncToCloud(context)
                     sharedPrefs.edit().putLong("last_chat_sync", currentTime).apply()
@@ -190,15 +212,20 @@ object ChatHistoryUtils {
     }
 
     /**
-     * Sync local chat history to cloud
+     * Sync local chat history to Firestore cloud
      */
     private suspend fun syncToCloud(context: Context) {
         try {
-            // Cloud sync will be implemented later
-            // This will be called automatically by the switching service
-            Log.d(TAG, "Chat history sync to cloud initiated")
+            val firestoreManager = FirestoreChatManager.getInstance()
+            val success = firestoreManager.syncChatData()
+            
+            if (success) {
+                Log.d(TAG, "Chat history successfully synced to Firestore")
+            } else {
+                Log.w(TAG, "Chat history sync to Firestore failed")
+            }
         } catch (e: Exception) {
-            Log.e(TAG, "Error syncing chat history to cloud", e)
+            Log.e(TAG, "Error syncing chat history to Firestore", e)
         }
     }
 
@@ -231,32 +258,103 @@ object ChatHistoryUtils {
     }
 
     /**
-     * Get conversation statistics
+     * Get conversation statistics from both local and Firestore
      */
     suspend fun getConversationStats(context: Context): Map<String, Int> {
         return try {
-            val database = DatabaseProvider.database
-            val conversations = database.conversationDao().getConversations().first()
-            val totalConversations = conversations.size
-            var totalMessages = 0
+            // Try to get stats from Firestore first
+            val firestoreManager = FirestoreChatManager.getInstance()
+            val firestoreStats = firestoreManager.getChatStatistics()
             
-            conversations.forEach { conversation ->
-                val messages = database.messageDao().getMessages(conversation.id).first()
-                totalMessages += messages.size
+            if (firestoreStats.isNotEmpty()) {
+                Log.d(TAG, "Retrieved stats from Firestore")
+                mapOf(
+                    "totalConversations" to (firestoreStats["totalSessions"] ?: 0),
+                    "totalMessages" to (firestoreStats["totalMessages"] ?: 0),
+                    "todayMessages" to 0, // TODO: Implement today message counting
+                    "favoriteChats" to (firestoreStats["favoriteChats"] ?: 0)
+                )
+            } else {
+                // Fallback to local database
+                val database = DatabaseProvider.database
+                val conversations = database.conversationDao().getConversations().first()
+                val totalConversations = conversations.size
+                var totalMessages = 0
+                
+                conversations.forEach { conversation ->
+                    val messages = database.messageDao().getMessages(conversation.id).first()
+                    totalMessages += messages.size
+                }
+                
+                Log.d(TAG, "Retrieved stats from local database")
+                mapOf(
+                    "totalConversations" to totalConversations,
+                    "totalMessages" to totalMessages,
+                    "todayMessages" to 0,
+                    "favoriteChats" to 0
+                )
             }
-            
-            mapOf(
-                "totalConversations" to totalConversations,
-                "totalMessages" to totalMessages,
-                "todayMessages" to 0 // TODO: Implement today message counting
-            )
         } catch (e: Exception) {
             Log.e(TAG, "Error getting conversation stats", e)
             mapOf(
                 "totalConversations" to 0,
                 "totalMessages" to 0,
-                "todayMessages" to 0
+                "todayMessages" to 0,
+                "favoriteChats" to 0
             )
+        }
+    }
+    
+    /**
+     * Get chat history from Firestore with fallback to local database
+     */
+    suspend fun getAllChatHistoryFromFirestore(context: Context): List<ChatMessage> {
+        return try {
+            val firestoreManager = FirestoreChatManager.getInstance()
+            val sessions = firestoreManager.getChatSessions()
+            val allMessages = mutableListOf<ChatMessage>()
+            
+            sessions.forEach { session ->
+                val messages = firestoreManager.getChatMessages(session.sessionId)
+                val chatMessages = messages.map { firestoreMessage ->
+                    ChatMessage(
+                        id = firestoreMessage.messageId,
+                        message = firestoreMessage.content,
+                        isUser = firestoreMessage.senderType == "user",
+                        timestamp = firestoreMessage.timestamp.time,
+                        aiModel = firestoreMessage.aiModel,
+                        provider = firestoreMessage.provider,
+                        conversationId = firestoreMessage.sessionId
+                    )
+                }
+                allMessages.addAll(chatMessages)
+            }
+            
+            Log.d(TAG, "Retrieved ${allMessages.size} messages from Firestore")
+            allMessages.sortedBy { it.timestamp }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting chat history from Firestore, falling back to local", e)
+            // Fallback to local database
+            getAllChatHistory(context)
+        }
+    }
+    
+    /**
+     * Force full sync of local database to Firestore
+     */
+    fun forceSyncToFirestore(context: Context, onComplete: (Boolean) -> Unit) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                syncToCloud(context)
+                withContext(Dispatchers.Main) {
+                    onComplete(true)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Force sync to Firestore failed", e)
+                withContext(Dispatchers.Main) {
+                    onComplete(false)
+                }
+            }
         }
     }
 }

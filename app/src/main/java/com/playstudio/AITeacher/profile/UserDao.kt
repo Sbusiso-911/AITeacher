@@ -8,7 +8,7 @@ import java.util.Date
 interface UserDao {
     
     @Query("SELECT * FROM users WHERE user_id = :userId")
-    suspend fun getUserById(userId: Long): UserEntity?
+    suspend fun getUserById(userId: String): UserEntity?
     
     @Query("SELECT * FROM users WHERE email = :email")
     suspend fun getUserByEmail(email: String): UserEntity?
@@ -17,7 +17,7 @@ interface UserDao {
     suspend fun authenticateUser(email: String, passwordHash: String): UserEntity?
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertUser(user: UserEntity): Long
+    suspend fun insertUser(user: UserEntity)
     
     @Update
     suspend fun updateUser(user: UserEntity)
@@ -26,31 +26,31 @@ interface UserDao {
     suspend fun deleteUser(user: UserEntity)
     
     @Query("UPDATE users SET last_login = :loginTime WHERE user_id = :userId")
-    suspend fun updateLastLogin(userId: Long, loginTime: Date)
+    suspend fun updateLastLogin(userId: String, loginTime: Date)
     
     @Query("UPDATE users SET profile_picture_url = :url WHERE user_id = :userId")
-    suspend fun updateProfilePicture(userId: Long, url: String)
+    suspend fun updateProfilePicture(userId: String, url: String)
     
     @Query("UPDATE users SET theme_preference = :theme WHERE user_id = :userId")
-    suspend fun updateThemePreference(userId: Long, theme: String)
+    suspend fun updateThemePreference(userId: String, theme: String)
     
     @Query("UPDATE users SET language_setting = :language WHERE user_id = :userId")
-    suspend fun updateLanguageSetting(userId: Long, language: String)
+    suspend fun updateLanguageSetting(userId: String, language: String)
     
     @Query("UPDATE users SET notification_enabled = :enabled WHERE user_id = :userId")
-    suspend fun updateNotificationSettings(userId: Long, enabled: Boolean)
+    suspend fun updateNotificationSettings(userId: String, enabled: Boolean)
     
     @Query("UPDATE users SET google_id = :googleId WHERE user_id = :userId")
-    suspend fun updateGoogleId(userId: Long, googleId: String)
+    suspend fun updateGoogleId(userId: String, googleId: String)
     
     @Query("UPDATE users SET newsletter_subscribed = :subscribed WHERE user_id = :userId")
-    suspend fun updateNewsletterSubscription(userId: Long, subscribed: Boolean)
+    suspend fun updateNewsletterSubscription(userId: String, subscribed: Boolean)
     
     @Query("UPDATE users SET product_updates_subscribed = :subscribed WHERE user_id = :userId")
-    suspend fun updateProductUpdatesSubscription(userId: Long, subscribed: Boolean)
+    suspend fun updateProductUpdatesSubscription(userId: String, subscribed: Boolean)
     
     @Query("UPDATE users SET promotional_emails_subscribed = :subscribed WHERE user_id = :userId")
-    suspend fun updatePromotionalEmailsSubscription(userId: Long, subscribed: Boolean)
+    suspend fun updatePromotionalEmailsSubscription(userId: String, subscribed: Boolean)
     
     @Query("SELECT COUNT(*) FROM users WHERE is_active = 1")
     suspend fun getActiveUserCount(): Int

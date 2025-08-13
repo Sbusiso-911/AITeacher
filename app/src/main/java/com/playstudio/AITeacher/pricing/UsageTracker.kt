@@ -2,7 +2,6 @@ package com.playstudio.aiteacher.pricing
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.playstudio.aiteacher.credits.CreditManager
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -55,21 +54,20 @@ class UsageTracker(private val context: Context) {
             return false
         }
 
-        // Also ensure sufficient credits remain for the estimated cost
-        val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(context)
-        val estimatedCost = creditManager.calculateMessageCost(
-            model.averageInputTokens,
-            model.averageOutputTokens,
-            model.modelId,
-            userTier
+        // Check against token pool daily tokens instead of credit system
+        val poolTier = userTier.toTokenPoolTier()
+        val tokenPool = com.playstudio.aiteacher.credits.TokenPoolManager.getInstance(context)
+        val estimatedPoolCost = tokenPool.calculateTokenCost(
+            modelName = model.modelId,
+            responseType = com.playstudio.aiteacher.credits.TokenPoolManager.ResponseType.TEXT,
+            inputTokens = model.averageInputTokens,
+            outputTokens = model.averageOutputTokens,
+            responseLength = model.averageOutputTokens * 4,
+            userTier = poolTier
         )
-        val remainingCredits = creditManager.getRemainingCredits("default_user", userTier)
-
-        val canUse = remainingCredits >= estimatedCost
-
-        android.util.Log.d("UsageTracker", "canUseModel: modelId=$modelId, userTier=$userTier")
-        android.util.Log.d("UsageTracker", "canUseModel: usageLimit=$usageLimit, currentUsage=${getCurrentUsage(modelId)}, remainingCredits=$remainingCredits, estimatedCost=$estimatedCost, canUse=$canUse")
-
+        val remainingTokens = tokenPool.getRemainingDailyTokens("default_user", poolTier)
+        val canUse = remainingTokens >= estimatedPoolCost
+        android.util.Log.d("UsageTracker", "canUseModel: modelId=$modelId, userTier=$userTier, remainingTokens=$remainingTokens, estimatedPoolCost=$estimatedPoolCost")
         return canUse
     }
 

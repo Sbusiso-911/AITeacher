@@ -66,10 +66,11 @@ private fun Fragment.showModelSelectionDialog(
 
     tierTextView.text = "Current Plan: ${userTier.name.replace("_", " ")}"
 
-    val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(context)
-    val tierConfig = com.playstudio.aiteacher.credits.SubscriptionTiers.getConfig(userTier)
-    val remainingCredits = creditManager.getRemainingCredits("default_user", userTier)
-    creditTextView.text = "Credits: ${String.format("%.2f", remainingCredits)} / ${tierConfig.dailyCredits}"
+    val poolTier = userTier.toTokenPoolTier()
+    val tokenPool = com.playstudio.aiteacher.credits.TokenPoolManager.getInstance(context)
+    val remainingTokens = tokenPool.getRemainingDailyTokens("default_user", poolTier).toInt()
+    val dailyAllocation = poolTier.tokenAllocation.toInt()
+    creditTextView.text = "Tokens: $remainingTokens / $dailyAllocation"
 
     val usageTracker = com.playstudio.aiteacher.pricing.UsageTracker(context)
     val modelAdapter = SubscriptionAwareModelAdapter(availableModels, userTier, usageTracker) { selectedModel ->

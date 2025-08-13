@@ -60,19 +60,18 @@ class SubscriptionAwareModelAdapter(
             val stars = "⭐".repeat(minOf(model.capabilities, 5))
             tvCapabilities.text = "$stars (${model.capabilities}/10)"
 
-            // Set cost per message using credit system
-            val creditManager = com.playstudio.aiteacher.credits.CreditManager.getInstance(itemView.context)
-            val costPerMessage = creditManager.calculateMessageCost(
-                model.averageInputTokens,
-                model.averageOutputTokens,
-                model.modelId,
-                userTier
+            // Show estimated token-pool cost per message for transparency
+            val tokenPool = com.playstudio.aiteacher.credits.TokenPoolManager.getInstance(itemView.context)
+            val poolTier = userTier.toTokenPoolTier()
+            val estimatedTokens = tokenPool.calculateTokenCost(
+                modelName = model.modelId,
+                responseType = com.playstudio.aiteacher.credits.TokenPoolManager.ResponseType.TEXT,
+                inputTokens = model.averageInputTokens,
+                outputTokens = model.averageOutputTokens,
+                responseLength = model.averageOutputTokens * 4,
+                userTier = poolTier
             )
-            tvCostPerMessage.text = if (costPerMessage < 0.001) {
-                "~$0.00/msg"
-            } else {
-                "~$${String.format("%.3f", costPerMessage)}/msg"
-            }
+            tvCostPerMessage.text = "≈ ${estimatedTokens.toInt()} tokens/msg"
 
             // Check if user can use this model (has remaining usage)
             // Allow GPT Image 1 for all users

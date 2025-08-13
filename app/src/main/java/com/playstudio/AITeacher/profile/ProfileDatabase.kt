@@ -14,7 +14,7 @@ import androidx.room.RoomDatabase
         SubscriptionEntity::class,
         UsageAnalyticsEntity::class
     ],
-    version = 1,
+    version = 2, // Incremented due to changing userId from Long to String
     exportSchema = false
 )
 @TypeConverters(DatabaseConverters::class)
@@ -35,7 +35,9 @@ abstract class ProfileDatabase : RoomDatabase() {
                     context.applicationContext,
                     ProfileDatabase::class.java,
                     "profile_database"
-                ).build()
+                )
+                .fallbackToDestructiveMigration() // Safe since we're migrating to Firestore-only architecture
+                .build()
                 INSTANCE = instance
                 instance
             }

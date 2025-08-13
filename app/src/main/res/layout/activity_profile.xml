@@ -199,6 +199,35 @@
                     android:textColor="@color/glass_text_secondary"
                     android:layout_marginBottom="8dp" />
 
+                <!-- Subscription Tier Highlight -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="16dp"
+                    android:padding="12dp"
+                    android:background="@drawable/rounded_corners"
+                    android:backgroundTint="@color/glass_accent"
+                    android:alpha="0.2">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Current Tier"
+                        android:textSize="12sp"
+                        android:textColor="@color/glass_text_secondary" />
+
+                    <TextView
+                        android:id="@+id/subscriptionTierText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="PRO"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/glass_accent" />
+                </LinearLayout>
+
                 <TextView
                     android:id="@+id/subscriptionStatusText"
                     android:layout_width="wrap_content"
@@ -208,45 +237,65 @@
                     android:textColor="@color/glass_accent"
                     android:layout_marginBottom="12dp" />
 
-                <!-- Usage Progress -->
+                <!-- Daily Usage Tracking -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
+                    <!-- Daily Tokens -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:layout_marginBottom="4dp">
 
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_time"
+                            app:tint="@color/glass_accent"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="8dp" />
+
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Messages"
+                            android:text="Daily Tokens Remaining"
                             android:textSize="12sp"
                             android:textColor="@color/glass_text_secondary" />
 
                         <TextView
-                            android:id="@+id/messagesProgressText"
+                            android:id="@+id/dailyTokensProgressText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="150 / 500"
+                            android:text="7,500 / 10,000"
                             android:textSize="12sp"
-                            android:textColor="@color/glass_text_secondary" />
+                            android:textStyle="bold"
+                            android:textColor="@color/glass_accent" />
 
                     </LinearLayout>
 
                     <ProgressBar
-                        android:id="@+id/messagesProgressBar"
+                        android:id="@+id/dailyTokensProgressBar"
                         style="@style/Widget.AppCompat.ProgressBar.Horizontal"
                         android:layout_width="match_parent"
-                        android:layout_height="8dp"
-                        android:progress="30"
+                        android:layout_height="10dp"
+                        android:progress="75"
                         android:progressTint="@color/glass_accent"
+                        android:layout_marginBottom="8dp" />
+
+                    <TextView
+                        android:id="@+id/tokenResetTimeText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Resets in 6 hours"
+                        android:textSize="10sp"
+                        android:textColor="@color/glass_text_secondary"
                         android:layout_marginBottom="12dp" />
 
+                    <!-- Monthly Progress -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -257,26 +306,26 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Tokens"
+                            android:text="Monthly Usage"
                             android:textSize="12sp"
                             android:textColor="@color/glass_text_secondary" />
 
                         <TextView
-                            android:id="@+id/tokensProgressText"
+                            android:id="@+id/monthlyProgressText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="25K / 100K"
+                            android:text="45K / 300K"
                             android:textSize="12sp"
                             android:textColor="@color/glass_text_secondary" />
 
                     </LinearLayout>
 
                     <ProgressBar
-                        android:id="@+id/tokensProgressBar"
+                        android:id="@+id/monthlyProgressBar"
                         style="@style/Widget.AppCompat.ProgressBar.Horizontal"
                         android:layout_width="match_parent"
-                        android:layout_height="8dp"
-                        android:progress="25"
+                        android:layout_height="6dp"
+                        android:progress="15"
                         android:progressTint="@color/glass_secondary"
                         android:layout_marginBottom="8dp" />
 
@@ -301,12 +350,12 @@
             android:orientation="horizontal"
             android:layout_marginBottom="16dp">
 
-            <!-- Total Chats -->
+            <!-- Total Chats with Recent History -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/chatHistoryCard"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_height="300dp"
+                android:layout_weight="2"
                 android:layout_marginEnd="8dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="6dp"
@@ -314,33 +363,90 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:orientation="vertical"
-                    android:padding="16dp"
-                    android:gravity="center">
+                    android:padding="16dp">
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_chat"
-                        app:tint="@color/glass_accent"
-                        android:layout_marginBottom="8dp" />
-
-                    <TextView
-                        android:id="@+id/totalChatsText"
-                        android:layout_width="wrap_content"
+                    <!-- Header -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="42"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/glass_text_primary" />
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="12dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Total Chats"
-                        android:textSize="10sp"
-                        android:textColor="@color/glass_text_secondary" />
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_chat"
+                            app:tint="@color/glass_accent" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="12dp">
+
+                            <TextView
+                                android:id="@+id/totalChatsText"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="42"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/glass_text_primary" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Total Chats"
+                                android:textSize="10sp"
+                                android:textColor="@color/glass_text_secondary" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_arrow_right"
+                            app:tint="@color/glass_text_secondary" />
+                    </LinearLayout>
+
+                    <!-- Recent Chat History List -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recentChatHistoryRecyclerView"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:scrollbars="vertical"
+                        android:clipToPadding="false"
+                        android:paddingBottom="8dp" />
+
+                    <!-- Empty State -->
+                    <LinearLayout
+                        android:id="@+id/emptyChatHistoryLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:visibility="gone">
+
+                        <ImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:src="@drawable/ic_chat"
+                            app:tint="@color/glass_text_secondary"
+                            android:alpha="0.5"
+                            android:layout_marginBottom="8dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="No chat history yet"
+                            android:textSize="12sp"
+                            android:textColor="@color/glass_text_secondary"
+                            android:gravity="center" />
+                    </LinearLayout>
 
                 </LinearLayout>
 
@@ -539,14 +645,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="8dp">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/settingsButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="4dp"
                 android:text="Settings"
                 android:textColor="@color/glass_text_primary"
                 android:backgroundTint="@color/glass_secondary"
@@ -555,11 +661,24 @@
                 app:iconTint="@color/glass_text_primary" />
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/clearHistoryButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="4dp"
+                android:text="Clear History"
+                android:textColor="@color/white"
+                android:backgroundTint="@color/glass_text_secondary"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_delete"
+                app:iconTint="@color/white" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/logoutButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="4dp"
                 android:text="Logout"
                 android:textColor="@color/white"
                 android:backgroundTint="@color/glass_accent"

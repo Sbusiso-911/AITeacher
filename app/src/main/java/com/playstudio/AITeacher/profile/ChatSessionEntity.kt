@@ -9,15 +9,8 @@ import androidx.room.TypeConverters
 import java.util.Date
 
 @Entity(
-    tableName = "chat_sessions",
-    foreignKeys = [
-        ForeignKey(
-            entity = UserEntity::class,
-            parentColumns = ["user_id"],
-            childColumns = ["user_id"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
+    tableName = "chat_sessions"
+    // Removed foreign key constraint since we're using Firebase UID strings
 )
 @TypeConverters(DatabaseConverters::class)
 data class ChatSessionEntity(
@@ -26,7 +19,7 @@ data class ChatSessionEntity(
     val sessionId: Long = 0,
     
     @ColumnInfo(name = "user_id")
-    val userId: Long,
+    val userId: String, // Changed to String to match Firebase UID
     
     @ColumnInfo(name = "title")
     val title: String,

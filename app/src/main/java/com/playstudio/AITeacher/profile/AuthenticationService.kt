@@ -83,9 +83,12 @@ class AuthenticationService(private val context: Context) {
                 return AuthResult(false, message = "User already exists with this email")
             }
             
+            // Generate Firebase-compatible String userId for new user
+            val firebaseUserId = java.util.UUID.randomUUID().toString()
+            
             // Create new user
             val newUser = UserEntity(
-                userId = 0, // Room will auto-generate
+                userId = firebaseUserId, // Use String UUID for compatibility
                 email = registrationData.email,
                 passwordHash = hashPassword(registrationData.password),
                 fullName = registrationData.fullName,
@@ -100,9 +103,9 @@ class AuthenticationService(private val context: Context) {
                 promotionalEmailsSubscribed = registrationData.promotionalEmailsSubscribed
             )
             
-            // Insert user and get generated ID
-            val userId = userDao.insertUser(newUser)
-            val savedUser = newUser.copy(userId = userId)
+            // Insert user
+            userDao.insertUser(newUser)
+            val savedUser = newUser
             
             // Generate authentication token
             val token = generateAuthToken(savedUser)
@@ -110,7 +113,7 @@ class AuthenticationService(private val context: Context) {
             
             // Track registration analytics
             val analytics = UsageAnalyticsEntity(
-                userId = userId,
+                userId = firebaseUserId,
                 date = Date(),
                 chatSessionsStarted = 0,
                 featuresAccessed = listOf("registration")
@@ -196,9 +199,12 @@ class AuthenticationService(private val context: Context) {
                 userDao.updateUser(updatedUser)
                 updatedUser
             } else {
+                // Generate Firebase-compatible String userId for Google user
+                val firebaseUserId = googleSignInData.googleId // Use Google ID as unique identifier
+                
                 // Create new user with Google data
                 val newUser = UserEntity(
-                    userId = 0, // Room will auto-generate
+                    userId = firebaseUserId, // Use Google ID as String
                     email = googleSignInData.email,
                     passwordHash = null,
                     fullName = googleSignInData.fullName,
@@ -212,8 +218,8 @@ class AuthenticationService(private val context: Context) {
                     productUpdatesSubscribed = googleSignInData.productUpdatesSubscribed,
                     promotionalEmailsSubscribed = googleSignInData.promotionalEmailsSubscribed
                 )
-                val userId = userDao.insertUser(newUser)
-                newUser.copy(userId = userId)
+                userDao.insertUser(newUser)
+                newUser
             }
             
             // Generate authentication token
@@ -316,7 +322,7 @@ class AuthenticationService(private val context: Context) {
     // Session Management
     private fun saveAuthSession(user: UserEntity, token: String, rememberMe: Boolean = false) {
         encryptedPrefs.edit().apply {
-            putLong(PREF_USER_ID, user.userId)
+            putString(PREF_USER_ID, user.userId) // Changed to putString for String userId
             putString(PREF_AUTH_TOKEN, token)
             putLong(PREF_LOGIN_TIME, System.currentTimeMillis())
             putBoolean(PREF_REMEMBER_ME, rememberMe)
@@ -336,9 +342,9 @@ class AuthenticationService(private val context: Context) {
     
     suspend fun getCurrentUser(): UserEntity? {
         return try {
-            val userId = encryptedPrefs.getLong(PREF_USER_ID, 0)
-            if (userId > 0) {
-                return userDao.getUserById(userId)
+            val userId = encryptedPrefs.getString(PREF_USER_ID, "") ?: ""
+            if (userId.isNotEmpty()) {
+                return userDao.getUserById(userId) // Now takes String
             } else {
                 null
             }
@@ -349,11 +355,11 @@ class AuthenticationService(private val context: Context) {
     }
     
     fun isLoggedIn(): Boolean {
-        val userId = encryptedPrefs.getLong(PREF_USER_ID, 0)
+        val userId = encryptedPrefs.getString(PREF_USER_ID, "") ?: ""
         val token = encryptedPrefs.getString(PREF_AUTH_TOKEN, "")
         val loginTime = encryptedPrefs.getLong(PREF_LOGIN_TIME, 0)
         
-        if (userId == 0L || token.isNullOrEmpty() || loginTime == 0L) {
+        if (userId.isEmpty() || token.isNullOrEmpty() || loginTime == 0L) {
             return false
         }
         
