@@ -653,19 +653,21 @@ class ProfileManager(private val context: Context) {
      */
     suspend fun getChatStatisticsFromFirestore(): Map<String, Int> {
         return try {
-            val stats = firestoreChatManager.getChatStatistics()
+            var stats = firestoreChatManager.getChatStatistics()
             Log.d(TAG, "Retrieved chat statistics from Firestore: $stats")
-            
-            // If Firestore has no data, check SharedPreferences
+
             if (stats["totalSessions"] == 0) {
-                Log.d(TAG, "No Firestore data, checking SharedPreferences for statistics")
-                val sharedPrefStats = getChatStatisticsFromSharedPrefs()
-                if (sharedPrefStats["totalSessions"]!! > 0) {
-                    Log.d(TAG, "Using SharedPreferences statistics: $sharedPrefStats")
-                    return sharedPrefStats
-                }
+                // Push any local data then refresh stats
+                syncChatHistoryToFirestore()
+                stats = firestoreChatManager.getChatStatistics()
             }
-            
+
+            if (stats["totalSessions"] == 0) {
+                // Still no data in the cloud – fallback to local cache
+                val sharedPrefStats = getChatStatisticsFromSharedPrefs()
+                if (sharedPrefStats["totalSessions"]!! > 0) return sharedPrefStats
+            }
+
             stats
         } catch (e: Exception) {
             Log.e(TAG, "Error getting chat statistics from Firestore", e)
@@ -848,47 +850,14 @@ class ProfileManager(private val context: Context) {
             
             Log.e(TAG, "getRecentChatActivity: Getting chat sessions for Firebase user ${firebaseUser.uid}")
             
-            // Check SharedPreferences for recent chat activity to compare timestamps
-            val sharedPrefSessions = getRecentChatFromSharedPrefs(limit)
-            val sharedPrefLastActivity = sharedPrefSessions.maxByOrNull { it.updatedAt }?.updatedAt
-            
-            // Get from Firestore
-            val firestoreSessions = firestoreChatManager.getChatSessions()
-            val firestoreLastActivity = firestoreSessions.maxByOrNull { it.updatedAt }?.updatedAt
-            
-            Log.e(TAG, "getRecentChatActivity: SharedPrefs has ${sharedPrefSessions.size} sessions (last: $sharedPrefLastActivity)")
-            Log.e(TAG, "getRecentChatActivity: Firestore has ${firestoreSessions.size} sessions (last: $firestoreLastActivity)")
-            
-            // If SharedPreferences has any data, prioritize it and sync to Firestore
-            val shouldSyncToFirestore = when {
-                sharedPrefSessions.isEmpty() -> false
-                firestoreSessions.isEmpty() -> true
-                sharedPrefLastActivity != null && firestoreLastActivity != null -> 
-                    sharedPrefLastActivity.after(firestoreLastActivity)
-                sharedPrefSessions.isNotEmpty() -> true  // Always prefer current SharedPrefs data
-                else -> false
+            // Attempt to load sessions from Firestore first for true cross-device history
+            var firestoreSessions = firestoreChatManager.getChatSessions()
+            if (firestoreSessions.isEmpty()) {
+                // No cloud data yet – push any local history then try again
+                syncChatHistoryToFirestore()
+                firestoreSessions = firestoreChatManager.getChatSessions()
             }
-            
-            // If we have SharedPreferences data, use it directly and sync in background
-            if (sharedPrefSessions.isNotEmpty()) {
-                Log.e(TAG, "getRecentChatActivity: Using current SharedPreferences data directly")
-                
-                // Sync to Firestore in background (don't wait for it)
-                kotlinx.coroutines.GlobalScope.launch {
-                    try {
-                        syncChatHistoryToFirestore()
-                        Log.e(TAG, "Background sync to Firestore completed")
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Background sync to Firestore failed", e)
-                    }
-                }
-                
-                // Return current SharedPreferences data immediately
-                Log.e(TAG, "Retrieved ${sharedPrefSessions.size} recent chat sessions from SharedPreferences")
-                return sharedPrefSessions.take(limit)
-            }
-            
-            // Use Firestore data if available and current
+
             if (firestoreSessions.isNotEmpty()) {
                 val recentSessions = firestoreSessions
                     .sortedByDescending { it.updatedAt }
@@ -908,14 +877,18 @@ class ProfileManager(private val context: Context) {
                             lastMessagePreview = firestoreSession.lastMessagePreview
                         )
                     }
-                
                 Log.d(TAG, "Retrieved ${recentSessions.size} recent chat sessions from Firestore")
                 return recentSessions
             }
-            
-            // Fallback to SharedPreferences
-            Log.d(TAG, "getRecentChatActivity: Using SharedPreferences data as fallback")
-            sharedPrefSessions
+
+            // Cloud had no data; fall back to any locally cached history for offline access
+            val sharedPrefSessions = getRecentChatFromSharedPrefs(limit)
+            if (sharedPrefSessions.isNotEmpty()) {
+                // Sync in background to make this data available on other devices
+                kotlinx.coroutines.GlobalScope.launch { syncChatHistoryToFirestore() }
+            }
+            Log.d(TAG, "getRecentChatActivity: Returning ${sharedPrefSessions.size} sessions from SharedPreferences")
+            sharedPrefSessions.take(limit)
         } catch (e: Exception) {
             Log.e(TAG, "Error getting recent chat activity", e)
             emptyList()
