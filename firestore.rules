@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // User-specific data: profile, chat sessions, messages, subscriptions
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      match /{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Root-level subscription docs for administrative access
+    match /subscriptions/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Legacy top-level chats collection access (if still present)
+    match /chats/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
