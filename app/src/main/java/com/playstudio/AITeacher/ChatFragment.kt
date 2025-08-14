@@ -7217,26 +7217,20 @@ class ChatFragment : Fragment() {
                 Log.d("ChatFragment", "Syncing ${messages.size} messages to Firestore for conversation: $conversationId")
                 
                 val firestoreManager = FirestoreChatManager.getInstance()
-                
-                // Convert ChatMessage objects to Firestore format and sync each message
-                messages.forEach { chatMessage ->
-                    val firestoreMessage = FirestoreChatManager.FirestoreChatMessage(
+
+                val firestoreMessages = messages.map { chatMessage ->
+                    FirestoreChatManager.FirestoreChatMessage(
                         messageId = chatMessage.id,
                         sessionId = conversationId,
                         content = chatMessage.content,
                         senderType = if (chatMessage.isUser) "user" else "ai",
                         timestamp = java.util.Date(chatMessage.timestamp),
-                        aiModel = "gpt-3.5-turbo", // Default model - could be enhanced to track actual model
-                        provider = "openai"
+                        aiModel = "gpt-3.5-turbo",
+                        provider = "openai",
                     )
-                    
-                    val success = firestoreManager.saveChatMessage(firestoreMessage)
-                    if (!success) {
-                        Log.w("ChatFragment", "Failed to sync message ${chatMessage.id} to Firestore")
-                    }
                 }
-                
-                // Also create/update the chat session in Firestore
+
+                // Create/update the chat session in Firestore along with all messages
                 val sessionTitle = if (messages.isNotEmpty()) {
                     // Use first user message as title, truncated to 50 characters
                     val firstUserMessage = messages.find { it.isUser }?.content?.take(50) ?: "Chat Session"
@@ -7258,11 +7252,11 @@ class ChatFragment : Fragment() {
                     lastMessagePreview = messages.lastOrNull()?.content?.take(100) ?: ""
                 )
                 
-                val sessionSuccess = firestoreManager.saveChatSession(chatSession)
+                val sessionSuccess = firestoreManager.saveChatConversation(chatSession, firestoreMessages)
                 if (sessionSuccess) {
-                    Log.d("ChatFragment", "Successfully synced chat session to Firestore")
+                    Log.d("ChatFragment", "Successfully synced conversation to Firestore")
                 } else {
-                    Log.w("ChatFragment", "Failed to sync chat session to Firestore")
+                    Log.w("ChatFragment", "Failed to sync conversation to Firestore")
                 }
                 
             } catch (e: Exception) {

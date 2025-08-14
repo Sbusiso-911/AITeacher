@@ -145,6 +145,33 @@ class FirestoreChatManager private constructor() {
         }
     }
 
+    /** Save an entire conversation (session + messages) atomically. */
+    suspend fun saveChatConversation(
+        session: FirestoreChatSession,
+        messages: List<FirestoreChatMessage>,
+    ): Boolean {
+        return try {
+            val userId = getCurrentUserId() ?: return false
+            val sessionData = session.copy(userId = userId)
+            val batch = firestore.batch()
+
+            val sessionRef = sessionsCollection(userId).document(sessionData.sessionId)
+            batch.set(sessionRef, sessionData.toMap(), SetOptions.merge())
+
+            messages.forEach { msg ->
+                val msgData = msg.copy(userId = userId, sessionId = sessionData.sessionId)
+                val msgRef = messagesCollection(userId, sessionData.sessionId).document(msgData.messageId)
+                batch.set(msgRef, msgData.toMap(), SetOptions.merge())
+            }
+
+            batch.commit().await()
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error saving chat conversation", e)
+            false
+        }
+    }
+
     /** Retrieve all chat sessions for the current user. */
     suspend fun getChatSessions(): List<FirestoreChatSession> {
         return try {
@@ -292,7 +319,6 @@ class FirestoreChatManager private constructor() {
             for (conversation in conversations) {
                 val messages = com.playstudio.aiteacher.history.DatabaseProvider.database
                     .messageDao().getMessages(conversation.id).first()
-
                 val session = FirestoreChatSession(
                     sessionId = conversation.id,
                     userId = userId,
@@ -303,10 +329,8 @@ class FirestoreChatManager private constructor() {
                     messageCount = messages.size,
                     lastMessagePreview = messages.lastOrNull()?.content?.take(100) ?: "",
                 )
-                saveChatSession(session)
-
-                for (msg in messages) {
-                    val fsMessage = FirestoreChatMessage(
+                val fsMessages = messages.map { msg ->
+                    FirestoreChatMessage(
                         messageId = msg.id,
                         sessionId = conversation.id,
                         userId = userId,
@@ -316,8 +340,8 @@ class FirestoreChatManager private constructor() {
                         aiModel = "gpt-3.5-turbo",
                         provider = "openai",
                     )
-                    saveChatMessage(fsMessage)
                 }
+                saveChatConversation(session, fsMessages)
             }
             true
         } catch (e: Exception) {
