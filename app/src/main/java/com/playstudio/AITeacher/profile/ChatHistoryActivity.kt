@@ -209,6 +209,8 @@ class ChatHistoryActivity : AppCompatActivity() {
                     applyFilters()
                     updateEmptyState()
                 }
+            } catch (ce: kotlinx.coroutines.CancellationException) {
+                throw ce
             } catch (e: Exception) {
                 Log.e("ChatHistoryActivity", "Error loading chat history", e)
                 Toast.makeText(this@ChatHistoryActivity, "Error loading chat history: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -231,6 +233,8 @@ class ChatHistoryActivity : AppCompatActivity() {
                     chatHistoryAdapter.updateSessions(filteredChatSessions)
                     updateEmptyState()
                 }
+            } catch (ce: kotlinx.coroutines.CancellationException) {
+                throw ce
             } catch (e: Exception) {
                 Toast.makeText(this@ChatHistoryActivity, "Error searching chats: ${e.message}", Toast.LENGTH_SHORT).show()
             }
@@ -251,6 +255,8 @@ class ChatHistoryActivity : AppCompatActivity() {
                     chatHistoryAdapter.updateSessions(filteredChatSessions)
                     updateEmptyState()
                 }
+            } catch (ce: kotlinx.coroutines.CancellationException) {
+                throw ce
             } catch (e: Exception) {
                 Toast.makeText(this@ChatHistoryActivity, "Error filtering by category: ${e.message}", Toast.LENGTH_SHORT).show()
             }
@@ -271,6 +277,8 @@ class ChatHistoryActivity : AppCompatActivity() {
                     chatHistoryAdapter.updateSessions(filteredChatSessions)
                     updateEmptyState()
                 }
+            } catch (ce: kotlinx.coroutines.CancellationException) {
+                throw ce
             } catch (e: Exception) {
                 Toast.makeText(this@ChatHistoryActivity, "Error filtering by model: ${e.message}", Toast.LENGTH_SHORT).show()
             }

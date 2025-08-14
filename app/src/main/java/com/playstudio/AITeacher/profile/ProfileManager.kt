@@ -8,6 +8,7 @@ import com.playstudio.aiteacher.profile.FirestoreSubscriptionManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
@@ -258,6 +259,8 @@ class ProfileManager(private val context: Context) {
                         chatSessionDao.getActiveChatSessions(user.userId).collect { emit(it) }
                     }
                 }
+            } catch (ce: kotlinx.coroutines.CancellationException) {
+                throw ce
             } catch (e: Exception) {
                 Log.w(TAG, "Firestore retrieval failed, falling back to local database", e)
                 chatSessionDao.getActiveChatSessions(user.userId).collect { emit(it) }
@@ -306,6 +309,8 @@ class ProfileManager(private val context: Context) {
                 } else {
                     emit(emptyList())
                 }
+            } catch (ce: CancellationException) {
+                throw ce
             } catch (e: Exception) {
                 Log.e(TAG, "Error getting favorite chat history", e)
                 emit(emptyList())
@@ -324,6 +329,8 @@ class ProfileManager(private val context: Context) {
                 } else {
                     emit(emptyList())
                 }
+            } catch (ce: CancellationException) {
+                throw ce
             } catch (e: Exception) {
                 Log.e(TAG, "Error searching chat history", e)
                 emit(emptyList())
@@ -342,6 +349,8 @@ class ProfileManager(private val context: Context) {
                 } else {
                     emit(emptyList())
                 }
+            } catch (ce: CancellationException) {
+                throw ce
             } catch (e: Exception) {
                 Log.e(TAG, "Error getting chat history by category", e)
                 emit(emptyList())
@@ -360,6 +369,8 @@ class ProfileManager(private val context: Context) {
                 } else {
                     emit(emptyList())
                 }
+            } catch (ce: CancellationException) {
+                throw ce
             } catch (e: Exception) {
                 Log.e(TAG, "Error getting chat history by model", e)
                 emit(emptyList())
