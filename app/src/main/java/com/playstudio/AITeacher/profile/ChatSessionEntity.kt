@@ -17,7 +17,11 @@ data class ChatSessionEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "session_id")
     val sessionId: Long = 0,
-    
+
+    // Firestore document ID for cross-device retrieval
+    @ColumnInfo(name = "firestore_id")
+    val firestoreId: String? = null,
+
     @ColumnInfo(name = "user_id")
     val userId: String, // Changed to String to match Firebase UID
     

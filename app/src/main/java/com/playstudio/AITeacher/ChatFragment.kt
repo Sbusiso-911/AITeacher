@@ -6710,8 +6710,27 @@ class ChatFragment : Fragment() {
     }
 
     private fun initializeChat(model: String?, conversationId: String?) {
-        if (model != null && conversationId != null) {
-            // Initialize the chat with the provided model and conversation ID
+        // Set model if provided
+        if (model != null) {
+            selectedModel = model
+        }
+
+        if (conversationId != null) {
+            this.conversationId = conversationId
+            viewLifecycleOwner.lifecycleScope.launch {
+                val firestoreMessages = loadMessagesFromFirestore(conversationId)
+                if (firestoreMessages.isNotEmpty()) {
+                    chatMessages.clear()
+                    chatMessages.addAll(firestoreMessages)
+                    chatAdapter.submitList(chatMessages.toList()) {
+                        if (chatMessages.isNotEmpty()) {
+                            binding.recyclerView.scrollToPosition(chatMessages.size - 1)
+                        }
+                    }
+                } else {
+                    loadChatHistoryFromSharedPrefs(conversationId)
+                }
+            }
         }
     }
 

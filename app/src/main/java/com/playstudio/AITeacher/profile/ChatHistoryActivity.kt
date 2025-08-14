@@ -314,7 +314,8 @@ class ChatHistoryActivity : AppCompatActivity() {
     private fun openChatSession(session: ChatSessionEntity) {
         // Navigate to chat activity with session ID
         val intent = Intent(this, com.playstudio.aiteacher.ChatActivity::class.java)
-        intent.putExtra("session_id", session.sessionId)
+        val conversationId = session.firestoreId ?: session.sessionId.toString()
+        intent.putExtra("conversation_id", conversationId)
         startActivity(intent)
     }
     

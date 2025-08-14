@@ -29,7 +29,9 @@ class ChatActivity : AppCompatActivity(), ChatFragment.OnSubscriptionClickListen
 
         if (savedInstanceState == null) {
             val chatFragment = ChatFragment()
-            chatFragment.arguments = intent.extras
+
+            // Start with any extras passed from the caller (e.g. conversation_id)
+            val bundle = Bundle(intent.extras ?: Bundle())
 
             // Pass subscription status and suggested message to the ChatFragment
             val isAdFree = intent.getBooleanExtra("is_ad_free", false)
@@ -41,7 +43,7 @@ class ChatActivity : AppCompatActivity(), ChatFragment.OnSubscriptionClickListen
             val autoSelectModel = intent.getBooleanExtra("auto_select_model", false)
             val autoStartLiveVoice = intent.getBooleanExtra("auto_start_live_voice", false)
             val voiceAgentType = intent.getStringExtra("voice_agent_type")
-            val bundle = Bundle().apply {
+            bundle.apply {
                 putBoolean("is_ad_free", isAdFree)
                 putLong("expiration_time", expirationTime)
                 putString("suggested_message", suggestedMessage)

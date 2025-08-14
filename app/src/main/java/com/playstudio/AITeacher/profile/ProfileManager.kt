@@ -241,6 +241,7 @@ class ProfileManager(private val context: Context) {
                         val converted = sessions.map { fs ->
                             ChatSessionEntity(
                                 sessionId = fs.sessionId.hashCode().toLong(),
+                                firestoreId = fs.sessionId,
                                 userId = user.userId,
                                 title = fs.title,
                                 aiModelUsed = fs.aiModelUsed,
@@ -281,6 +282,7 @@ class ProfileManager(private val context: Context) {
                             val convertedSessions = favoriteSessions.map { firestoreSession ->
                                 ChatSessionEntity(
                                     sessionId = firestoreSession.sessionId.hashCode().toLong(),
+                                    firestoreId = firestoreSession.sessionId,
                                     userId = user.userId,
                                     title = firestoreSession.title,
                                     aiModelUsed = firestoreSession.aiModelUsed,
@@ -643,6 +645,7 @@ class ProfileManager(private val context: Context) {
                         val convertedSessions = firestoreSessions.map { firestoreSession ->
                             ChatSessionEntity(
                                 sessionId = firestoreSession.sessionId.hashCode().toLong(),
+                                firestoreId = firestoreSession.sessionId,
                                 userId = user.userId,
                                 title = firestoreSession.title,
                                 aiModelUsed = firestoreSession.aiModelUsed,
@@ -884,6 +887,7 @@ class ProfileManager(private val context: Context) {
                     .map { firestoreSession ->
                         ChatSessionEntity(
                             sessionId = firestoreSession.sessionId.hashCode().toLong(),
+                            firestoreId = firestoreSession.sessionId,
                             userId = firebaseUser.uid,
                             title = firestoreSession.title,
                             aiModelUsed = firestoreSession.aiModelUsed,
@@ -981,6 +985,7 @@ class ProfileManager(private val context: Context) {
                     
                     val session = ChatSessionEntity(
                         sessionId = conversationId.hashCode().toLong(),
+                        firestoreId = conversationId,
                         userId = userId,
                         title = title,
                         aiModelUsed = "gpt-3.5-turbo", // Default model
