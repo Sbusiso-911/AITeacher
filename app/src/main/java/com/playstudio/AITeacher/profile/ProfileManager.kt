@@ -227,51 +227,40 @@ class ProfileManager(private val context: Context) {
     // Chat History Management
     fun getChatHistory(): Flow<List<ChatSessionEntity>> {
         return flow {
+            val user = getCurrentUserEntity()
+            if (user == null) {
+                emit(emptyList())
+                return@flow
+            }
+
             try {
-                val user = getCurrentUserEntity()
-                if (user != null) {
-                    // First try to get from Firestore (primary source for cross-device sync)
-                    try {
-                        val firestoreSessions = firestoreChatManager.getChatSessions()
-                        if (firestoreSessions.isNotEmpty()) {
-                            // Convert Firestore sessions to ChatSessionEntity format
-                            val convertedSessions = firestoreSessions.map { firestoreSession ->
-                                ChatSessionEntity(
-                                    sessionId = firestoreSession.sessionId.hashCode().toLong(), // Convert string to long
-                                    userId = user.userId,
-                                    title = firestoreSession.title,
-                                    aiModelUsed = firestoreSession.aiModelUsed,
-                                    category = firestoreSession.category,
-                                    createdAt = firestoreSession.createdAt,
-                                    updatedAt = firestoreSession.updatedAt,
-                                    isFavorite = firestoreSession.isFavorite,
-                                    isArchived = firestoreSession.isArchived,
-                                    messageCount = firestoreSession.messageCount,
-                                    lastMessagePreview = firestoreSession.lastMessagePreview
-                                )
-                            }
-                            emit(convertedSessions)
-                            Log.d(TAG, "Retrieved ${convertedSessions.size} chat sessions from Firestore")
-                        } else {
-                            // Fallback to local database
-                            Log.d(TAG, "No Firestore sessions found, falling back to local database")
-                            chatSessionDao.getActiveChatSessions(user.userId).collect { sessions ->
-                                emit(sessions)
-                            }
+                // Listen for real-time updates from Firestore first
+                firestoreChatManager.getChatSessionsFlow().collect { sessions ->
+                    if (sessions.isNotEmpty()) {
+                        val converted = sessions.map { fs ->
+                            ChatSessionEntity(
+                                sessionId = fs.sessionId.hashCode().toLong(),
+                                userId = user.userId,
+                                title = fs.title,
+                                aiModelUsed = fs.aiModelUsed,
+                                category = fs.category,
+                                createdAt = fs.createdAt,
+                                updatedAt = fs.updatedAt,
+                                isFavorite = fs.isFavorite,
+                                isArchived = fs.isArchived,
+                                messageCount = fs.messageCount,
+                                lastMessagePreview = fs.lastMessagePreview
+                            )
                         }
-                    } catch (firestoreError: Exception) {
-                        Log.w(TAG, "Firestore retrieval failed, falling back to local database", firestoreError)
-                        // Fallback to local database
-                        chatSessionDao.getActiveChatSessions(user.userId).collect { sessions ->
-                            emit(sessions)
-                        }
+                        emit(converted)
+                    } else {
+                        // If Firestore has no data, fall back to local Room storage
+                        chatSessionDao.getActiveChatSessions(user.userId).collect { emit(it) }
                     }
-                } else {
-                    emit(emptyList())
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error getting chat history", e)
-                emit(emptyList())
+                Log.w(TAG, "Firestore retrieval failed, falling back to local database", e)
+                chatSessionDao.getActiveChatSessions(user.userId).collect { emit(it) }
             }
         }
     }

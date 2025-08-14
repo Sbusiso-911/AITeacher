@@ -95,6 +95,9 @@ class ChatHistoryActivity : AppCompatActivity() {
             layoutManager = LinearLayoutManager(this@ChatHistoryActivity)
             adapter = chatHistoryAdapter
         }
+
+        // ensure empty state hidden until data loads
+        binding.emptyStateLayout.visibility = android.view.View.GONE
     }
     
     private fun setupUI() {
@@ -289,6 +292,7 @@ class ChatHistoryActivity : AppCompatActivity() {
         filteredChatSessions.clear()
         filteredChatSessions.addAll(allChatSessions)
         chatHistoryAdapter.updateSessions(filteredChatSessions)
+        updateEmptyState()
     }
     
     private fun updateEmptyState() {
