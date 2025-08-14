@@ -191,20 +191,24 @@ class ChatHistoryActivity : AppCompatActivity() {
                     redirectToLogin()
                     return@launch
                 }
-                
+
                 binding.progressBar.visibility = android.view.View.VISIBLE
-                
+
                 profileManager.getChatHistory().collect { sessions ->
+                    // Hide the spinner after the first emission
+                    if (binding.progressBar.visibility == android.view.View.VISIBLE) {
+                        binding.progressBar.visibility = android.view.View.GONE
+                    }
+
                     allChatSessions.clear()
                     allChatSessions.addAll(sessions)
-                    
+
                     applyFilters()
                     updateEmptyState()
                 }
             } catch (e: Exception) {
                 Log.e("ChatHistoryActivity", "Error loading chat history", e)
                 Toast.makeText(this@ChatHistoryActivity, "Error loading chat history: ${e.message}", Toast.LENGTH_SHORT).show()
-            } finally {
                 binding.progressBar.visibility = android.view.View.GONE
             }
         }

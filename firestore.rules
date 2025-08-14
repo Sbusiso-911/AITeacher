@@ -2,10 +2,23 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // User-specific data: profile, chat sessions, messages, subscriptions
+    // All user-scoped data lives under /users/{userId}
     match /users/{userId} {
+      // Allow the signed-in user to read and write their root profile document
       allow read, write: if request.auth != null && request.auth.uid == userId;
-      match /{document=**} {
+
+      // Chat sessions collection
+      match /chat_sessions/{sessionId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+
+        // Messages within a chat session
+        match /messages/{messageId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
+      }
+
+      // Optional subscription documents nested under the user
+      match /subscriptions/{subId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
