@@ -149,9 +149,34 @@ class FirestoreChatManager private constructor() {
     suspend fun getChatSessions(): List<FirestoreChatSession> {
         return try {
             val userId = getCurrentUserId() ?: return emptyList()
-            sessionsCollection(userId)
+            val sessions = sessionsCollection(userId)
                 .orderBy("updatedAt", Query.Direction.DESCENDING)
                 .get().await().documents.mapNotNull { it.toObject(FirestoreChatSession::class.java) }
+
+            if (sessions.isNotEmpty()) {
+                return sessions
+            }
+
+            // Fallback to legacy root-level structure: chats/{userId}
+            val legacyDoc = firestore.collection("chats").document(userId).get().await()
+            if (legacyDoc.exists()) {
+                val messages = legacyDoc.get("messages") as? List<Map<String, Any?>> ?: emptyList()
+                val lastUsed = legacyDoc.getTimestamp("lastUsed")?.toDate() ?: Date()
+                val lastPreview = (messages.lastOrNull()?.get("content") as? String)?.take(100) ?: ""
+                val session = FirestoreChatSession(
+                    sessionId = "legacy_$userId",
+                    userId = userId,
+                    title = (messages.firstOrNull()?.get("content") as? String) ?: "Chat",
+                    aiModelUsed = legacyDoc.getString("lastModel") ?: "",
+                    createdAt = lastUsed,
+                    updatedAt = lastUsed,
+                    messageCount = messages.size,
+                    lastMessagePreview = lastPreview
+                )
+                return listOf(session)
+            }
+
+            emptyList()
         } catch (e: Exception) {
             Log.e(TAG, "Error getting chat sessions", e)
             emptyList()
@@ -162,9 +187,32 @@ class FirestoreChatManager private constructor() {
     suspend fun getChatMessages(sessionId: String): List<FirestoreChatMessage> {
         return try {
             val userId = getCurrentUserId() ?: return emptyList()
-            messagesCollection(userId, sessionId)
+            val msgs = messagesCollection(userId, sessionId)
                 .orderBy("timestamp", Query.Direction.ASCENDING)
                 .get().await().documents.mapNotNull { it.toObject(FirestoreChatMessage::class.java) }
+            if (msgs.isNotEmpty()) {
+                return msgs
+            }
+
+            // Fallback to legacy structure
+            val legacyDoc = firestore.collection("chats").document(userId).get().await()
+            if (legacyDoc.exists()) {
+                val messages = legacyDoc.get("messages") as? List<Map<String, Any?>> ?: emptyList()
+                return messages.mapIndexed { index, msg ->
+                    FirestoreChatMessage(
+                        messageId = msg["messageId"] as? String ?: index.toString(),
+                        sessionId = sessionId,
+                        userId = userId,
+                        content = msg["content"] as? String ?: "",
+                        senderType = if ((msg["role"] as? String) == "assistant") "ai" else "user",
+                        timestamp = Date((msg["timestamp"] as? Number)?.toLong() ?: System.currentTimeMillis()),
+                        aiModel = msg["model"] as? String,
+                        provider = if (msg["fromWebapp"] as? Boolean == true) "webapp" else null
+                    )
+                }
+            }
+
+            emptyList()
         } catch (e: Exception) {
             Log.e(TAG, "Error getting chat messages", e)
             emptyList()

@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
 import com.playstudio.aiteacher.firestore.FirestoreChatManager
+import com.playstudio.aiteacher.profile.FirestoreSubscriptionManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.first
@@ -24,6 +25,7 @@ class ProfileManager(private val context: Context) {
     private val usageAnalyticsDao = database.usageAnalyticsDao()
     private val authService = AuthenticationService(context)
     private val firestoreChatManager = FirestoreChatManager.getInstance()
+    private val firestoreSubscriptionManager = FirestoreSubscriptionManager(context)
     
     companion object {
         private const val TAG = "ProfileManager"
@@ -82,9 +84,26 @@ class ProfileManager(private val context: Context) {
             val userId = getCurrentFirebaseUserId() ?: return null
             Log.d(TAG, "Getting profile data for Firebase user: $userId")
             
-            // Try to get subscription data
+            // Try to get subscription data from Firestore
             val subscription = try {
-                subscriptionDao.getActiveSubscription(userId)
+                firestoreSubscriptionManager.getSubscription()?.let { sub ->
+                    SubscriptionEntity(
+                        subscriptionId = 0L,
+                        userId = sub.userId,
+                        planType = sub.planType,
+                        status = sub.status,
+                        startDate = Date(sub.startDate),
+                        endDate = Date(sub.endDate),
+                        billingCycle = sub.billingCycle,
+                        pricePaid = sub.pricePaid,
+                        currency = sub.currency,
+                        autoRenew = sub.autoRenew,
+                        trialEndDate = sub.trialEndDate?.let { Date(it) },
+                        createdAt = Date(sub.createdAt),
+                        updatedAt = Date(sub.updatedAt),
+                        featuresIncluded = sub.features
+                    )
+                }
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to get subscription data", e)
                 null
